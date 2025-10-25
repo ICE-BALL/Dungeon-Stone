@@ -1,0 +1,553 @@
+/* --- Google Fonts Import --- */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=MedievalSharp&display=swap');
+
+/* --- CSS 변수 (컬러 팔레트) --- */
+:root {
+    --font-primary: 'Noto Sans KR', sans-serif;
+    --font-title: 'MedievalSharp', cursive; /* 판타지 느낌의 영문 타이틀 폰트 */
+
+    --color-bg-darkest: #121212;  /* 가장 어두운 배경 */
+    --color-bg-dark: #1a1a1a;   /* 기본 배경 (콘텐츠 영역) */
+    --color-bg-mid: #2a2a2a;    /* UI 요소 배경 (버튼 등) */
+    --color-bg-light: #383838;  /* 강조/Hover 배경 */
+
+    --color-border: #444444;     /* 테두리선 */
+    --color-text-primary: #e0e0e0; /* 기본 텍스트 */
+    --color-text-secondary: #a0a0a0;/* 보조 텍스트 (설명 등) */
+    --color-text-title: #ffffff;    /* 타이틀 텍스트 */
+
+    --color-accent: #8a6d3b;      /* 포인트 컬러 (골드/브라운 계열) */
+    --color-accent-hover: #a88d5b; /* 포인트 컬러 Hover */
+    --color-magic: #6a85ab;      /* 마법/MP 계열 */
+    --color-health: #ab6a6a;     /* 체력/위험 계열 */
+    --color-stamina: #6aab7d;    /* 기력/긍정 계열 */
+    --color-monster-hp: #c97b7b; /* 몬스터 HP 바 색상 */
+
+    --shadow-small: 0 2px 4px rgba(0, 0, 0, 0.3);
+    --shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.5);
+    --border-radius: 5px;
+}
+
+/* --- 기본 스타일 --- */
+body {
+    font-family: var(--font-primary);
+    background-color: var(--color-bg-darkest);
+    background-image: url('https://www.transparenttextures.com/patterns/concrete-wall-2.png'); /* 은은한 석재 질감 */
+    color: var(--color-text-primary);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5 {
+    font-family: var(--font-title);
+    color: var(--color-text-title);
+    margin-top: 0;
+    letter-spacing: 1px;
+}
+
+/* --- 레이아웃 (추후 index.html 수정 대비) --- */
+/*
+#app-container {
+    display: grid;
+    grid-template-areas:
+        "header header"
+        "status main"
+        "log main";
+    grid-template-columns: 300px 1fr;
+    grid-template-rows: auto 1fr auto;
+    max-width: 1200px;
+    height: 100vh;
+    margin: 0 auto;
+    border: 1px solid var(--color-border);
+}
+*/
+
+#game-container {
+    max-width: 900px;
+    margin: 20px auto;
+    background: var(--color-bg-dark);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--color-border);
+}
+
+#game-title {
+    /* grid-area: header; (추후 사용) */
+    text-align: center;
+    color: var(--color-accent);
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--color-accent);
+    padding-bottom: 10px;
+}
+
+/* --- 상태 창 (#status) --- */
+#status {
+    /* grid-area: status; (추후 사용) */
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--color-border);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    font-size: 0.9rem;
+}
+
+/* HP, MP, 기력 바 (플레이어 용) - progress 요소 사용으로 변경됨 */
+/* 기존 .stat-bar 관련 스타일은 주석 처리 또는 삭제 가능 */
+/*
+.stat-bar { ... }
+.stat-bar > div { ... }
+#hp-bar > div { background-color: var(--color-health); }
+#mp-bar > div { background-color: var(--color-magic); }
+#stamina-bar > div { background-color: var(--color-stamina); }
+*/
+
+
+/* --- 메인 화면 (메뉴, 전투 등) --- */
+#main-game, #combat-screen, #race-selection {
+    /* grid-area: main; (추후 사용) */
+    padding: 10px;
+}
+
+#menu, #combat-menu, #city-locations, #races-list, #inventory-menu, #essences-menu, #spells-menu, #party-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 8px; /* 버튼 사이 간격 */
+}
+
+/* --- 버튼 스타일 --- */
+button {
+    font-family: var(--font-primary);
+    background: var(--color-bg-mid);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    padding: 12px 15px;
+    margin: 0; /* 개별 마진 제거 */
+    cursor: pointer;
+    border-radius: var(--border-radius);
+    text-align: left;
+    transition: background-color 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    font-size: 1rem;
+    box-shadow: var(--shadow-small);
+}
+
+button:hover {
+    background: var(--color-bg-light);
+    border-color: var(--color-accent-hover);
+    color: #fff;
+    transform: translateY(-1px); /* 살짝 떠오르는 효과 */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+button:active {
+    background: var(--color-accent);
+    color: #fff;
+    transform: translateY(0);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5); /* 눌리는 효과 */
+}
+
+button:disabled,
+button.disabled {
+    background: var(--color-bg-dark);
+    color: var(--color-text-secondary);
+    cursor: not-allowed;
+    border-color: var(--color-border);
+    transform: none;
+    box-shadow: none;
+}
+
+/* 전투 메뉴 버튼 (특별 강조) */
+#combat-menu button {
+    border-left: 3px solid var(--color-accent);
+}
+#combat-menu button:hover {
+    border-left-color: var(--color-health);
+}
+#combat-menu button[onclick*="Run"] { /* 도망가기 버튼 */
+    border-left-color: var(--color-stamina);
+}
+
+/* --- 게임 로그 (#log) --- */
+#log {
+    /* grid-area: log; (추후 사용) */
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+}
+
+/* 로그 메시지 스타일 (추후 ui.js에서 클래스 추가 시 적용) */
+.log-message {
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--color-border);
+}
+.log-message.combat { color: var(--color-health); }
+.log-message.event { color: var(--color-magic); }
+.log-message.reward { color: var(--color-stamina); }
+.log-message.system { color: var(--color-accent); }
+.log-message:last-child {
+    border-bottom: none;
+}
+
+
+/* --- 화면 전환 및 숨김 --- */
+#race-selection { display: block; }
+#main-game, #combat-screen { display: none; }
+.hidden { display: none !important; }
+
+/* --- 팝업 모달 (인벤토리, 정수 등 - 추후 index.html 수정 대비) --- */
+/*
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+*/
+
+#inventory-screen,
+#essences-screen,
+#spells-screen,
+#party-screen {
+    /* (현재는 hidden으로 동작)
+    (추후) 모달로 변경 시 스타일
+    background: var(--color-bg-dark);
+    width: 80%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--color-accent);
+    z-index: 1001;
+    */
+    display: none; /* 현재 로직 유지 */
+    border: 1px solid var(--color-accent);
+    padding: 15px;
+    margin-top: 20px;
+    border-radius: var(--border-radius);
+}
+
+#inventory-screen h2,
+#essences-screen h2,
+#spells-screen h2,
+#party-screen h2 {
+    color: var(--color-accent);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 10px;
+}
+
+#inventory-list, #essences-list, #spells-list, #party-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+/* 리스트 아이템 스타일 */
+.list-item, .stat-item {
+    background: var(--color-bg-mid);
+    padding: 10px;
+    border-radius: var(--border-radius);
+    border-left: 3px solid var(--color-magic);
+}
+
+.stat-list, .special-stat-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 5px;
+}
+.stat-item {
+    font-size: 0.85rem;
+    border-left-color: var(--color-border);
+}
+
+/* 설명 텍스트 */
+.layer-description, .event-desc, #race-selection p {
+    margin-bottom: 15px;
+    font-style: italic;
+    color: var(--color-text-secondary);
+    border-left: 3px solid var(--color-accent);
+    padding-left: 10px;
+}
+
+/* ---
+[추가 코드]
+새로운 index.html 레이아웃을 위한 CSS
+--- */
+
+/* --- 1. 메인 게임 그리드 레이아웃 --- */
+#main-game {
+    display: grid;
+    grid-template-areas:
+        "status main"
+        "log    main";
+    grid-template-columns: 320px 1fr; /* 좌측 상태 패널 너비 320px */
+    grid-template-rows: auto 1fr;
+    gap: 20px; /* 패널 사이 간격 */
+
+    /* 기존 hidden 로직은 그대로 사용 */
+    /* display: none; */
+}
+
+#status-panel {
+    grid-area: status;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--color-border);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    /* 내용이 많아지면 스크롤 */
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+#main-content {
+    grid-area: main;
+    background: rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--color-border);
+    padding: 20px;
+    border-radius: var(--border-radius);
+}
+
+#log-panel {
+    grid-area: log;
+    /* 상태 패널과 높이를 맞추기 위해 log-panel 자체에 스타일 적용 */
+    height: 350px; /* 로그 패널 높이 고정 */
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--color-border);
+    padding: 15px;
+    border-radius: var(--border-radius);
+}
+
+#log-panel h3 {
+    margin: 0 0 10px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+#log {
+    /* 기존 #log 스타일 재정의 */
+    height: 100%; /* 부모 패널 높이에 맞춤 */
+    flex-grow: 1; /* 남는 공간 모두 차지 */
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    margin: 0;
+    border: 1px solid var(--color-border);
+    box-shadow: none;
+}
+
+/* 기존 #status는 이제 status-panel의 일부 */
+#status {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: 0.85rem;
+}
+
+/* --- 2. 새로운 스탯 바 (Progress Bar) --- */
+.status-bars {
+    margin-bottom: 15px;
+}
+.status-bars label {
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    display: block; /* label이 progress를 감싸도록 */
+    margin-bottom: 5px;
+}
+.status-bars progress {
+    width: 100%;
+    height: 18px;
+    border-radius: 3px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-light);
+    appearance: none; /* 기본 스타일 제거 */
+}
+/* Webkit (Chrome, Safari) */
+.status-bars progress::-webkit-progress-bar {
+    background: var(--color-bg-light);
+    border-radius: 3px;
+}
+.status-bars progress::-webkit-progress-value {
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+/* Firefox */
+.status-bars progress::-moz-progress-bar {
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+/* 색상 적용 */
+#player-hp { color: var(--color-health); }
+#player-hp::-webkit-progress-value { background-color: var(--color-health); }
+#player-hp::-moz-progress-bar { background-color: var(--color-health); }
+
+#player-mp { color: var(--color-magic); }
+#player-mp::-webkit-progress-value { background-color: var(--color-magic); }
+#player-mp::-moz-progress-bar { background-color: var(--color-magic); }
+
+#player-stamina { color: var(--color-stamina); }
+#player-stamina::-webkit-progress-value { background-color: var(--color-stamina); }
+#player-stamina::-moz-progress-bar { background-color: var(--color-stamina); }
+
+/* 스탯 값 텍스트 */
+.status-bars span {
+    font-weight: bold;
+    color: var(--color-text-primary);
+    float: right;
+    font-size: 0.85rem;
+    margin-left: 5px; /* 바와의 간격 */
+}
+
+
+/* --- [신규] 몬스터 HP 바 스타일 --- */
+.monster-status-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+.monster-status-list li {
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+.monster-hp-bar {
+    width: 60%; /* 너비 조정 */
+    height: 12px; /* 높이 조정 */
+    margin: 0 5px;
+    vertical-align: middle;
+    border-radius: 2px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-light);
+    appearance: none;
+}
+.monster-hp-bar::-webkit-progress-bar {
+    background: var(--color-bg-light);
+    border-radius: 2px;
+}
+.monster-hp-bar::-webkit-progress-value {
+    background-color: var(--color-monster-hp); /* 몬스터 HP 색상 */
+    border-radius: 1px;
+    transition: width 0.2s ease;
+}
+.monster-hp-bar::-moz-progress-bar {
+    background-color: var(--color-monster-hp);
+    border-radius: 1px;
+    transition: width 0.2s ease;
+}
+.monster-hp-value {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary);
+    vertical-align: middle;
+}
+/* --- 몬스터 HP 바 스타일 끝 --- */
+
+
+/* --- 3. 모달 (팝업) 스타일 --- */
+/* (기존 주석 처리된 스타일 활성화 및 수정) */
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75); /* 더 어둡게 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px); /* 뒷배경 흐리게 */
+}
+
+.modal-content {
+    background: var(--color-bg-dark);
+    width: 90%;
+    max-width: 700px; /* 최대 너비 증가 */
+    max-height: 85vh; /* 최대 높이 증가 */
+    overflow-y: auto;
+    padding: 25px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-medium);
+    border: 1px solid var(--color-accent);
+    z-index: 1001;
+    /* 기존 화면 스타일 초기화 */
+    margin: 0;
+}
+
+/* 기존 화면 ID들을 모달 오버레이로 변경 */
+#inventory-screen,
+#essences-screen,
+#spells-screen,
+#party-screen {
+    /* 기존 스타일 초기화 */
+    border: none;
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+    /* 모달 오버레이 스타일 적용 (display: flex 등) */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(3px);
+}
+
+/* .hidden 클래스가 modal-overlay에 적용되도록 함 */
+#inventory-screen.hidden,
+#essences-screen.hidden,
+#spells-screen.hidden,
+#party-screen.hidden {
+    display: none !important;
+}
+
+/* 모달 닫기 버튼 */
+.modal-close-btn {
+    margin-top: 20px;
+    background: var(--color-accent);
+    color: white;
+    text-align: center;
+    font-weight: bold;
+}
+.modal-close-btn:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-border);
+}
+
+/* 아이콘 폰트 (임시) - 나중에 FontAwesome 등으로 교체 가능 */
+[class^="icon-"] {
+    display: inline-block;
+    margin-right: 8px;
+    font-family: var(--font-title);
+    color: var(--color-accent);
+}
+.icon-user:before { content: "P"; }
+.icon-combat:before { content: "!"; }
+.icon-log:before { content: "L"; }
+.icon-inventory:before { content: "I"; }
+.icon-essence:before { content: "E"; }
+.icon-spell:before { content: "S"; }
+.icon-party:before { content: "T"; }

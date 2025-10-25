@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>던전 앤 스톤: 게임 속 바바리안으로 살아남기</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;700&family=MedievalSharp&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <h1 id="game-title">Dungeon & Stone</h1>
+
+        <div id="race-selection">
+            <h2>종족 선택</h2>
+            <p class="layer-description">게임을 시작하려면 종족을 선택하세요. 각 종족은 고유의 기본 스탯과 특성을 가집니다.</p>
+            <div id="races-list"></div>
+        </div>
+
+        <div id="main-game" class="hidden">
+
+            <aside id="status-panel">
+                <h3><i class="icon-user"></i> 플레이어 상태</h3>
+
+                <div class="status-bars">
+                    <label>HP: <progress id="player-hp" max="100" value="100"></progress> <span id="player-hp-value">100/100</span></label>
+                    <label>MP: <progress id="player-mp" max="100" value="100"></progress> <span id="player-mp-value">100/100</span></label>
+                    <label>기력: <progress id="player-stamina" max="100" value="100"></progress> <span id="player-stamina-value">100/100</span></label>
+                </div>
+
+                <div id="status"></div>
+            </aside>
+
+            <main id="main-content">
+                <div id="menu"></div>
+
+                <div id="combat-screen" class="hidden">
+                    <h2><i class="icon-combat"></i> 전투 중</h2>
+                    <div id="combat-status"></div>
+                    <div id="combat-menu"></div>
+                </div>
+            </main>
+
+            <div id="log-panel">
+                <h3><i class="icon-log"></i> 게임 로그</h3>
+                <div id="log"></div>
+            </div>
+        </div>
+
+        <div id="inventory-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-inventory"></i> 인벤토리</h2>
+                <div id="inventory-list"></div>
+                <button id="back-to-menu" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="essences-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-essence"></i> 정수 목록</h2>
+                <div id="essences-list"></div>
+                <button id="back-to-menu" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="spells-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-spell"></i> 마법/스킬 목록</h2>
+                <div id="spells-list"></div>
+                <button id="back-to-menu" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+         <div id="party-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-party"></i> 파티원 정보</h2>
+                <div id="party-list"></div>
+                <button id="back-to-menu" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="audio-container">
+        <audio id="bgm-title" src="music/adventure-begins-148729.mp3" loop preload="auto"></audio>
+        <audio id="bgm-city" src="music/Tavern Loop One.mp3" loop preload="auto"></audio>
+        <audio id="bgm-dungeon" src="music/øneheart x reidenshi - snowfall __ Dark Ambient Music __ #shorts.mp3" loop preload="auto"></audio>
+        <audio id="bgm-combat" src="music/Battle Of The Creek  By Alexander Nakarada  [Royalty Free] - Medieval Battle Music.mp3" loop preload="auto"></audio>
+        <audio id="sfx-event" src="music/162. Get Fanfare - Key Item (Breath of the Wild Soundtrack).mp3" preload="auto"></audio>
+        </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
