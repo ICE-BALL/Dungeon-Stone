@@ -3,6 +3,8 @@
 // 기존 ui.js에서 분리됨
 // [수정] 몬스터 HP 바 추가
 // [수정] 파티원 HP 표시 추가
+// [수정] showCombatSkillsMenu: 모든 전투용 액티브 정수 스킬 표시 로직 수정
+// [오류 수정] 몬스터 처치 시 UI에서 '데이터 오류' 대신 '처치됨'을 표시하도록 로직 수정
 
 // --- 데이터 임포트 ---
 import {
@@ -40,7 +42,7 @@ export function updateCombatStatus(player) {
     }
 
      // 전투 종료 시
-     if (!player.currentMonster || !Array.isArray(player.currentMonster) || player.currentMonster.length === 0) {
+     if (!player.currentMonster || !Array.isArray(player.currentMonster) || player.currentMonster.every(m => !m || m.hp <= 0)) {
          statusDiv.innerHTML = "<h4>전투 종료</h4>";
          return;
      }
@@ -48,9 +50,19 @@ export function updateCombatStatus(player) {
     let combatStatusHtml = "<h4>몬스터</h4><ul class='monster-status-list'>";
     // 몬스터 상태 표시 (HP 바 포함)
     player.currentMonster.forEach((m, i) => {
-        if (m && m.hp > 0) { // 살아있는 몬스터만 표시
-            const maxHp = m.maxHp ?? m.hp ?? 1;
-            const currentHp = m.hp ?? 0;
+        // [오류 수정] 몬스터 객체 자체가 유효하지 않은 경우만 건너뛰고, HP를 기준으로 상태를 판단
+        if (!m) return; // 유효하지 않은 항목 (예: 이미 제거되었을 경우)
+
+        const maxHp = m.maxHp ?? m.hp ?? 1;
+        const currentHp = m.hp ?? 0;
+        const isDefeated = currentHp <= 0;
+        
+        // 처치된 몬스터 표시
+        if (isDefeated) {
+             combatStatusHtml += `<li style="text-decoration: line-through; color: grey;">${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (처치됨)</li>`;
+        } 
+        // 살아있는 몬스터 표시
+        else { 
             combatStatusHtml += `
                 <li>
                     ${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (${m.grade || '?'}등급)
@@ -58,10 +70,6 @@ export function updateCombatStatus(player) {
                     <span class="monster-hp-value">${currentHp}/${maxHp}</span>
                     ${m.debuffs && m.debuffs.length > 0 ? `<span style='color: orange;'>[${m.debuffs.join(',')}]</span>` : ''}
                 </li>`;
-        } else if (m && m.hp <= 0) {
-             combatStatusHtml += `<li style="text-decoration: line-through; color: grey;">${i}: ${m.name || '알 수 없는 몬스터'} (처치됨)</li>`;
-        } else {
-            combatStatusHtml += `<li>${i}: 데이터 오류</li>`;
         }
     });
     combatStatusHtml += "</ul>";
@@ -188,7 +196,8 @@ export function showCombatSkillsMenu(player) {
     player.spells.forEach(spellName => {
         const spell = magic[spellName];
         // 대상 지정이 필요하거나(effect 함수에 target 인자) 직접 데미지가 있는 경우
-        if (spell && (spell.dmg !== undefined || (spell.effect && spell.effect.toString().includes('target')))) {
+        // 또는 대상 지정 없이 광역 피해를 주는 경우 (effect 함수만 있고 dmg 없는 광역기, 예: 냉기폭풍)
+        if (spell && (spell.dmg !== undefined || (spell.effect && spell.effect.toString().includes('target')) || (spell.effect && !spell.effect.toString().includes('target') && spell.type === 'magic' && spell.mp_cost > 0) )) {
             availableSkills.push({
                 name: spellName,
                 type: 'spell',
@@ -209,7 +218,8 @@ export function showCombatSkillsMenu(player) {
             }
         }
         // 대상 지정이 필요하거나 직접 데미지가 있는 경우
-        if (skillData && (skillData.dmg !== undefined || (skillData.effect && skillData.effect.toString().includes('target')))) {
+        // 또는 대상 지정 없이 광역 피해를 주는 경우 (effect 함수만 있고 dmg 없는 광역기, 예: 해일)
+        if (skillData && (skillData.dmg !== undefined || (skillData.effect && skillData.effect.toString().includes('target')) || (skillData.effect && !skillData.effect.toString().includes('target') && skillData.mp_cost > 0) )) {
              availableSkills.push({
                  name: skillName,
                  type: 'essence',
@@ -230,15 +240,28 @@ export function showCombatSkillsMenu(player) {
                     logMessage("MP가 부족합니다.");
                     return;
                 }
-                // 공격 대상 선택 필요 여부 확인
-                if (livingMonsters.length > 1) {
+                // 공격 대상 선택 필요 여부 확인 (대상이 필요하거나, 몬스터가 여러 마리인 경우)
+                // 광역기는 대상 선택 없이 바로 사용
+                const skillInfo = skill.type === 'spell' ? magic[skill.name] : essences[player.essences.find(eKey => essences[eKey]?.active?.name === skill.name)]?.active;
+                const requiresTarget = (skillInfo?.dmg !== undefined || (skillInfo?.effect && skillInfo.effect.toString().includes('target')));
+
+                if (requiresTarget && livingMonsters.length > 1) {
                     showTargetSelection(player, skill); // 대상 선택 함수 호출
-                } else if (livingMonsters.length === 1) { // 대상이 하나면 바로 사용
+                } else if (requiresTarget && livingMonsters.length === 1) { // 대상이 하나면 바로 사용
                     const targetIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
                     if (skill.type === 'spell') {
                         player.playerSpell(skill.name, targetIndex);
                     } else if (skill.type === 'essence') {
                         player.playerEssenceSkill(skill.name, targetIndex);
+                    }
+                } else if (!requiresTarget && livingMonsters.length > 0) { // 광역기 등 대상 지정 불필요 스킬
+                     // 광역기의 경우 targetIndex를 -1 또는 null 로 전달하여 구분 가능하도록 함 (Player 클래스 수정 필요)
+                     // 여기서는 임시로 첫 번째 대상을 타겟으로 넘기거나 null을 넘김
+                     const targetIndex = livingMonsters.length > 0 ? player.currentMonster.findIndex(m => m === livingMonsters[0]) : -1; // 임시: 첫 몬스터 인덱스 또는 -1
+                    if (skill.type === 'spell') {
+                        player.playerSpell(skill.name, targetIndex); // Player 클래스에서 targetIndex가 -1일 때 광역 처리 필요
+                    } else if (skill.type === 'essence') {
+                        player.playerEssenceSkill(skill.name, targetIndex); // Player 클래스에서 targetIndex가 -1일 때 광역 처리 필요
                     }
                 } else {
                      logMessage("스킬을 사용할 대상이 없습니다.");

@@ -4,6 +4,7 @@
 // --- [계획 수정 3] ---
 // [수정] ui_main.js에서 showPortalChoice 함수 import 추가
 // [수정] gameCallbacks 객체에 showPortalChoice 콜백 추가
+// [오류 수정] 자동 재생 오류 방지를 위해 초기 BGM 재생 주석 처리
 
 // 1. 클래스 임포트
 import { Player } from './classes.js';
@@ -41,7 +42,9 @@ const musicManager = {
 
     // 초기화: HTML에서 audio 요소를 찾아 저장
     init: function() {
+        // --- bgm_dungeon_snowfall.mp3 ID 추가 ---
         const audioIds = ['bgm-title', 'bgm-city', 'bgm-dungeon', 'bgm-combat', 'sfx-event']; // 모든 오디오 ID 목록
+        // --- 수정 완료 ---
         audioIds.forEach(id => {
             const element = document.getElementById(id);
             if (element) {
@@ -63,7 +66,7 @@ const musicManager = {
         }
 
         // 이미 같은 곡이 재생 중이면 중단
-        if (this.currentTrack === trackId) {
+        if (this.currentTrack === trackId && !this.audioElements[trackId].paused) { // paused 확인 추가
             return;
         }
 
@@ -84,7 +87,10 @@ const musicManager = {
                 this.currentTrack = trackId; // 현재 트랙 ID 업데이트
             }).catch(error => {
                 // 자동 재생 실패 (사용자 상호작용 필요)
-                console.warn(`Autoplay failed for ${trackId}: ${error}. User interaction required.`);
+                 // --- 오류 메시지 개선 및 현재 트랙 초기화 ---
+                 console.warn(`Playback failed for ${trackId}: ${error}. User interaction required.`);
+                 this.currentTrack = null; // 재생 실패 시 현재 트랙 초기화
+                 // --- 수정 완료 ---
                 // 필요하다면, 사용자 클릭 시 재생을 다시 시도하는 로직 추가 가능
             });
         } else {
@@ -95,6 +101,7 @@ const musicManager = {
                  this.currentTrack = trackId;
              } catch (error) {
                  console.warn(`Playback failed for ${trackId}: ${error}. User interaction required.`);
+                 this.currentTrack = null; // 재생 실패 시 현재 트랙 초기화
              }
         }
     },
@@ -106,18 +113,22 @@ const musicManager = {
             // 이전 페이드 아웃 중지
             if (this.fadeInterval) {
                 clearInterval(this.fadeInterval);
+                 this.fadeInterval = null; // 인터벌 ID 초기화
             }
             // 볼륨 서서히 줄이기 (Fade out)
             this.fadeInterval = setInterval(() => {
-                if (track.volume > 0.1) {
-                    track.volume -= 0.1;
+                // --- 볼륨 감소 로직 및 정지 조건 수정 ---
+                if (track.volume > 0.05) { // 더 낮은 값까지 감소
+                    track.volume = Math.max(0, track.volume - 0.1); // 0 미만 방지
                 } else {
                     clearInterval(this.fadeInterval);
+                    this.fadeInterval = null; // 인터벌 ID 초기화
                     track.pause();
                     track.volume = 0.5; // 나중 재생을 위해 볼륨 복구
+                    console.log(`Music stopped: ${this.currentTrack}`);
                     this.currentTrack = null; // 현재 트랙 없음으로 표시
-                    console.log("Music stopped");
                 }
+                // --- 수정 완료 ---
             }, 50); // 50ms 마다 볼륨 감소
         }
          // 현재 재생 중인 트랙이 없어도, 혹시 모를 인터벌 정리
@@ -176,16 +187,20 @@ const player = new Player(gameCallbacks);
 
 // 5. 주기적인 이벤트 체크 (포만감, 배신 등)
 setInterval(() => {
-    if (player.position === "Labyrinth") {
+    // --- player 객체 생성 확인 ---
+    if (player && player.position === "Labyrinth") {
+    // --- 수정 완료 ---
         player.checkSatiety();
         player.checkBetrayal();
     }
-}, 60000);
+}, 60000); // 1분에 한 번 체크
 
 // 6. 게임 시작
-// --- [신규] 타이틀 BGM 재생 ---
-musicManager.playMusic('bgm-title');
+// --- [오류 수정] 초기 BGM 자동 재생 시도 주석 처리 ---
+// musicManager.playMusic('bgm-title'); // 브라우저 정책으로 인해 사용자 상호작용 없이는 실패함
+// --- 수정 완료 ---
 // 종족 선택 화면을 띄웁니다. (ui_main.js에서 import)
+// 종족 선택 시 ui_main.js의 initRaceSelection 내부에서 bgm-city 재생 시도
 initRaceSelection(player);
 
 // -----------------------------------------------------------------
@@ -196,21 +211,35 @@ initRaceSelection(player);
 // --- [선택 사항] 사용자 상호작용 시 오디오 잠금 해제 시도 ---
 // 사용자가 처음 클릭/터치할 때 모든 오디오 로드를 시도하여 이후 자동 재생 문제를 줄임
 function unlockAudioContext() {
-    console.log("Attempting to unlock audio context...");
+    console.log("Attempting to unlock audio context after user interaction...");
+    let unlocked = false;
     Object.values(musicManager.audioElements).forEach(audio => {
-        // 이미 재생 중이거나 로드 중이지 않은 오디오만 로드 시도
-        if (audio.paused && audio.readyState < 3) {
-             audio.load(); // 메타데이터 로드 시도
-             // 짧게 재생 후 멈추는 방법도 있으나, 원치 않는 소리가 날 수 있음
-             // audio.play().then(() => audio.pause()).catch(()=>{});
+        // 짧게 재생 후 즉시 멈추는 방식 (소리가 거의 안 나게)
+        audio.volume = 0.01;
+        const playPromise = audio.play();
+        if (playPromise !== undefined) {
+             playPromise.then(_ => {
+                 audio.pause();
+                 audio.currentTime = 0; // 재생 위치 초기화
+                 audio.volume = 0.5; // 원래 볼륨 복구
+                 unlocked = true;
+             }).catch(error => {
+                // console.warn("Audio unlock failed for one element:", error); // 개별 오류 로깅은 생략 가능
+                 audio.volume = 0.5; // 실패해도 볼륨 복구
+             });
         }
     });
+    if (unlocked) {
+        console.log("Audio context likely unlocked.");
+    } else {
+        console.warn("Could not unlock audio context automatically.");
+    }
     // 이벤트 리스너 제거 (한 번만 실행)
     document.body.removeEventListener('click', unlockAudioContext);
     document.body.removeEventListener('touchstart', unlockAudioContext);
 }
-// document.body.addEventListener('click', unlockAudioContext);
-// document.body.addEventListener('touchstart', unlockAudioContext);
-// --> 주석 처리: 명시적인 사용자 클릭 유도 없이, play() 실패 시 경고만 표시하는 것으로 변경.
-//     필요하다면 게임 시작 버튼 등을 만들고 해당 버튼 클릭 시 unlockAudioContext() 호출 가능.
+ // --- 페이지 로드 후 첫 클릭/터치 시 unlockAudioContext 실행 ---
+ document.body.addEventListener('click', unlockAudioContext, { once: true }); // once: true 로 자동 제거
+ document.body.addEventListener('touchstart', unlockAudioContext, { once: true });
+ // --- 수정 완료 ---
 // --- 오디오 잠금 해제 끝 ---

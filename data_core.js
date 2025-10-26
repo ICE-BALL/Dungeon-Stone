@@ -6,9 +6,10 @@
 // - 대상/몬스터 처리를 안전하게 다루기 위한 유틸 추가
 // - 일부 직접 스탯 수정 시 stats 객체 보장
 // - 자바스크립트 문법 오류 수정 (쉼표, 콜론 등)
+// - [오류 수정] helpers 객체 export 추가
 
-// 공용 유틸
-const helpers = {
+// 공용 유틸 (export 추가)
+export const helpers = {
     toArray: (x) => (Array.isArray(x) ? x : x ? [x] : []), // 객체나 null을 안전하게 배열로 변환
     safeApplyDebuff: (t, name) => { if (!t) return; t.applyDebuff?.(name); }, // 대상의 applyDebuff 안전 호출
     ensureStats: (obj) => { if (!obj) obj = {}; if (!obj.stats) obj.stats = {}; return obj; }, // 객체와 stats 속성 존재 보장
@@ -350,6 +351,68 @@ export const essences = {
         active: { name: "망자의 부름", desc: "전투당 한 번, 여러 마리(1~3)의 구울을 소환합니다.", mp_cost: 40, effect: (p, t) => { p?.cb?.logMessage?.("망자들을 불러내어 구울을 소환했다!"); } }
     },
     // ... 나머지 정수 데이터들 ...
+     // --- 추가 정수 예시 (임의 데이터) ---
+     "홉 고블린": {
+        stats: { "근력": 5, "지구력": 3, "물리 내성": 2 },
+        passive: { name: "독 면역", desc: "모든 종류의 독에 면역이 됩니다." },
+        active: { name: "독성 부여", desc: "다음 물리 공격에 독(중) 효과를 부여합니다.", mp_cost: 15, effect: (p, t) => { /* 독 부여 로직 필요 */ p?.cb?.logMessage?.("다음 공격에 독 효과를 부여했다."); }}
+    },
+     "미믹": {
+        stats: { "육감": 10, "행운": 5, "인지 방해": 8 },
+        passive: { name: "탐욕", desc: "마석 드랍률이 30% 상승합니다." },
+        active: { name: "보물창고", desc: "개인 아공간 창고를 엽니다.", mp_cost: 0, effect: (p, t) => { p?.cb?.logMessage?.("개인 아공간 창고를 열었다."); }}
+    },
+     "아이안트로": {
+         stats: { "근력": 4, "물리 내성": 6, "지구력": 5 },
+         passive: { name: "강철 피부", desc: "물리 내성이 추가로 5 상승합니다." },
+         active: { name: "균형추", desc: "일시적으로 넉백 면역 상태가 되고 충격 흡수율이 증가합니다.", mp_cost: 20, effect: (p, t) => { /* 넉백 면역 및 충격 흡수 로직 필요 */ p?.cb?.logMessage?.("균형추 스킬을 사용했다!"); }}
+     },
+     "오크 주술사": {
+         stats: { "정신력": 6, "영혼력": 15, "항마력": 3 },
+         passive: { name: "주술 강화", desc: "저주 및 버프 계열 스킬 효과가 소폭 증가합니다." },
+         active: { name: "열광", desc: "대상 아군의 물리 내성을 10초간 3배 증가시킵니다 (최대 300).", mp_cost: 25, effect: (p, t) => { /* 아군 대상 지정 및 버프 로직 필요 */ p?.cb?.logMessage?.("열광 주문을 외웠다!"); }}
+     },
+     "프로그맨": {
+        stats: { "민첩성": 7, "유연성": 5, "독 내성": 4 },
+        passive: { name: "썩은점액", desc: "둔기류 공격에 대한 회피율이 상승합니다." },
+        active: { name: "점액 투척", desc: "끈적이는 점액을 던져 대상의 이동 속도를 감소시킵니다.", mp_cost: 10, effect: (p, t) => { helpers.safeApplyDebuff(t, "둔화"); p?.cb?.logMessage?.(`${t?.name || '대상'}에게 점액을 던져 느려지게 했다!`); }}
+    },
+    "리치": {
+        stats: { "정신력": 10, "영혼력": 30, "항마력": 8, "어둠 감응도": 5 },
+        passive: { name: "영혼의 함", desc: "죽음에 이르는 피해를 입으면 영혼의 함으로 부활합니다 (1회)." },
+        active: { name: "죽음의 손길", desc: "대상에게 강력한 어둠 피해를 주고 생명력을 흡수합니다.", mp_cost: 40, dmg: 60, type:"magic", effect: (p, t) => { if (!t) { p?.cb?.logMessage?.("대상이 없습니다."); return; } const dmg = helpers.calculateDamage(60, t.magic_def); helpers.safeHpUpdate(t, -dmg); helpers.safeHpUpdate(p, Math.floor(dmg * 0.3)); p?.cb?.logMessage?.(`죽음의 손길로 ${t?.name || '대상'}에게 ${dmg}의 어둠 피해를 주고 체력을 흡수했다! (HP: ${t?.hp})`); }}
+    },
+     "데스나이트": {
+         stats: { "근력": 8, "물리 내성": 10, "골강도": 8, "항마력": 5 },
+         passive: { name: "불사의 투지", desc: "HP가 30% 이하일 때 공격력과 방어력이 상승합니다." },
+         active: { name: "원한", desc: "주변 적들의 치유 및 재생 효과를 대폭 감소시키는 오오라를 발산합니다.", mp_cost: 30, effect: (p, t) => { /* 주변 적 디버프 로직 필요 */ p?.cb?.logMessage?.("원한의 오오라를 발산했다!"); }}
+     },
+    "균열": { // 균열 수호자 (임의 데이터)
+        stats: { "영혼력": 20, "모든 속성 감응도": 10 },
+        passive: { name: "차원의 불안정성", desc: "공격 시 낮은 확률로 무작위 공간 이동 효과를 유발합니다." },
+        active: { name: "차원 가르기", desc: "강력한 차원 에너지로 대상을 공격합니다.", mp_cost: 50, dmg: 70, type: "magic", effect: (p, t) => { if (!t) { p?.cb?.logMessage?.("대상이 없습니다."); return; } const dmg = helpers.calculateDamage(70, t.magic_def); helpers.safeHpUpdate(t, -dmg); p?.cb?.logMessage?.(`차원 가르기로 ${t?.name || '대상'}에게 ${dmg}의 마법 피해! (HP: ${t?.hp})`); }}
+    },
+     "종말의 기사": { // 백색신전 수호자 (임의 데이터)
+         stats: { "근력": 15, "지구력": 12, "물리 내성": 10, "항마력": 10 },
+         passive: { name: "기사도", desc: "사망 시 장비를 파괴하고 생명력을 회복합니다 (1회)." },
+         active: { name: "종복", desc: "강력한 혼령마를 소환하여 함께 싸웁니다.", mp_cost: 60, effect: (p, t) => { p?.cb?.logMessage?.("혼령마를 소환했다!"); }}
+     },
+     "하프 트롤": {
+         stats: { "근력": 6, "지구력": 8, "자연 재생력": 5 },
+         passive: { name: "재생력", desc: "자연 재생력이 소폭 상승합니다." },
+         active: { name: "광분", desc: "일시적으로 통증을 느끼지 못하고 공격력이 상승합니다.", mp_cost: 20, effect: (p, t) => { /* 버프 로직 필요 */ p?.cb?.logMessage?.("광분 상태에 돌입했다!"); }}
+     },
+     "카나바로": {
+        stats: { "민첩성": 8, "명중률": 6, "인지 방해": 4 },
+        passive: { name: "추적자", desc: "이동 시 민첩성이 상승하고 적의 흔적을 발견하기 쉬워집니다." },
+        active: { name: "마력 지뢰", desc: "보이지 않는 마력 지뢰를 설치하여 밟은 적에게 피해를 줍니다.", mp_cost: 25, effect: (p, t) => { p?.cb?.logMessage?.("마력 지뢰를 설치했다."); }}
+    },
+     "가고일": {
+         stats: { "물리 내성": 7, "골강도": 5 },
+         passive: { name: "석화 피부", desc: "평소 석상 형태로 물리/마법 방어력이 높습니다." },
+         active: { name: "석화", desc: "대상을 석화 상태로 만듭니다.", mp_cost: 30, effect: (p, t) => { helpers.safeApplyDebuff(t, "석화"); p?.cb?.logMessage?.(`${t?.name || '대상'}을 석화시켰다!`); }}
+     },
+    // --- 추가 정수 끝 ---
     "레비아탄": {
         stats: { "영혼력": 50, "모든 속성 감응도": 20, "항마력": 25 },
         passive: { name: "해극신", desc: "바다 지형에서 모든 능력이 대폭(스탯 +20%) 상승하며, 물 속성 공격에 면역이 됩니다." },

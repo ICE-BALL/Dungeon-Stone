@@ -5,6 +5,7 @@
 // --- [계획 수정 2] ---
 // [추가] showPortalChoice 함수: 차원 비석 발견 시 다음 층 이동/머무르기 선택 버튼 표시
 // [수정] updateMenu 함수: '탐색하기' 이벤트 로직 수정 (event.portalTo 속성 감지하여 showPortalChoice 호출)
+// [수정] updateMenu 함수: '잠자기' 로직 수정 (파티원 체력/마나 회복 추가)
 
 // --- 데이터 임포트 ---
 import {
@@ -163,13 +164,13 @@ export function updateMenu(player) {
             } else { // 일반 이벤트 또는 아무 일 없음 (40%)
                  if (layer.events && layer.events.length > 0) {
                      const event = layer.events[Math.floor(Math.random() * layer.events.length)];
-                     
+
                      // --- [계획 수정 2] ---
                      // 이벤트에 portalTo 속성이 있는지 확인
                      if (event.portalTo !== undefined) {
                          // 포탈 발견 시, 선택 함수 호출
                          showPortalChoice(player, event.portalTo);
-                     } 
+                     }
                      // --- [수정 완료] ---
                      else {
                          // 기존 일반 이벤트 처리
@@ -206,6 +207,12 @@ export function updateMenu(player) {
                 player.hp = player.maxHp;
                 player.mp = player.maxMp;
                 player.stamina = player.maxStamina;
+                // --- 파티원 회복 로직 추가 ---
+                player.party.forEach(member => {
+                    member.hp = member.maxHp;
+                    member.mp = member.maxMp;
+                });
+                // --- 수정 완료 ---
                 logMessage(`${player.party[0].name}이(가) 보초를 서는 동안 안전하게 잠을 자 모든 것을 회복했다.`);
             } else { // 혼자면 습격 확률
                 logMessage("동료가 없어 불안한 마음에 잠을 청한다...");
@@ -591,6 +598,12 @@ export function handleCityAction(player, location) {
                 player.mp = player.maxMp;
                 player.stamina = player.maxStamina;
                 player.fatigue = 0; // 피로도 회복
+                 // --- 파티원 회복 로직 추가 ---
+                 player.party.forEach(member => {
+                    member.hp = member.maxHp;
+                    member.mp = member.maxMp;
+                });
+                // --- 수정 완료 ---
                 player.gold -= innCost; // 비용 지불
                 logMessage(`여관에서 하루 묵으며 모든 것을 회복했다. (${innCost} 스톤 지불)`);
                 player.safePlaySfx('sfx-event'); // [SFX] 휴식
@@ -631,7 +644,7 @@ export function showPortalChoice(player, nextLayer) {
     addButton(menu, `이동한다 (${nextLayer}층 ${layerData.name})`, () => {
         player.position = "Labyrinth"; // 위치 확정
         player.currentLayer = nextLayer; // 층 변경
-        
+
         // 다음 층 진입 시 초기화
         player.daysInLabyrinth = 1; // (기획에 따라 1일차로 초기화 or 유지) -> 1일차로 초기화
         player.explorationCount = 0;
