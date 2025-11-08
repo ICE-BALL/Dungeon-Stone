@@ -1,13 +1,7 @@
 // 이 파일은 게임의 메인 흐름(비전투) UI 함수를 담당합니다.
 // (종족 선택, 도시, 탐험, 메인 모달창)
-// [수정] data_core.js, data_content.js의 직접 임포트 제거
-// [수정] 모든 데이터(races, layers, items 등)를 player.cb.gameData 객체를 통해 참조하도록 변경
-
-// --- 데이터 임포트 (제거) ---
-// (모든 데이터는 player.cb.gameData를 통해 접근)
-
-// --- 클래스 임포트 (제거) ---
-// (NPC 클래스는 main.js에서 콜백으로 주입됨)
+// [수정] showPortalChoice: 8층 버그 수정을 위해 '현재 층 머무르기' 옵션 추가
+// [수정] updateMenu (Rift): 몬스터 없는 스테이지('녹색 탄광 3챕터' 등) 진행 불가 버그 수정
 
 // --- 핵심 UI 유틸리티 임포트 ---
 import {
@@ -35,8 +29,8 @@ export function initRaceSelection(player) {
 
         racesListDiv.innerHTML = '';
 
-        // [수정] player.cb.gameData에서 races 데이터를 가져옵니다.
-        const races = player.cb.gameData.races;
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+        const races = player.cb?.gameData?.races || {};
         
         Object.keys(races).forEach(race => {
             addButton(racesListDiv, `${race} - ${races[race].description}`, () => {
@@ -44,18 +38,17 @@ export function initRaceSelection(player) {
                 raceSelectionDiv.style.display = 'none';
 
                 mainGameDiv.classList.remove('hidden');
-                mainGameDiv.style.display = 'grid'; // 메인 게임 레이아웃 활성화
+                mainGameDiv.style.display = 'grid'; 
 
                 logMessage("던전 앤 스톤의 세계에 온 것을 환영합니다. 도시에서 탐험을 준비하세요.");
 
-                // --- [BGM] 도시 BGM 재생 ---
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
                 if (player.cb && player.cb.playMusic) {
-                    player.cb.playMusic('bgm-city');
+                    player.cb?.playMusic('bgm-city');
                 }
-                // --- [BGM] 완료 ---
 
-                updateMenu(player); // 메인 메뉴 업데이트
-                player.showStatus(); // 상태창 업데이트
+                updateMenu(player); 
+                player.showStatus(); 
             });
         });
     } else {
@@ -77,15 +70,14 @@ export function updateMenu(player) {
         return;
     }
 
-    // --- [BGM] 현재 위치에 맞는 BGM 재생 ---
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
     if (player.cb && player.cb.playMusic) {
-        if (player.position === "Labyrinth") {
-            player.cb.playMusic('bgm-dungeon');
+        if (player.position === "Labyrinth" || player.position === "Rift") {
+            player.cb?.playMusic('bgm-dungeon');
         } else { // 도시 또는 다른 안전 구역
-            player.cb.playMusic('bgm-city');
+            player.cb?.playMusic('bgm-city');
         }
     }
-    // --- [BGM] 완료 ---
 
     // 화면 전환
     menu.innerHTML = ''; // 메뉴 초기화
@@ -97,10 +89,69 @@ export function updateMenu(player) {
 
     updateStatusBars(player); // 상태 바 업데이트
 
+    // [확장 계획 5] 균열(Rift) 내부 메뉴
+    if (player.position === "Rift") {
+        if (!player.currentRift || !player.currentRift.stages) {
+            logMessage("오류: 유효하지 않은 균열입니다. 도시로 귀환합니다.");
+            player.position = "라비기온 (7-13구역)"; 
+            player.currentRift = null;
+            updateMenu(player);
+            return;
+        }
+        
+        const stageIndex = player.currentRiftStage;
+        const stage = player.currentRift.stages[stageIndex];
+        
+        if (!stage) {
+            // (이 로직은 classes.js의 endCombat에서 이미 처리됨 - 8층 제외)
+            logMessage(`[${player.currentRift.name}] 균열 탐사가 완료되었습니다. 도시로 귀환합니다.`);
+            player.position = "라비기온 (7-13구역)"; 
+            player.currentRift = null;
+            updateMenu(player);
+            return;
+        }
+
+        logMessage(`현재 위치: [${player.currentRift.name}] 균열 - ${stage.name}`);
+
+        // 균열 탐사 버튼
+        const exploreButton = addButton(menu, `균열 탐사: ${stage.name} 진입`, () => {
+            logMessage(`[${stage.name}]으로 진입합니다...`);
+            
+            const monstersToCombat = stage.boss || stage.monsters;
+            
+            if (monstersToCombat && monstersToCombat.length > 0) {
+                player.startCombat(monstersToCombat);
+            } else {
+                // [버그 수정] 몬스터가 없는 스테이지(예: 녹색탄광 3챕터)에서 진행이 막히는 오류 수정
+                logMessage("이 구역에는 몬스터가 없는 것 같습니다... 다음 단계로 이동합니다.");
+                player.currentRiftStage++; // [수정] 스테이지 수동 증가
+                updateMenu(player); // [수정] 메뉴 즉시 갱신
+            }
+            player.showStatus();
+        });
+        /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+        if (player.inCombat || player.isWaitingForEssenceChoice) exploreButton.disabled = true;
+
+        // 균열 포기 버튼
+        const returnButton = addButton(menu, "균열 포기 (도시로 귀환)", () => {
+            if (confirm("균열 탐사를 포기하고 도시로 귀환하시겠습니까?")) {
+                player.position = "라비기온 (7-13구역)";
+                logMessage("균열에서 탈출하여 도시로 귀환했다.");
+                player.currentRift = null;
+                player.currentRiftStage = 0;
+                updateMenu(player);
+                player.showStatus();
+            }
+        });
+        if (player.inCombat || player.isWaitingForEssenceChoice) { 
+            returnButton.disabled = true;
+            returnButton.title = "전투 중 또는 선택 중에는 귀환할 수 없습니다.";
+        }
+    }
     // 미궁 내부 메뉴
-    if (player.position === "Labyrinth") {
-        // [수정] player.cb.gameData에서 layers 데이터를 가져옵니다.
-        const layer = player.cb.gameData.layers[player.currentLayer];
+    else if (player.position === "Labyrinth") {
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+        const layer = player.cb.gameData?.layers?.[player.currentLayer];
         if (!layer) {
              logMessage(`오류: ${player.currentLayer}층 데이터를 찾을 수 없습니다.`);
              player.position = "라비기온 (7-13구역)"; 
@@ -131,28 +182,54 @@ export function updateMenu(player) {
                 return;
             }
 
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const riftData = player.cb.gameData?.rifts?.[player.currentLayer];
+            /* AUTO-FIX: [Plan 4] Changed logic to call random rift modal popup */
+            if (riftData && riftData.length > 0 && Math.random() < 0.05) {
+                logMessage("땅이 흔들리며 기이한 균열이 나타났다!");
+                const randomRift = riftData[Math.floor(Math.random() * riftData.length)];
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                player.cb?.showRiftEntryModal(player, randomRift); // 새 모달 함수 호출
+                return; 
+            }
+
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+            const navigator = player.party?.find(m => m.trait === "인도자");
+            if (navigator && Math.random() < 0.2) {
+                logMessage(`[파티 보너스] 인도자 ${navigator.name}이(가) 다음 층으로 향하는 지름길을 발견했습니다!`);
+                const nextLayer = parseInt(player.currentLayer) + 1;
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                if (player.cb.gameData?.layers?.[nextLayer]) {
+                    showPortalChoice(player, nextLayer);
+                } else {
+                    logMessage("...하지만 더 이상 나아갈 길이 없는 것 같습니다.");
+                }
+                return; 
+            }
+
             const rand = Math.random();
             let encounteredMonster = null;
-            // [수정] player.cb.gameData.monsters를 통해 몬스터 존재 여부 확인
-            if (rand < 0.05 && player.cb.gameData.monsters["균열 수호자"]) { 
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            if (rand < 0.05 && player.cb.gameData?.monsters?.["균열 수호자"]) { 
                  logMessage("땅이 흔들리며 균열이 나타났다!");
                  encounteredMonster = "균열 수호자";
             } else if (rand < 0.6) { 
                 logMessage("몬스터와 조우했다!");
-                 encounteredMonster = player.cb.getRandomMonsters(player.currentLayer); // 콜백 사용
+                 /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                 encounteredMonster = player.cb?.getRandomMonsters(player.currentLayer); // 콜백 사용
             } else { 
-                 if (layer.events && layer.events.length > 0) {
+                 /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                 if (layer?.events && layer.events.length > 0) {
                      const event = layer.events[Math.floor(Math.random() * layer.events.length)];
 
-                     if (event.portalTo !== undefined) {
-                         // [수정] 콜백 대신 이 파일의 로컬 함수 호출
-                         showPortalChoice(player, event.portalTo);
+                     if (event.effect?.type === "portal") {
+                         // [수정] 로컬 함수 호출
+                         showPortalChoice(player, event.effect.targetLayer);
                      }
                      else {
                          logMessage(event.desc);
-                         // [수정] JSON에는 함수가 없으므로, effect 객체를 Player가 처리하도록 전달
                          if (event.effect) {
-                             player.handleEventEffect(event.effect); // classes.js에 이 함수 구현 필요 (또는 여기서 직접 처리)
+                             player.handleEventEffect(event.effect); 
                          }
                      }
                  } else {
@@ -166,7 +243,8 @@ export function updateMenu(player) {
 
             player.showStatus();
         });
-        if (player.inCombat) exploreButton.disabled = true;
+        /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+        if (player.inCombat || player.isWaitingForEssenceChoice) exploreButton.disabled = true;
 
         // 잠자기 버튼
         const sleepButton = addButton(menu, `잠자기 (피로/체력/MP/기력 회복) [${player.sleepCount}/3]`, () => {
@@ -189,7 +267,8 @@ export function updateMenu(player) {
                 logMessage("동료가 없어 불안한 마음에 잠을 청한다...");
                 if (Math.random() < 0.4) { 
                     logMessage("잠든 사이 몬스터의 습격을 받았다!");
-                     const monsterToAttack = player.cb.randomMonsterFromLayer(player.currentLayer); // 콜백 사용
+                     /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                     const monsterToAttack = player.cb?.randomMonsterFromLayer(player.currentLayer); // 콜백 사용
                      if (monsterToAttack) player.startCombat(monsterToAttack);
                 } else {
                     player.fatigue = 0;
@@ -202,14 +281,14 @@ export function updateMenu(player) {
             player.showStatus();
             updateMenu(player); 
         });
-        if (player.sleepCount >= 3 || player.inCombat) sleepButton.disabled = true;
+        /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+        if (player.sleepCount >= 3 || player.inCombat || player.isWaitingForEssenceChoice) sleepButton.disabled = true;
 
         // 종족 스킬 버튼
-        // [수정] player.cb.gameData에서 races 데이터를 가져옵니다.
-        const racialSkill = player.cb.gameData.races[player.race]?.racial_skill; 
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+        const racialSkill = player.cb.gameData?.races?.[player.race]?.racial_skill; 
         if (racialSkill) {
-            addButton(menu, `종족 스킬: ${racialSkill.name}`, () => {
-                // [수정] data_functional.js에서 병합된 effect 함수를 호출합니다.
+            const racialSkillButton = addButton(menu, `종족 스킬: ${racialSkill.name}`, () => {
                 if(typeof racialSkill.effect === 'function') {
                     logMessage(`종족 스킬 [${racialSkill.name}]을(를) 사용합니다: ${racialSkill.desc}`);
                     racialSkill.effect(player);
@@ -217,7 +296,9 @@ export function updateMenu(player) {
                 } else {
                     logMessage("이 종족은 특별한 스킬이 없습니다.");
                 }
-            }).disabled = player.inCombat;
+            });
+            /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+            if (player.inCombat || player.isWaitingForEssenceChoice) racialSkillButton.disabled = true;
         }
 
         // 도시 귀환 버튼
@@ -228,20 +309,22 @@ export function updateMenu(player) {
             updateMenu(player);
             player.showStatus();
         });
-        if (player.inCombat) { 
+        if (player.inCombat || player.isWaitingForEssenceChoice) { 
             returnButton.disabled = true;
-            returnButton.title = "전투 중에는 귀환할 수 없습니다.";
+            returnButton.title = "전투 중 또는 선택 중에는 귀환할 수 없습니다.";
         }
 
     }
     // 도시 내부 메뉴
     else {
         // [수정] 도시 관련 기능은 ui_city.js로 분리되었으므로 해당 콜백 호출
-        addButton(menu, "도시 구역 이동", () => player.cb.showCityDistricts(player));
-        addButton(menu, "현재 구역 활동", () => player.cb.showCityLocations(player));
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+        addButton(menu, "도시 구역 이동", () => player.cb?.showCityDistricts(player));
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+        addButton(menu, "현재 구역 활동", () => player.cb?.showCityLocations(player));
         addButton(menu, "미궁 진입 (1층)", () => {
-             // [수정] player.cb.gameData에서 layers 데이터를 가져옵니다.
-             const layerOne = player.cb.gameData.layers[1];
+             /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+             const layerOne = player.cb.gameData?.layers?.[1];
              if (!layerOne) {
                  logMessage("오류: 1층 미궁 데이터를 찾을 수 없습니다.");
                  return;
@@ -253,61 +336,130 @@ export function updateMenu(player) {
             player.sleepCount = 0;
             player.timeRemaining = layerOne.time_limit; 
             logMessage("1층 수정동굴로 진입합니다.");
+
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+            player.questManager?.checkProgress('REACH', '1층', 1);
+
             updateMenu(player);
             player.showStatus();
         });
     }
 
     // 공통 메뉴 (모달 열기 버튼)
-    // [수정] 이 함수들이 이 파일 내에 다시 정의되었으므로 로컬 호출로 변경
-    addButton(menu, "인벤토리", () => showInventory(player)).disabled = player.inCombat;
-    addButton(menu, "정수 확인", () => showEssences(player)).disabled = player.inCombat;
-    addButton(menu, "마법/스킬", () => showSpells(player)).disabled = player.inCombat;
-    // [수정] ui_party.js가 있지만, main.js의 import 구조가 혼란스러우므로
-    // 원본처럼 ui_main.js에 showParty를 포함시키고 로컬 호출
-    addButton(menu, "파티원 정보", () => showParty(player)).disabled = player.inCombat;
-    // [신규] 임무 일지 버튼 (콜백 사용)
-    addButton(menu, "임무 일지", () => player.cb.showQuestLog(player)).disabled = player.inCombat;
-    addButton(menu, "상태 보기 (텍스트 재출력)", () => player.showStatus());
+    /* AUTO-FIX: [Optimization] Disable all modal buttons during combat AND if waiting for essence choice */
+    const commonButtonsDisabled = player.inCombat || player.isWaitingForEssenceChoice;
+    
+    addButton(menu, "인벤토리", () => showInventory(player)).disabled = commonButtonsDisabled;
+    addButton(menu, "정수 확인", () => showEssences(player)).disabled = commonButtonsDisabled;
+    addButton(menu, "마법/스킬", () => showSpells(player)).disabled = commonButtonsDisabled;
+    // [수정] ui_party.js의 함수를 콜백으로 호출
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+    addButton(menu, "파티원 정보", () => player.cb?.showParty(player)).disabled = commonButtonsDisabled;
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+    addButton(menu, "임무 일지", () => player.cb?.showQuestLog(player)).disabled = commonButtonsDisabled;
+    addButton(menu, "상태 보기 (텍스트 재출력)", () => player.showStatus()).disabled = commonButtonsDisabled;
 }
 
 /**
- * [신규] 차원 비석(포탈) 발견 시 선택 메뉴 표시
+ * [수정] 차원 비석(포탈) 발견 시 선택 메뉴 표시
+ * 8층 버그 수정을 위해 '현재 층'으로 돌아가는 옵션 추가
  * @param {Player} player - 플레이어 객체
  * @param {number | string} nextLayer - 이동할 다음 층 번호
+ * @param {number | string | null} [currentLayer=null] - (선택) 현재 층 (머무르기 옵션용)
  */
-export function showPortalChoice(player, nextLayer) {
+export function showPortalChoice(player, nextLayer, currentLayer = null) {
     const menu = document.getElementById('menu');
     if (!menu) return;
     menu.innerHTML = ''; 
 
-    // [수정] player.cb.gameData에서 layers 데이터를 가져옵니다.
-    const layerData = player.cb.gameData.layers[nextLayer];
-    if (!layerData) {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+    const nextLayerData = player.cb.gameData?.layers?.[nextLayer];
+    if (!nextLayerData) {
         logMessage(`오류: ${nextLayer}층 데이터를 찾을 수 없습니다.`);
         updateMenu(player); 
         return;
     }
 
-    logMessage(`${nextLayer}층 (${layerData.name})으로 가는 차원 비석을 발견했다. 이동하시겠습니까?`);
+    logMessage(`${nextLayer}층 (${nextLayerData.name})으로 가는 차원 비석을 발견했다. 이동하시겠습니까?`);
 
-    addButton(menu, `이동한다 (${nextLayer}층 ${layerData.name})`, () => {
+    addButton(menu, `이동한다 (${nextLayer}층 ${nextLayerData.name})`, () => {
         player.position = "Labyrinth";
         player.currentLayer = nextLayer;
         player.daysInLabyrinth = 1; 
         player.explorationCount = 0;
         player.sleepCount = 0;
-        player.timeRemaining = layerData.time_limit || 0; 
+        player.timeRemaining = nextLayerData.time_limit || 0; 
 
-        logMessage(`${nextLayer}층 ${layerData.name}(으)로 진입합니다.`);
+        logMessage(`${nextLayer}층 ${nextLayerData.name}(으)로 진입합니다.`);
+        
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+        player.questManager?.checkProgress('REACH', `${nextLayer}층`, 1);
+
         updateMenu(player); 
         player.showStatus();
     });
 
-    addButton(menu, "머무른다 (현재 층 탐색)", () => {
-        logMessage("현재 층에 머무르기로 했다.");
-        updateMenu(player);
+    // [신규] 8층 -> 9층 이동 시 "머무른다" 옵션
+    if (currentLayer) {
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+        const currentLayerData = player.cb.gameData?.layers?.[currentLayer];
+        const currentLayerName = currentLayerData?.name || `${currentLayer}층`;
+        addButton(menu, `머무른다 (${currentLayerName})`, () => {
+            logMessage(`현재 ${currentLayerName}에 머무르기로 했다.`);
+            updateMenu(player);
+        });
+    } 
+    // (기존) 8층이 아닌 경우
+    else {
+        addButton(menu, "머무른다 (현재 층 탐색)", () => {
+            logMessage("현재 층에 머무르기로 했다.");
+            updateMenu(player);
+        });
+    }
+}
+
+
+/**
+ * [신규][확장 계획 5] 균열(Rift) 발견 시 입장 여부 팝업 표시
+ * @param {Player} player - 플레이어 객체
+ * @param {object} rift - 입장할 단일 균열 데이터 (world_data.json)
+ */
+/* AUTO-FIX: [Plan 4] Added new modal function 'showRiftEntryModal' */
+export function showRiftEntryModal(player, rift) {
+    const modal = document.getElementById('rift-choice-screen');
+    const title = document.getElementById('rift-choice-title');
+    const desc = document.getElementById('rift-choice-desc');
+    const buttonList = document.getElementById('rift-choice-buttons');
+
+    if (!modal || !title || !desc || !buttonList) {
+        console.error("Rift Choice Modal elements not found! (Check index.html)");
+        logMessage("균열을 발견했지만 UI 오류로 인해 무시합니다.");
+        return;
+    }
+
+    buttonList.innerHTML = '';
+    title.innerHTML = `<i class="icon-combat"></i> [${rift.name}] 균열 발견!`;
+    desc.textContent = rift.description || "불안정한 차원의 틈새를 발견했습니다. 입장하시겠습니까?";
+
+    // 1. 입장 버튼
+    addButton(buttonList, "입장한다", () => {
+        player.position = "Rift"; // 플레이어 위치를 '균열'로 변경
+        player.currentRift = rift; // 진입할 균열 정보 저장
+        player.currentRiftStage = 0; // 균열 1단계부터 시작
+
+        logMessage(`[${rift.name}] 균열 속으로 진입합니다...`);
+        hideModal('#rift-choice-screen');
+        updateMenu(player); // 균열용 메뉴(Rift Menu)로 갱신
+        player.showStatus();
     });
+
+    // 2. 거절 버튼
+    addButton(buttonList, "입장하지 않는다", () => {
+        logMessage("균열을 무시하고 탐색을 계속합니다.");
+        hideModal('#rift-choice-screen');
+    });
+
+    showModal('#rift-choice-screen');
 }
 
 
@@ -327,20 +479,21 @@ export function showInventory(player) {
 
     inventoryListDiv.innerHTML = '';
 
-    const itemCounts = player.inventory.reduce((acc, item) => {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    const itemCounts = player.inventory?.reduce((acc, item) => {
         acc[item] = (acc[item] || 0) + 1;
         return acc;
     }, {});
 
-    // [수정] player.cb.gameData에서 모든 아이템 데이터를 가져옵니다.
+    /* AUTO-FIX: added optional chaining ?. and default values {} for safety (Rule 4); review required */
     const allGameItems = {
-        ...player.cb.gameData.items, 
-        ...player.cb.gameData.numbersItems, 
-        ...player.cb.gameData.shopItems, 
-        ...player.cb.gameData.materials
+        ...(player.cb?.gameData?.items || {}), 
+        ...(player.cb?.gameData?.numbersItems || {}), 
+        ...(player.cb?.gameData?.shopItems || {}), 
+        ...(player.cb?.gameData?.materials || {})
     };
 
-    if (Object.keys(itemCounts).length === 0) {
+    if (!itemCounts || Object.keys(itemCounts).length === 0) {
         inventoryListDiv.innerHTML = "<p>인벤토리가 비어있습니다.</p>";
     } else {
         Object.entries(itemCounts).forEach(([itemName, count]) => {
@@ -349,19 +502,18 @@ export function showInventory(player) {
             btn.textContent = `${itemName} (${count}개) - ${itemData.desc}`;
             btn.classList.add('list-item'); 
 
-            // [수정] data_functional.js에서 병합된 effect 함수를 확인합니다.
-            const functionalItemData = player.cb.gameData.items[itemName] || player.cb.gameData.numbersItems[itemName];
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const functionalItemData = player.cb?.gameData?.items?.[itemName] || player.cb?.gameData?.numbersItems?.[itemName];
             
             if (functionalItemData && typeof functionalItemData.effect === 'function' && (!itemData.type || itemData.type === '소모품')) {
                 btn.onclick = () => {
                      hideModal('#inventory-screen'); 
                      player.useItem(itemName); 
-                     // player.showStatus(); // useItem에서 이미 호출됨
                 }
                 btn.style.borderLeftColor = 'var(--color-stamina)'; 
             }
             // 2. 장착 가능한 장비
-            else if (itemData.type && ['투구', '갑옷', '장갑', '각반', '무기', '부무기'].includes(itemData.type)) {
+            else if (itemData.type && ['투구', '갑옷', '장갑', '각반', '무기', '부무기', '팔찌', '목걸이', '반지', '귀걸이', '벨트'].includes(itemData.type)) {
                 const isEquipped = player.equipment[itemData.type] === itemName;
                 if (isEquipped) {
                     btn.textContent = `[해제] ${itemName} (${count}개) - ${itemData.desc}`;
@@ -395,66 +547,9 @@ export function showInventory(player) {
 }
 
 /**
- * 파티원 정보 모달 표시 (ui_main.js로 복구)
- * @param {Player} player - 플레이어 객체
+ * [제거됨] ui_party.js로 이동
  */
-export function showParty(player) {
-    const partyScreenDiv = document.getElementById('party-screen');
-    const partyListDiv = document.getElementById('party-list');
-    const backButton = partyScreenDiv ? partyScreenDiv.querySelector('.modal-close-btn') : null;
-
-     if (!partyScreenDiv || !partyListDiv || !backButton) {
-         console.error("Party screen modal elements not found!");
-         return;
-     }
-
-    partyListDiv.innerHTML = ''; 
-    if (player.party.length === 0) {
-        partyListDiv.innerHTML = "<p>모집한 파티원이 없습니다.</p>";
-    } else {
-        player.party.forEach((member, index) => {
-            let memberInfo = `<b>${member.name} (${member.grade}등급/${member.trait})</b><br>`;
-            // [수정] player.cb.gameData에서 expToLevel 데이터를 가져옵니다.
-            memberInfo += `레벨: ${member.level} | EXP: ${member.exp}/${player.cb.gameData.expToLevel[member.level] || 'MAX'}<br>`; 
-            memberInfo += `HP: ${member.hp}/${member.maxHp} | MP: ${member.mp}/${member.maxMp}<br>`;
-            memberInfo += `스킬: ${member.skills.map(s => s.name).join(', ') || '없음'}<br>`;
-            memberInfo += `정수: ${member.essences.join(', ') || '없음'}<br>`;
-            memberInfo += "스탯:<ul class='stat-list' style='font-size: 0.8em;'>";
-            // [수정] NPC의 currentStats를 표시합니다.
-            for (const statName in member.currentStats) {
-                 if(member.currentStats[statName] !== 0) {
-                    memberInfo += `<li class='stat-item'>${statName}: ${member.currentStats[statName]}</li>`;
-                 }
-            }
-            memberInfo += "</ul>";
-
-            const memberDiv = document.createElement('div');
-            memberDiv.className = 'list-item';
-            memberDiv.style.borderLeftColor = 'var(--color-stamina)';
-            memberDiv.innerHTML = memberInfo;
-
-            // 추방 버튼
-            const dismissButton = addButton(memberDiv, "파티에서 추방", () => {
-                 if (confirm(`${member.name}을(를) 정말로 파티에서 추방하시겠습니까?`)) {
-                    const removedMember = player.party.splice(index, 1)[0]; 
-                    logMessage(`${removedMember.name}을(를) 파티에서 추방했다.`);
-                    player.showStatus();
-                    showParty(player);
-                }
-            });
-            dismissButton.style.marginTop = "10px";
-            dismissButton.style.background = "var(--color-health)"; 
-            dismissButton.style.color = "white";
-
-            partyListDiv.appendChild(memberDiv);
-        });
-    }
-
-    showModal('#party-screen'); 
-    backButton.onclick = () => {
-        hideModal('#party-screen');
-    };
-}
+// export function showParty(player) { ... }
 
 /**
  * 보유 정수 목록 모달 표시 (ui_main.js로 복구)
@@ -476,18 +571,17 @@ export function showEssences(player) {
         essencesListDiv.innerHTML += "<p>흡수한 정수가 없습니다.</p>";
     } else {
         player.essences.forEach(essenceName => {
-            // [수정] player.cb.gameData에서 essences 데이터를 가져옵니다.
-            const essence = player.cb.gameData.essences[essenceName];
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const essence = player.cb?.gameData?.essences?.[essenceName];
             const div = document.createElement('div');
             div.className = 'list-item';
             div.style.borderLeftColor = 'var(--color-magic)'; 
 
-            let essenceInfo = `<b>${essenceName} 정수</b>`;
+            let essenceInfo = `<b>${essenceName} 정수</b> (등급: ${essence?.grade || '?'})`;
             if(essence){ 
                  if (essence.stats) {
                      essenceInfo += `<br>- 스탯: ${Object.entries(essence.stats).map(([k, v]) => `${k} ${v >= 0 ? '+' : ''}${v}`).join(', ')}`;
                  }
-                // [수정] passive/active가 배열일 수 있음을 고려
                 if(essence.passive) {
                     const passives = Array.isArray(essence.passive) ? essence.passive : [essence.passive];
                     passives.forEach(p => {
@@ -531,8 +625,8 @@ export function showSpells(player) {
     spellsListDiv.innerHTML = '<h3>마법 목록</h3>'; 
     if (player.spells.length > 0) {
         player.spells.forEach(spellName => {
-            // [수정] player.cb.gameData에서 magic 데이터를 가져옵니다.
-            const spell = player.cb.gameData.magic[spellName];
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const spell = player.cb?.gameData?.magic?.[spellName];
             const div = document.createElement('div');
             div.className = 'list-item';
             div.style.borderLeftColor = 'var(--color-magic)'; 
@@ -553,10 +647,9 @@ export function showSpells(player) {
              let skillDesc = "(상세 정보 없음)";
              let mpCost = 0;
              for (const key of player.essences) { 
-                 // [수정] player.cb.gameData에서 essences 데이터를 가져옵니다.
-                 const ess = player.cb.gameData.essences[key];
+                 /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                 const ess = player.cb?.gameData?.essences?.[key];
                  if (ess && ess.active) {
-                     // [수정] active가 배열일 수 있음을 고려
                      const actives = Array.isArray(ess.active) ? ess.active : [ess.active];
                      const foundSkill = actives.find(s => s.name === skillName);
                      if (foundSkill) {

@@ -55,6 +55,35 @@
       "npc": "대장장이"
     }
   },
+  "GUILD_003": {
+    "id": "GUILD_003",
+    "title": "2층 망자의 땅 정화",
+    "description": "2층 망자의 땅에 스켈레톤들이 너무 많아져 탐험가들이 위험에 처했습니다. 스켈레톤 전사 15마리를 처치해 주십시오.",
+    "type": "GUILD",
+    "giver": "탐험가 길드 접수원",
+    "objectives": [
+      {
+        "type": "KILL",
+        "target": "스켈레톤 전사",
+        "requiredCount": 15,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 250,
+      "gold": 1200,
+      "items": [
+        { "item": "상급 포션", "count": 1 }
+      ],
+      "reputation": 10
+    },
+    "startCondition": {
+      "level": 3
+    },
+    "endCondition": {
+      "npc": "탐험가 길드 접수원"
+    }
+  },
   "LIBRARIAN_001": {
     "id": "LIBRARIAN_001",
     "title": "사서의 부탁",
@@ -82,6 +111,41 @@
     },
     "endCondition": {
       "npc": "도서관 사서 라그나"
+    }
+  },
+  "FORGE_001": {
+    "id": "FORGE_001",
+    "title": "대장장이의 특별 주문",
+    "description": "대장장이가 2단계 금속인 '라이티늄'이 필요하다고 합니다. 3층 오크 군락지 등에서 라이티늄 3개를 구해 대장장이에게 가져다주세요.",
+    "type": "NPC",
+    "giver": "대장장이",
+    "objectives": [
+      {
+        "type": "TALK",
+        "target": "대장장이",
+        "requiredCount": 1,
+        "currentCount": 0
+      },
+      {
+        "type": "COLLECT",
+        "target": "라이티늄",
+        "requiredCount": 3,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 300,
+      "gold": 2000,
+      "items": [
+        { "item": "강철 방패", "count": 1 }
+      ],
+      "reputation": 10
+    },
+    "startCondition": {
+      "level": 4
+    },
+    "endCondition": {
+      "npc": "대장장이"
     }
   },
   "MAIN_001": {

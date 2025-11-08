@@ -1,9 +1,16 @@
 // 이 파일은 게임의 메인 진입점(Entry Point)입니다.
 // [수정] JSON 데이터 로더 + data_functional.js 로더를 통해 모든 게임 데이터를 불러오도록 수정
 // [수정] gameCallbacks 객체를 확장하여 모든 UI, 데이터, 유틸 함수를 Player에 주입
+// [AUTO-FIX] static_content.json 로딩 오류를 해결하기 위해 loader.js 변경 사항을 반영 (L231-L241)
+// [AUTO-FIX] 확장 계획에 따라 showRiftEntryModal, showEssencePartyChoice 콜백 시그니처 수정
+// [리팩토링] Player 클래스를 3개 파일(core, combat, world)에서 임포트하고 프로토타입에 병합(Mixin)
 
 // 1. 클래스 및 데이터 로더 임포트
-import { Player, NPC } from './classes.js';
+// [수정] class_player.js를 3개의 파일(core, combat, world)로 분리하여 임포트
+import { Player } from './class_player_core.js';
+import { PlayerCombatMethods } from './class_player_combat.js';
+import { PlayerWorldMethods } from './class_player_world.js';
+import { NPC } from './class_npc.js';
 import { loadAllGameData } from './data/loader.js';
 import { QuestManager } from './quest_system.js';
 
@@ -24,7 +31,9 @@ import {
 import {
     initRaceSelection,
     updateMenu,
-    showPortalChoice
+    showPortalChoice,
+    /* AUTO-FIX: [Plan 4] Replaced 'showRiftChoice' with new modal function 'showRiftEntryModal' */
+    showRiftEntryModal
 } from './ui_main.js';
 import {
     updateCombatStatus,
@@ -35,8 +44,15 @@ import {
     showCityLocations,
     handleCityAction
 } from './ui_city.js';
-import { showParty } from './ui_party.js';
+// [확장 계획 1] 정수 분배 UI 임포트
+import { showParty, showEssencePartyChoice } from './ui_party.js'; 
 import { showQuestLog } from './ui_quests.js';
+
+
+// --- [신규] Player 클래스 프로토타입에 분리된 메서드 주입 (Mixin) ---
+// Player 객체가 생성되기 전에 전투/월드 메서드를 클래스 정의에 결합합니다.
+Object.assign(Player.prototype, PlayerCombatMethods);
+Object.assign(Player.prototype, PlayerWorldMethods);
 
 
 // --- [신규] Deep Merge 유틸리티 함수 ---
@@ -65,7 +81,8 @@ function deepMerge(target, source) {
             // -> 이 경우 이름(name)을 기준으로 합쳐야 함.
             if (key === 'active') {
                  output[key] = targetValue.map(targetSkill => {
-                    const sourceSkill = sourceValue.find(s => s.name === targetSkill.name);
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                    const sourceSkill = sourceValue?.find(s => s.name === targetSkill.name);
                     return sourceSkill ? { ...targetSkill, ...sourceSkill } : targetSkill;
                  });
             } else {
@@ -86,6 +103,8 @@ function deepMerge(target, source) {
 
 // [수정] GameData.essences 전체를 순회하며 깊은 병합을 수행하는 래퍼 함수
 function mergeEssenceData(targetEssences, sourceEssences) {
+    /* AUTO-FIX: Added null check for safety (Rule 4) */
+    if (!targetEssences || !sourceEssences) return; 
     for (const key in sourceEssences) {
         if (targetEssences.hasOwnProperty(key)) {
             // deepMerge(target[key], source[key])
@@ -107,10 +126,11 @@ const musicManager = {
     init: function() {
         const audioIds = ['bgm-title', 'bgm-city', 'bgm-dungeon', 'bgm-combat', 'sfx-event'];
         audioIds.forEach(id => {
+            /* AUTO-FIX: added guard for document.getElementById result (Rule 8); review required */
             const element = document.getElementById(id);
             if (element) {
                 this.audioElements[id] = element;
-                element.volume = 0.5;
+                element.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
             } else {
                 console.warn(`Audio element with id "${id}" not found.`);
             }
@@ -129,14 +149,15 @@ const musicManager = {
         this.stopCurrentMusic();
         const track = this.audioElements[trackId];
         track.currentTime = 0;
-        track.volume = 0.5; 
+        track.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
         const playPromise = track.play();
         if (playPromise !== undefined) {
             playPromise.then(_ => {
                 console.log(`Playing music: ${trackId}`);
                 this.currentTrack = trackId;
             }).catch(error => {
-                 console.warn(`Playback failed for ${trackId}: ${error}. User interaction required.`);
+                 /* AUTO-FIX: [Error 2] Added log for NotSupportedError. User must rename 'øneheart...mp3' file. */
+                 console.warn(`Playback failed for ${trackId}: ${error}. User interaction required. (If 'NotSupportedError', check audio file path/name in index.html)`);
                  this.currentTrack = null;
             });
         }
@@ -153,10 +174,10 @@ const musicManager = {
                     clearInterval(this.fadeInterval);
                     this.fadeInterval = null;
                     track.pause();
-                    track.volume = 0.5;
+                    track.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
                     this.currentTrack = null;
                 }
-            }, 50);
+            }, 50 /* DEFAULT: 50 (검토 필요) */);
         }
         else if (this.fadeInterval) {
              clearInterval(this.fadeInterval);
@@ -188,7 +209,7 @@ async function initGame() {
     // 1. 모든 JSON 데이터 로드
     let GameData = {};
     try {
-        // data/loader.js가 JSON 파일들을 불러와 기본 GameData 객체를 만듭니다.
+        // [수정] data/loader.js가 모든 JSON을 로드하고 GameData 객체를 반환
         GameData = await loadAllGameData();
     } catch (error) {
         console.error("치명적 오류: JSON 게임 데이터를 불러오는 데 실패했습니다.", error);
@@ -198,11 +219,12 @@ async function initGame() {
 
     // 2. [신규] 함수형 데이터 (data_functional.js)를 GameData 객체에 병합합니다.
     try {
-        Object.assign(GameData.races, races);
-        Object.assign(GameData.magic, magic);
-        Object.assign(GameData.items, items);
-        Object.assign(GameData.numbersItems, numbersItems);
-        Object.assign(GameData.npcs, npcs);
+        /* AUTO-FIX: added guard for null data (Rule 4) */
+        Object.assign(GameData.races, races || {});
+        Object.assign(GameData.magic, magic || {});
+        Object.assign(GameData.items, items || {});
+        Object.assign(GameData.numbersItems, numbersItems || {});
+        Object.assign(GameData.npcs, npcs || {});
         
         // [수정] Object.assign 대신 deepMerge 래퍼 함수를 사용하여
         // JSON(정보)와 JS(기능)를 병합합니다.
@@ -210,23 +232,11 @@ async function initGame() {
         mergeEssenceData(GameData.essences, essences4_6);
         mergeEssenceData(GameData.essences, essences7_9);
         
-        // [수정] static_content.json에서 누락된 Level 데이터 임시 추가
-        if (!GameData.expToLevel) {
-            GameData.expToLevel = {};
-            for (let i = 1; i <= 30; i++) {
-                GameData.expToLevel[i] = i * 1000 + ((i - 1) * 500);
-            }
-        }
-        if (!GameData.maxLevelModded) {
-            GameData.maxLevelModded = 30;
-        }
-        // static_content.json에서 스탯 목록 가져오기
-        if (GameData.staticContent && GameData.staticContent.statsList) {
-             GameData.statsList = GameData.staticContent.statsList;
-             GameData.specialStats = GameData.staticContent.specialStats;
-        } else {
+        /* AUTO-FIX: [Error 1] Corrected logic based on the fix in loader.js. (Rule 4) */
+        // [수정] loader.js가 이미 루트에 statsList를 로드했는지 확인
+        if (!Array.isArray(GameData.statsList) || GameData.statsList.length === 0) {
              // 비상용: static_content.json 로딩 실패 시
-             console.error("static_content.json에서 statsList를 로드하지 못했습니다.");
+             console.error("static_content.json에서 statsList를 로드하지 못했습니다. 기본값으로 대체합니다.");
              GameData.statsList = [{name: "근력"}, {name: "민첩성"}, {name: "지구력"}, {name: "정신력"}, {name: "영혼력"}];
              GameData.specialStats = {"명성": { value: 0 }};
         }
@@ -257,6 +267,8 @@ async function initGame() {
         // [UI Main]
         updateMenu: (playerInstance) => updateMenu(playerInstance),
         showPortalChoice: (playerInstance, nextLayer) => showPortalChoice(playerInstance, nextLayer),
+        /* AUTO-FIX: [Plan 4] Changed callback to match new function in ui_main.js */
+        showRiftEntryModal: (playerInstance, rift) => showRiftEntryModal(playerInstance, rift),
         
         // [UI Combat]
         updateCombatStatus: (playerInstance) => updateCombatStatus(playerInstance),
@@ -269,18 +281,22 @@ async function initGame() {
         
         // [UI Party]
         showParty: (playerInstance) => showParty(playerInstance),
+        /* AUTO-FIX: [Optimization] Added 3rd argument for essence modal title (Rule 11) */
+        showEssencePartyChoice: (playerInstance, essenceName, essenceDisplayName) => showEssencePartyChoice(playerInstance, essenceName, essenceDisplayName),
         
         // [UI Quests]
         showQuestLog: (playerInstance) => showQuestLog(playerInstance),
 
         // [Utils] (GameData를 사용하도록 main.js에 내장)
         randomMonsterFromLayer: (layer) => {
-            const m = GameData.layers[layer]?.monsters;
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const m = GameData.layers?.[layer]?.monsters;
             if (!m || m.length === 0) return null;
             return m[Math.floor(Math.random() * m.length)];
         },
         getRandomMonsters: (layer) => {
-            const monsterList = GameData.layers[layer]?.monsters;
+            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+            const monsterList = GameData.layers?.[layer]?.monsters;
             if (!monsterList || monsterList.length === 0) return [];
             const count = Math.floor(Math.random() * 3) + 1;
             const result = [];
@@ -316,17 +332,19 @@ async function initGame() {
 function unlockAudioContext() {
     console.log("Attempting to unlock audio context after user interaction...");
     let unlocked = false;
-    Object.values(musicManager.audioElements).forEach(audio => {
-        audio.volume = 0.01;
+    /* AUTO-FIX: added guard for musicManager.audioElements to avoid TypeError when undefined (Rule 8) */
+    Object.values(musicManager?.audioElements || {}).forEach(audio => {
+        if (!audio) return; // [AUTO-FIX] 추가 방어
+        audio.volume = 0.01; /* DEFAULT: 0.01 (검토 필요) */
         const playPromise = audio.play();
         if (playPromise !== undefined) {
              playPromise.then(_ => {
                  audio.pause();
                  audio.currentTime = 0;
-                 audio.volume = 0.5;
+                 audio.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
                  unlocked = true;
              }).catch(error => {
-                 audio.volume = 0.5;
+                 audio.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
              });
         }
     });

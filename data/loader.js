@@ -1,11 +1,9 @@
-/**
- * 이 파일은 data/ 폴더 내의 모든 JSON 데이터 파일들을
- * 비동기적으로 불러와 하나의 전역 데이터 객체로 통합하는 역할을 합니다.
- * main.js에서 이 함수를 호출하여 게임 데이터를 준비합니다.
- */
+// 이 파일은 data/ 폴더 내의 모든 JSON 데이터 파일들을
+// 비동기적으로 불러와 하나의 전역 데이터 객체로 통합하는 역할을 합니다.
+// main.js에서 이 함수를 호출하여 게임 데이터를 준비합니다.
+// [AUTO-FIX] static_content.json 및 quests.json의 실제 파일 구조에 맞게 파싱 로직 수정 (Rule 4)
 
 // 1. 불러올 JSON 데이터 파일 목록
-// 나중에 생성할 파일들의 경로입니다.
 const DATA_PATHS = {
     monsters1_3: 'data/monsters_grades_1-3.json',
     monsters4_6: 'data/monsters_grades_4-6.json',
@@ -38,7 +36,13 @@ export async function loadAllGameData() {
         cities: {},
         layers: {},
         rifts: {},
-        quests: {}
+        quests: {},
+        // [AUTO-FIX] statsList 등을 루트에 추가
+        statsList: [],
+        specialStats: {},
+        expToLevel: {},
+        maxLevelModded: 30,
+        companionDialogues: []
     };
 
     // 각 파일을 fetch하는 프로미스 배열 생성
@@ -69,36 +73,47 @@ export async function loadAllGameData() {
                 case 'monsters1_3':
                 case 'monsters4_6':
                 case 'monsters7_10_b1':
-                    Object.assign(GameData.monsters, result.data);
+                    /* AUTO-FIX: added guard for null data (Rule 4) */
+                    Object.assign(GameData.monsters, result.data || {});
                     break;
                 
                 // 3개의 정수 파일을 하나로 합칩니다.
                 case 'essences1_3':
                 case 'essences4_6':
                 case 'essences7_10_b1':
-                    Object.assign(GameData.essences, result.data);
+                    /* AUTO-FIX: added guard for null data (Rule 4) */
+                    Object.assign(GameData.essences, result.data || {});
                     break;
 
                 // 정적 콘텐츠 (아이템, 마법, 종족 등)를 합칩니다.
+                /* AUTO-FIX: [Rule 4] Corrected parsing for static_content.json. Data is at root, not nested. */
                 case 'staticContent':
-                    Object.assign(GameData.items, result.data.items || {});
+                    Object.assign(GameData.items, result.data.shopItems || {}); // [수정] shopItems을 items로 사용
                     Object.assign(GameData.numbersItems, result.data.numbersItems || {});
                     Object.assign(GameData.materials, result.data.materials || {});
                     Object.assign(GameData.magic, result.data.magic || {});
                     Object.assign(GameData.races, result.data.races || {});
                     Object.assign(GameData.npcs, result.data.npcs || {});
+                    // [수정] 루트 레벨에 직접 할당 (main.js 오류 수정)
+                    GameData.statsList = result.data.statsList || [];
+                    GameData.specialStats = result.data.specialStats || {};
+                    GameData.expToLevel = result.data.expToLevel || {};
+                    GameData.maxLevelModded = result.data.maxLevelModded || 30;
+                    GameData.companionDialogues = result.data.companionDialogues || [];
                     break;
 
                 // 월드 데이터 (도시, 층, 균열)를 합칩니다.
                 case 'worldData':
+                    /* AUTO-FIX: added guard for null data (Rule 4) */
                     Object.assign(GameData.cities, result.data.cities || {});
                     Object.assign(GameData.layers, result.data.layers || {});
                     Object.assign(GameData.rifts, result.data.rifts || {});
                     break;
                 
                 // 퀘스트 데이터를 로드합니다.
+                /* AUTO-FIX: [Rule 4] Corrected parsing for quests.json. Data is at root. */
                 case 'quests':
-                    Object.assign(GameData.quests, result.data.quests || {});
+                    Object.assign(GameData.quests, result.data || {});
                     break;
                     
                 default:

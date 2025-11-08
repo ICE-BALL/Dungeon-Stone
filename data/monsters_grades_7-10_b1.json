@@ -1,4 +1,136 @@
 {
+  "시체골렘": {
+    "grade": 7,
+    "hp": 500,
+    "atk": 35,
+    "def": 15,
+    "magic_def": 10,
+    "essences": ["시체골렘"],
+    "drops": ["균열석"],
+    "layer": ["Rift"],
+    "description": "1층 '핏빛 성채' 중간 보스. 수천 개의 시체로 이루어짐."
+  },
+  "본 나이트": {
+    "grade": 7,
+    "hp": 450,
+    "atk": 40,
+    "def": 20,
+    "magic_def": 15,
+    "essences": ["본 나이트"],
+    "drops": ["균열석"],
+    "layer": ["Rift"],
+    "description": "1층 '핏빛 성채' 몬스터. 3가지 타입(갈망, 슬픔, 증오)이 존재."
+  },
+  "아이안트로": {
+    "grade": 7,
+    "hp": 300,
+    "atk": 22,
+    "def": 18,
+    "magic_def": 10,
+    "essences": ["아이안트로"],
+    "drops": ["강철"],
+    "layer": [3],
+    "description": "3층 강철바위 언덕 몬스터. 넉백 면역 스킬 [균형추] 보유."
+  },
+  "하프 트롤": {
+    "grade": 7,
+    "hp": 400,
+    "atk": 30,
+    "def": 15,
+    "magic_def": 5,
+    "essences": ["하프 트롤"],
+    "drops": ["트롤 뼈"],
+    "layer": [3],
+    "description": "3층 마녀의 숲 몬스터. [광분] 스킬 사용."
+  },
+  "카나바로": {
+    "grade": 7,
+    "hp": 250,
+    "atk": 35,
+    "def": 10,
+    "magic_def": 10,
+    "essences": ["카나바로"],
+    "drops": [],
+    "layer": [3],
+    "description": "3층 마녀의 숲 몬스터. [마녀의 눈] 효과로 등장."
+  },
+  "미믹": {
+    "grade": 7,
+    "hp": 300,
+    "atk": 30,
+    "def": 10,
+    "magic_def": 10,
+    "essences": ["미믹"],
+    "drops": ["골드", "포션"],
+    "layer": [5],
+    "description": "5층 희귀종 몬스터. [보물창고] 스킬 보유."
+  },
+  "폭군 타룬바스": {
+    "grade": 7,
+    "hp": 1500,
+    "atk": 45,
+    "def": 20,
+    "magic_def": 15,
+    "essences": ["폭군 타룬바스"],
+    "drops": ["균열석", "설원의 몽둥이"],
+    "layer": ["Rift"],
+    "description": "1층 '빙하굴' 수호자. 라이칸스로프 계열 상위 변이종."
+  },
+  "홉 고블린": {
+    "grade": 7,
+    "hp": 150,
+    "atk": 25,
+    "def": 10,
+    "magic_def": 8,
+    "essences": ["홉 고블린"],
+    "drops": ["강철", "포션"],
+    "layer": [2],
+    "description": "2층 고블린 숲 외곽 출현 몬스터."
+  },
+  "무명 조각상": {
+    "grade": 7,
+    "hp": 280,
+    "atk": 30,
+    "def": 20,
+    "magic_def": 10,
+    "essences": ["무명 조각상"],
+    "drops": ["마력결정체", "무명 조각"],
+    "layer": [3],
+    "description": "3층 조각 사원 몬스터. '무명 조각' 드랍."
+  },
+  "씨웜": {
+    "grade": 7,
+    "hp": 750,
+    "atk": 48,
+    "def": 18,
+    "magic_def": 15,
+    "essences": ["씨웜"],
+    "drops": [],
+    "layer": [6],
+    "description": "6층 대해 몬스터. 바다 괴수."
+  },
+  "플미나스": {
+    "grade": 7,
+    "hp": 280,
+    "atk": 30,
+    "def": 12,
+    "magic_def": 12,
+    "essences": ["플미나스"],
+    "drops": [],
+    "layer": [3, 4],
+    "description": "3, 4층에서 등장하는 번개 속성 몬스터."
+  },
+  "어둠숭배자": {
+    "grade": 7,
+    "hp": 200,
+    "atk": 20,
+    "def": 10,
+    "magic_def": 15,
+    "essences": ["어둠숭배자"],
+    "drops": [],
+    "layer": [3],
+    "description": "(임의 추가) 3층 마녀의 숲 몬스터."
+  },
   "벽두더지 여왕": {
     "grade": 7,
     "hp": 300,
@@ -109,17 +241,6 @@
     "layer": [2],
     "description": "2층 바위 사막 특정 지역 출현 몬스터."
   },
-  "홉 고블린": {
-    "grade": 7,
-    "hp": 150,
-    "atk": 25,
-    "def": 10,
-    "magic_def": 8,
-    "essences": ["홉 고블린"],
-    "drops": ["강철", "포션"],
-    "layer": [2],
-    "description": "2층 고블린 숲 외곽 출현 몬스터."
-  },
   "드레드피어": {
     "grade": 7,
     "hp": 1500,
@@ -127,7 +248,7 @@
     "def": 20,
     "magic_def": 20,
     "essences": ["드레드피어"],
-    "drops": ["상급 포션", "강철"],
+    "drops": ["상급 포션", "강철", "신뢰"],
     "layer": [1],
     "description": "1층 수정동굴의 계층군주. 이명은 공포의 군주."
   },
@@ -138,7 +259,7 @@
     "def": 25,
     "magic_def": 15,
     "essences": ["베르자크"],
-    "drops": ["상급 포션", "라이티늄"],
+    "drops": ["상급 포션", "라이티늄", "계층석"],
     "layer": [1],
     "description": "1층 수정동굴의 계층군주. 이명은 심연의 군주."
   },
@@ -153,38 +274,16 @@
     "layer": [3, 2],
     "description": "3층 강철바위 언덕 몬스터. 2층 빙하굴에서도 등장."
   },
-  "아이언팔콘": {
-    "grade": 7,
-    "hp": 180,
-    "atk": 28,
-    "def": 10,
-    "magic_def": 8,
-    "essences": ["아이언팔콘"],
-    "drops": [],
-    "layer": [3],
-    "description": "3층 강철바위 언덕 몬스터."
-  },
   "강철언덕 수호병": {
     "grade": 7,
     "hp": 250,
     "atk": 25,
     "def": 15,
     "magic_def": 10,
-    "essences": ["강철언덕 추격자"],
+    "essences": ["강철언덕 수호병"],
     "drops": ["강철"],
     "layer": [3],
     "description": "3층 강철바위 언덕 몬스터."
-  },
-  "아이안트로": {
-    "grade": 7,
-    "hp": 300,
-    "atk": 22,
-    "def": 18,
-    "magic_def": 10,
-    "essences": ["아이안트로"],
-    "drops": ["강철"],
-    "layer": [3],
-    "description": "3층 강철바위 언덕 몬스터. 넉백 면역 스킬 [균형추] 보유."
   },
   "오크 대전사": {
     "grade": 7,
@@ -196,17 +295,6 @@
     "drops": ["강철", "라이티늄"],
     "layer": [3],
     "description": "3층 오크 군락지 몬스터."
-  },
-  "무명 조각상": {
-    "grade": 7,
-    "hp": 280,
-    "atk": 30,
-    "def": 20,
-    "magic_def": 10,
-    "essences": ["무명 조각상"],
-    "drops": ["마력결정체", "무명 조각"],
-    "layer": [3],
-    "description": "3층 조각 사원 몬스터. '무명 조각' 드랍."
   },
   "스네트리": {
     "grade": 7,
@@ -274,61 +362,6 @@
     "layer": [3],
     "description": "3층 마녀의 숲 희귀 몬스터. [매혹] 스킬 사용."
   },
-  "하프 트롤": {
-    "grade": 7,
-    "hp": 400,
-    "atk": 30,
-    "def": 15,
-    "magic_def": 5,
-    "essences": ["하프 트롤"],
-    "drops": ["트롤 뼈"],
-    "layer": [3],
-    "description": "3층 마녀의 숲 몬스터. [광분] 스킬 사용."
-  },
-  "카나바로": {
-    "grade": 7,
-    "hp": 250,
-    "atk": 35,
-    "def": 10,
-    "magic_def": 10,
-    "essences": ["카나바로"],
-    "drops": [],
-    "layer": [3],
-    "description": "3층 마녀의 숲 몬스터. [마녀의 눈] 효과로 등장."
-  },
-  "플미나스": {
-    "grade": 7,
-    "hp": 280,
-    "atk": 30,
-    "def": 12,
-    "magic_def": 12,
-    "essences": ["플미나스"],
-    "drops": [],
-    "layer": [3, 4],
-    "description": "3, 4층에서 등장하는 번개 속성 몬스터."
-  },
-  "시체골렘": {
-    "grade": 7,
-    "hp": 500,
-    "atk": 35,
-    "def": 15,
-    "magic_def": 10,
-    "essences": ["시체골렘"],
-    "drops": ["균열석"],
-    "layer": ["Rift"],
-    "description": "1층 '핏빛 성채' 중간 보스. 수천 개의 시체로 이루어짐."
-  },
-  "본 나이트": {
-    "grade": 7,
-    "hp": 450,
-    "atk": 40,
-    "def": 20,
-    "magic_def": 15,
-    "essences": ["본 나이트"],
-    "drops": ["균열석"],
-    "layer": ["Rift"],
-    "description": "1층 '핏빛 성채' 몬스터. 3가지 타입(갈망, 슬픔, 증오)이 존재."
-  },
   "예티": {
     "grade": 7,
     "hp": 380,
@@ -339,17 +372,6 @@
     "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "1층 '빙하굴' 문지기 몬스터."
-  },
-  "폭군 타룬바스": {
-    "grade": 7,
-    "hp": 1500,
-    "atk": 45,
-    "def": 20,
-    "magic_def": 15,
-    "essences": ["폭군 타룬바스"],
-    "drops": ["균열석", "설원의 몽둥이"],
-    "layer": ["Rift"],
-    "description": "1층 '빙하굴' 수호자. 라이칸스로프 계열 상위 변이종."
   },
   "아이스 오크": {
     "grade": 7,
@@ -505,16 +527,104 @@
     "layer": [-1],
     "description": "지하 1층 괴물섬(인간섬)의 원주민. 몬스터 판정."
   },
-  "미믹": {
-    "grade": 7,
+  "데스핀드": {
+    "grade": 8,
+    "hp": 180,
+    "atk": 20,
+    "def": 12,
+    "magic_def": 15,
+    "essences": ["데스핀드"],
+    "drops": [],
+    "layer": [2, 1],
+    "description": "2층 망자의 땅 몬스터. '뉴비 학살몹'. 1층 핏빛성채에서도 등장."
+  },
+  "스톤골렘": {
+    "grade": 8,
+    "hp": 200,
+    "atk": 15,
+    "def": 20,
+    "magic_def": 10,
+    "essences": ["스톤골렘"],
+    "drops": ["마력결정체"],
+    "layer": [2],
+    "description": "2층 바위 사막 몬스터. [진압] 스킬 사용."
+  },
+  "가고일": {
+    "grade": 8,
+    "hp": 150,
+    "atk": 20,
+    "def": 15,
+    "magic_def": 10,
+    "essences": ["가고일"],
+    "drops": [],
+    "layer": [1, 7],
+    "description": "1층 '핏빛 성채' 및 7층 '빙하의 눈' 몬스터. [석화] 사용."
+  },
+  "리자드맨 척후병": {
+    "grade": 8,
+    "hp": 130,
+    "atk": 20,
+    "def": 10,
+    "magic_def": 7,
+    "essences": ["리자드맨 척후병"],
+    "drops": [],
+    "layer": [3, 4],
+    "description": "3층 녹빛꼬리 습지 몬스터."
+  },
+  "리빙아머": {
+    "grade": 8,
+    "hp": 160,
+    "atk": 18,
+    "def": 20,
+    "magic_def": 12,
+    "essences": ["리빙아머"],
+    "drops": [],
+    "layer": [4],
+    "description": "(임의 추가) 4층 천공의 탑 몬스터"
+  },
+  "오크 주술사": {
+    "grade": 8,
+    "hp": 120,
+    "atk": 15,
+    "def": 8,
+    "magic_def": 12,
+    "essences": ["오크 주술사"],
+    "drops": ["포션"],
+    "layer": [3, 4],
+    "description": "3층 오크 군락지 몬스터. [열광] 버프가 까다로움."
+  },
+  "강철언덕 추격자": {
+    "grade": 8,
+    "hp": 140,
+    "atk": 22,
+    "def": 10,
+    "magic_def": 8,
+    "essences": ["강철언덕 추격자"],
+    "drops": ["강철"],
+    "layer": [3],
+    "description": "3층 강철바위 언덕 몬스터."
+  },
+  "프로그맨": {
+    "grade": 8,
+    "hp": 100,
+    "atk": 18,
+    "def": 8,
+    "magic_def": 6,
+    "essences": ["프로그맨"],
+    "drops": [],
+    "layer": [3, 4],
+    "description": "3층 칠흑의 강어귀 몬스터. 작고 민첩함."
+  },
+  "맥구리": {
+    "grade": 8,
     "hp": 300,
-    "atk": 30,
+    "atk": 25,
     "def": 10,
     "magic_def": 10,
-    "essences": ["미믹"],
-    "drops": ["골드", "포션"],
-    "layer": [5],
-    "description": "5층 희귀종 몬스터. [보물창고] 스킬 보유."
+    "essences": ["맥구리"],
+    "drops": ["마석"],
+    "layer": [-1],
+    "description": "지하 1층 변종 몬스터. 프로그맨과 유사. (겜바바 8등급)"
   },
   "거대칼날늑대": {
     "grade": 8,
@@ -604,17 +714,6 @@
     "layer": [2, 1],
     "description": "2층 망자의 땅 몬스터. 1층 핏빛성채에서도 등장. 영체류."
   },
-  "데스핀드": {
-    "grade": 8,
-    "hp": 180,
-    "atk": 20,
-    "def": 12,
-    "magic_def": 15,
-    "essences": ["데스핀드"],
-    "drops": [],
-    "layer": [2, 1],
-    "description": "2층 망자의 땅 몬스터. '뉴비 학살몹'. 1층 핏빛성채에서도 등장."
-  },
   "코볼트 방패병": {
     "grade": 8,
     "hp": 70,
@@ -637,17 +736,6 @@
     "layer": [2],
     "description": "2층 바위 사막 몬스터."
   },
-  "스톤골렘": {
-    "grade": 8,
-    "hp": 200,
-    "atk": 15,
-    "def": 20,
-    "magic_def": 10,
-    "essences": ["스톤골렘"],
-    "drops": ["마력결정체"],
-    "layer": [2],
-    "description": "2층 바위 사막 몬스터. [진압] 스킬 사용."
-  },
   "샌드맨": {
     "grade": 8,
     "hp": 100,
@@ -658,17 +746,6 @@
     "drops": [],
     "layer": [2],
     "description": "2층 바위 사막 몬스터."
-  },
-  "오크 주술사": {
-    "grade": 8,
-    "hp": 120,
-    "atk": 15,
-    "def": 8,
-    "magic_def": 12,
-    "essences": ["오크 주술사"],
-    "drops": ["포션"],
-    "layer": [3, 4],
-    "description": "3층 오크 군락지 몬스터. [열광] 버프가 까다로움."
   },
   "오크 전사": {
     "grade": 8,
@@ -692,28 +769,6 @@
     "layer": [3, 4],
     "description": "3층 오크 군락지 몬스터."
   },
-  "프로그맨": {
-    "grade": 8,
-    "hp": 100,
-    "atk": 18,
-    "def": 8,
-    "magic_def": 6,
-    "essences": ["프로그맨"],
-    "drops": [],
-    "layer": [3, 4],
-    "description": "3층 칠흑의 강어귀 몬스터. 작고 민첩함."
-  },
-  "리자드맨": {
-    "grade": 8,
-    "hp": 130,
-    "atk": 20,
-    "def": 10,
-    "magic_def": 7,
-    "essences": ["리자드맨 척후병"],
-    "drops": [],
-    "layer": [3, 4],
-    "description": "3층 녹빛꼬리 습지 몬스터."
-  },
   "우드맨": {
     "grade": 8,
     "hp": 150,
@@ -724,17 +779,6 @@
     "drops": [],
     "layer": [3, 4],
     "description": "3층 마녀의 숲 몬스터."
-  },
-  "가고일": {
-    "grade": 8,
-    "hp": 150,
-    "atk": 20,
-    "def": 15,
-    "magic_def": 10,
-    "essences": ["가고일"],
-    "drops": [],
-    "layer": [1, 7],
-    "description": "1층 '핏빛 성채' 및 7층 '빙하의 눈' 몬스터. [석화] 사용."
   },
   "아이스 골렘": {
     "grade": 8,
@@ -823,17 +867,6 @@
     "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "2층 균열 '총포 사막' 몬스터. 조잡한 권총을 들고 있음."
-  },
-  "맥구리": {
-    "grade": 8,
-    "hp": 300,
-    "atk": 25,
-    "def": 10,
-    "magic_def": 10,
-    "essences": ["맥구리"],
-    "drops": ["마석"],
-    "layer": [-1],
-    "description": "지하 1층 변종 몬스터. 프로그맨과 유사. (겜바바 8등급)"
   },
   "고블린": {
     "grade": 9,
@@ -1022,17 +1055,6 @@
     "layer": [10],
     "description": "10층 심연의 문 몬스터. (겜바바 설정 3등급, data_content 10등급 -> data_content 기준 적용)"
   },
-  "레카르도": {
-    "grade": 5,
-    "hp": 4500,
-    "atk": 55,
-    "def": 25,
-    "magic_def": 25,
-    "essences": ["레카르도"],
-    "drops": ["계층석"],
-    "layer": [-1],
-    "description": "지하 1층 계층군주. 이명은 기록의 군주. (data_content는 5등급이나 겜바바 설정상 2등급 발크수스를 찢는 강력함. 임시 5등급)"
-  },
   "데드맨": {
     "grade": null,
     "hp": 30,
@@ -1095,7 +1117,7 @@
     "def": 30,
     "magic_def": 30,
     "essences": ["짐승"],
-    "drops": [],
+    "drops": ["정수 (짐승)"],
     "layer": [6],
     "description": "무등급 특수 보스. 6층 '종말의 기억' 히든 필드."
   }

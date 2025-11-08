@@ -165,8 +165,8 @@ export const essences = {
         name: "멸망의 씨앗",
         effect: (caster, target) => {
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
-            caster.cb.logMessage(`[멸망의 씨앗]! ${target.name}에게 회피 불가의 평타 공격을 날립니다!`);
-            const dmg = calculateDamage((caster.currentStats['근력'] || 0), 9999); // 회피 불가 (고정 피해)
+            caster.cb.logMessage(`[멸망의 씨앗]! ${target.name}에게 회피 불가의 일격을 날립니다!`);
+            const dmg = calculateDamage((caster.currentStats['근력'] || 0), 0); // 회피 불가 (방어 무시)
             safeHpUpdate(target, -dmg);
             caster.cb.logMessage(`${target.name}에게 ${dmg}의 고정 피해! (HP: ${target.hp})`);
         }
@@ -198,8 +198,7 @@ export const essences = {
         name: "치명적인 중독",
         effect: (caster, target) => {
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
-            caster.cb.logMessage(`[치명적인 중독]! ${target.name}의 중독 효과를 8배 증폭시킵니다!`);
-            // (실제 증폭은 classes.js의 턴 시작/종료 시 독 디버프 데미지 계산 로직 수정 필요)
+            caster.cb.logMessage(`[치명적인 중독]! ${target.name}의 중독 효과를 8배 증폭시킵니다! (지속 피해 로직에 적용 필요)`);
         }
       }
     ]
@@ -314,7 +313,7 @@ export const essences = {
         effect: (caster, target) => {
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
             caster.cb.logMessage(`[재귀]! ${target.name}에게 회피 불가의 창을 던집니다!`);
-            const dmg = calculateDamage(80 + (caster.currentStats['근력'] || 0), 9999); // 회피 불가 (고정 피해)
+            const dmg = calculateDamage(80 + (caster.currentStats['근력'] || 0), 0); // 회피 불가 (방어 무시)
             safeHpUpdate(target, -dmg);
             caster.cb.logMessage(`${target.name}에게 ${dmg}의 관통 피해! (HP: ${target.hp})`);
         }
@@ -507,7 +506,7 @@ export const essences = {
         effect: (caster, target) => {
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
             caster.cb.logMessage(`[파쇄]! ${target.name}의 공간을 우그러뜨립니다!`);
-            const dmg = calculateDamage(80 + (caster.currentStats['정신력'] || 0), 9999); // 회피/가드 불가 (고정 피해)
+            const dmg = calculateDamage(80 + (caster.currentStats['정신력'] || 0), 0); // 회피/가드 불가 (방어 무시)
             safeHpUpdate(target, -dmg);
             caster.cb.logMessage(`${target.name}에게 ${dmg}의 고정 피해! (HP: ${target.hp})`);
         }

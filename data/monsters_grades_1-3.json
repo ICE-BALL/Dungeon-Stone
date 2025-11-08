@@ -6,7 +6,7 @@
     "def": 50,
     "magic_def": 50,
     "essences": ["희망의 군주"],
-    "drops": [],
+    "drops": ["계층석"],
     "layer": [8],
     "description": "8층 여명의 땅의 계층군주."
   },
@@ -17,7 +17,7 @@
     "def": 40,
     "magic_def": 30,
     "essences": ["기가제르오스"],
-    "drops": [],
+    "drops": ["미스티움"],
     "layer": [9],
     "description": "9층 별무덤 몬스터. 거대한 인간형 몬스터로 강력한 전기 속성 이능을 사용."
   },
@@ -28,7 +28,7 @@
     "def": 45,
     "magic_def": 35,
     "essences": ["본 드래곤"],
-    "drops": [],
+    "drops": ["용의 심장", "용가죽"],
     "layer": [9],
     "description": "9층 용골산의 특수 보스. 1등급 불사종."
   },
@@ -39,7 +39,7 @@
     "def": 35,
     "magic_def": 40,
     "essences": ["드라이즌"],
-    "drops": [],
+    "drops": ["미스티움"],
     "layer": [9],
     "description": "9층 꿈결 폭포의 특수 보스. 환상종. 뱀 형태의 거대한 마물."
   },
@@ -50,7 +50,7 @@
     "def": 42,
     "magic_def": 30,
     "essences": ["브라키아이스텔로"],
-    "drops": [],
+    "drops": ["미스티움"],
     "layer": [9],
     "description": "9층 별무덤 몬스터. 염동력과 수속성 계열 이능을 사용하는 야수종."
   },
@@ -61,7 +61,7 @@
     "def": 38,
     "magic_def": 38,
     "essences": ["라망시스"],
-    "drops": [],
+    "drops": ["미스티움"],
     "layer": [9],
     "description": "9층 별무덤 몬스터. 9층 균열 내 히든 피스로만 마주칠 수 있음."
   },
@@ -72,7 +72,7 @@
     "def": 50,
     "magic_def": 40,
     "essences": ["길티고스"],
-    "drops": [],
+    "drops": ["아크"],
     "layer": [10],
     "description": "10층 심연의 문 몬스터. 악마종. 날개 달린 돼지 형태."
   },
@@ -83,7 +83,7 @@
     "def": 45,
     "magic_def": 45,
     "essences": ["톨-라푸파"],
-    "drops": [],
+    "drops": ["아크"],
     "layer": [10, -1],
     "description": "10층 히든 필드 몬스터. 섬 크기의 초대형 마물. 비선공."
   },
@@ -94,7 +94,7 @@
     "def": 60,
     "magic_def": 50,
     "essences": ["종말의 기사"],
-    "drops": [],
+    "drops": ["계층석", "아이기스의 장벽"],
     "layer": [10],
     "description": "10층 심연의 문의 계층군주(최종 보스)."
   },
@@ -105,7 +105,7 @@
     "def": 70,
     "magic_def": 70,
     "essences": ["레비아탄"],
-    "drops": ["미스티움"],
+    "drops": ["미스티움", "계층석"],
     "layer": [6],
     "description": "6층 대해에 등장하는 1등급 몬스터. '해극신'이라 불림."
   },
@@ -116,7 +116,7 @@
     "def": 50,
     "magic_def": 40,
     "essences": ["카샨"],
-    "drops": [],
+    "drops": ["균열석", "운명 추적자"],
     "layer": ["Rift"],
     "description": "예언의 늑대. 붉은 털과 눈 달린 세 개의 꼬리가 특징."
   },
@@ -127,7 +127,7 @@
     "def": 55,
     "magic_def": 55,
     "essences": ["스닉투라"],
-    "drops": [],
+    "drops": ["아크"],
     "layer": [6, 10],
     "description": "종말의 뱀. 6층 히든 필드 '종말의 기억' 및 10층에서 등장."
   },
@@ -138,7 +138,7 @@
     "def": 60,
     "magic_def": 60,
     "essences": ["원시 정령"],
-    "drops": [],
+    "drops": ["정령의 핵", "미스티움"],
     "layer": [9],
     "description": "9층 히든 필드 '이터널 홀'의 보스. 타입별(대지, 물, 화염, 바람)로 존재."
   },
@@ -336,7 +336,7 @@
     "def": 40,
     "magic_def": 40,
     "essences": ["데드레드"],
-    "drops": ["아크"],
+    "drops": ["아크", "계층석"],
     "layer": [7],
     "description": "7층 암흑대륙의 계층군주. 이명은 어둠의 군주."
   },
@@ -358,7 +358,7 @@
     "def": 40,
     "magic_def": 40,
     "essences": ["천계의 창지기 밀라옐"],
-    "drops": ["밀라옐의 신록거창"],
+    "drops": ["균열석", "밀라옐의 신록거창"],
     "layer": ["Rift"],
     "description": "8층 균열 '빛의 도시 칼헤움'의 수호자. 타이타누스종."
   },
@@ -369,7 +369,7 @@
     "def": 30,
     "magic_def": 35,
     "essences": ["인면조"],
-    "drops": [],
+    "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "비행종. 네크로맨서 코어 정수 드랍."
   },
@@ -380,7 +380,7 @@
     "def": 35,
     "magic_def": 50,
     "essences": ["몰락의 별 발란티스"],
-    "drops": [],
+    "drops": ["균열석", "수호자의 팔목 보호대"],
     "layer": ["Rift"],
     "description": "7층 균열 '발란티스의 묘궁'의 수호자."
   },
@@ -391,7 +391,7 @@
     "def": 60,
     "magic_def": 30,
     "essences": ["심연 골렘"],
-    "drops": [],
+    "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "흑색의 외피를 가진 골렘. 내피의 핵이 약점."
   },
@@ -424,7 +424,7 @@
     "def": 30,
     "magic_def": 25,
     "essences": ["스톰거쉬"],
-    "drops": ["미스릴"],
+    "drops": ["미스릴", "불멸의 심장"],
     "layer": [6],
     "description": "6층 파루네 섬 몬스터. '바다의 오우거'."
   },
@@ -468,7 +468,7 @@
     "def": 35,
     "magic_def": 40,
     "essences": ["테트라세아"],
-    "drops": ["미스티움"],
+    "drops": ["미스티움", "계층석"],
     "layer": [6],
     "description": "6층 대해의 계층군주. 이명은 눈물의 군주. 40m 이상의 초거대 마물."
   },
@@ -710,7 +710,7 @@
     "def": 30,
     "magic_def": 30,
     "essences": ["데스로드"],
-    "drops": [],
+    "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "3등급 몬스터."
   },
@@ -721,7 +721,7 @@
     "def": 28,
     "magic_def": 28,
     "essences": ["니바로크"],
-    "drops": [],
+    "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "균열에서만 나오는 희귀 몬스터."
   },
@@ -732,7 +732,7 @@
     "def": 32,
     "magic_def": 20,
     "essences": ["헬스미스"],
-    "drops": [],
+    "drops": ["균열석"],
     "layer": ["Rift"],
     "description": "염소머리에 망치를 든 3등급 몬스터."
   }

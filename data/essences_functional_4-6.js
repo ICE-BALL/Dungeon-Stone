@@ -19,7 +19,7 @@ const safeHpUpdate = (target, amount) => {
     
     // 피격 시 '진압', '수면', '석화' 등 해제
     if (amount < 0 && target.debuffs) {
-        const debuffsToClear = ["진압(1턴)", "수면(1턴)", "석화(1턴)", "속박(거품)", "속박(나무)", "속박(얼음)", "속박(무덤)"];
+        const debuffsToClear = ["진압(1턴)", "수면(1턴)", "석화(1턴)", "석화(2턴)", "속박(거품)", "속박(나무)", "속박(얼음)", "속박(무덤)", "속박(뱀)", "속박(늪)"];
         target.debuffs = target.debuffs.filter(d => !debuffsToClear.includes(d));
     }
 };
@@ -403,7 +403,9 @@ export const essences = {
         const allTargets = [caster, ...caster.party, ...(caster.currentMonster || [])];
         allTargets.forEach(t => {
             if (t && t.hp > 0) {
-                safeHpSet(t, t.maxHp * 0.5);
+                // safeHpUpdate 대신 고정값 설정 헬퍼 (없으므로 직접 설정)
+                t.hp = Math.floor(t.maxHp * 0.5);
+                if (t.hp <= 0) t.hp = 1; // 0이 되는 것 방지
             }
         });
         caster.cb.logMessage("모든 대상의 HP가 50%로 조율되었습니다.");

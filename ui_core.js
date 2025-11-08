@@ -1,12 +1,14 @@
 // 이 파일은 게임 UI의 핵심 DOM 헬퍼 및 유틸리티 함수를 보관합니다.
 // (로그, 버튼 생성, 모달 제어, 상태 바 업데이트)
-// 기존 ui.js에서 분리됨
+// [수정] logMessage: 전투 연출을 위해 CSS 클래스(className) 인자 추가
+// [신규] showScreenEffect: 전투 연출을 위한 화면 효과(번쩍임/흔들림) 함수 추가
 
 /**
  * 로그 메시지 출력 함수
  * @param {string} msg - 출력할 메시지
+ * @param {string} [className=null] - (선택) 메시지에 추가할 CSS 클래스
  */
-export function logMessage(msg) {
+export function logMessage(msg, className = null) {
     const log = document.getElementById('log');
     if (!log) {
         console.error("Log element not found!");
@@ -16,14 +18,19 @@ export function logMessage(msg) {
     const p = document.createElement('p');
     p.classList.add('log-message');
 
-    // 메시지 내용에 따라 스타일 클래스 부여
+    // [신규] 스킬 연출 등을 위한 커스텀 클래스 추가
+    if (className) {
+        p.classList.add(className);
+    }
+
+    // 메시지 내용에 따라 기본 스타일 클래스 부여
     if (msg.includes('피해') || msg.includes('공격!')) {
         p.classList.add('combat');
     } else if (msg.includes('획득') || msg.includes('회복')) {
         p.classList.add('reward');
     } else if (msg.includes('정수') || msg.includes('마법')) {
         p.classList.add('magic');
-    } else if (msg.includes('!!') || msg.includes('오류')) {
+    } else if (msg.includes('!!') || msg.includes('오류') || msg.includes('퀘스트')) {
         p.classList.add('system');
     }
 
@@ -31,6 +38,25 @@ export function logMessage(msg) {
     log.appendChild(p);
     log.scrollTop = log.scrollHeight;
 }
+
+/**
+ * [신규] 화면 효과(번쩍임, 흔들림) 함수
+ * @param {'flash' | 'shake' | 'boss-hit'} effectName - style.css에 정의된 효과 클래스 이름
+ */
+export function showScreenEffect(effectName) {
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    const effectClass = `effect-${effectName}`;
+    
+    container.classList.add(effectClass);
+    
+    // 애니메이션이 끝나면 클래스 제거
+    setTimeout(() => {
+        container.classList.remove(effectClass);
+    }, 300); // 0.3s (style.css의 애니메이션 시간과 일치)
+}
+
 
 /**
  * 버튼 추가 헬퍼 함수

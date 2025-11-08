@@ -1,8 +1,7 @@
 // 이 파일은 게임의 전투(Combat) UI 함수를 담당합니다.
-// [수정] 몬스터 HP 바 추가
-// [수정] 파티원 HP 표시 추가
+// [수정] updateCombatStatus: 2등급 이하 보스 몬스터 전용 HP 바 추가
 // [수정] showCombatSkillsMenu: 스킬 클릭 시 항상 showTargetSelection을 호출하도록 수정
-// [수정] showTargetSelection: 단일/광역/자신을 유저가 선택하도록 수정
+// [수정] showTargetSelection: 단일/광역/자신/아군/모든 아군 선택 로직 개선
 
 // --- 핵심 UI 유틸리티 임포트 ---
 import {
@@ -15,7 +14,7 @@ import {
 
 
 /**
- * 전투 중 상태 갱신 (플레이어, 몬스터, 파티원 HP 표시)
+ * [수정] 전투 중 상태 갱신 (보스/몬스터/파티원 HP 표시)
  * @param {Player} player - 플레이어 객체
  */
 export function updateCombatStatus(player) {
@@ -28,16 +27,35 @@ export function updateCombatStatus(player) {
     }
 
      // 전투 종료 시
+     /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
      if (!player.currentMonster || !Array.isArray(player.currentMonster) || player.currentMonster.every(m => !m || m.hp <= 0)) {
          statusDiv.innerHTML = "<h4>전투 종료</h4>";
          return;
      }
 
-    let combatStatusHtml = "<h4>몬스터</h4><ul class='monster-status-list'>";
+    let combatStatusHtml = "";
+
+    // [신규] 보스(2등급 이하) 전용 UI
+    const boss = player.currentMonster.find(m => m && m.hp > 0 && m.grade <= 2);
+    if (boss) {
+        const bossPhase = boss.bossPhase || 1;
+        combatStatusHtml += `
+            <div class="boss-status-container">
+                <h4>${boss.name} (Phase ${bossPhase})</h4>
+                <progress id="boss-hp-bar" max="${boss.maxHp}" value="${boss.hp}"></progress>
+                <span id="boss-hp-value">${boss.hp}/${boss.maxHp}</span>
+                 ${/* AUTO-FIX: added optional chaining ?. for safety (Rule B.5) */
+                   boss.debuffs?.length > 0 ? `<span style='color: orange; display: block;'>[${boss.debuffs.join(',')}]</span>` : ''}
+            </div>`;
+    }
+
     // 몬스터 상태 표시 (HP 바 포함)
+    combatStatusHtml += "<h4>몬스터</h4><ul class='monster-status-list'>";
     player.currentMonster.forEach((m, i) => {
-        // [수정] 몬스터 객체 유효성 및 HP 기준으로 상태 판단
         if (!m) return; 
+        
+        // 보스는 이미 표시했으므로 리스트에서 제외
+        if (m === boss) return;
 
         const maxHp = m.maxHp ?? m.hp ?? 1;
         const currentHp = m.hp ?? 0;
@@ -52,14 +70,20 @@ export function updateCombatStatus(player) {
                     ${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (${m.grade || '?'}등급)
                     <progress class="monster-hp-bar" max="${maxHp}" value="${currentHp}"></progress>
                     <span class="monster-hp-value">${currentHp}/${maxHp}</span>
-                    ${m.debuffs && m.debuffs.length > 0 ? `<span style='color: orange;'>[${m.debuffs.join(',')}]</span>` : ''}
+                    ${/* AUTO-FIX: added optional chaining ?. for safety (Rule B.5) */
+                      m.debuffs?.length > 0 ? `<span style='color: orange;'>[${m.debuffs.join(',')}]</span>` : ''}
                 </li>`;
         }
     });
+    if (player.currentMonster.filter(m => m !== boss).length === 0) {
+        combatStatusHtml += "<li>(남은 몬스터 없음)</li>";
+    }
     combatStatusHtml += "</ul>";
 
+
     // 파티원 상태 표시 (HP 바 포함)
-    if (player.party && player.party.length > 0) {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    if (player.party?.length > 0) {
         combatStatusHtml += "<h4 style='margin-top: 15px;'>파티원</h4><ul class='party-status-list'>";
         player.party.forEach((p, i) => {
             if (p) {
@@ -95,8 +119,6 @@ export function updateCombatMenu(player) {
         return;
     }
 
-    // BGM 재생은 Player 클래스의 startCombat에서 이미 호출됨
-
     combatMenu.innerHTML = ''; // 메뉴 초기화
     menu.classList.add('hidden');
     menu.style.display = 'none';
@@ -105,10 +127,11 @@ export function updateCombatMenu(player) {
 
     if (player.playerTurn && player.inCombat) {
         combatMenu.innerHTML = '<h4>플레이어 턴</h4>';
-        const attackCost = 1; // 기본 공격 기력 소모량
+        const attackCost = 1; 
 
         // 공격 대상 선택 버튼 생성
-        if (player.currentMonster && player.currentMonster.length > 0) {
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+        if (player.currentMonster?.length > 0) {
             const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
             if (livingMonsters.length > 1) {
                 livingMonsters.forEach((monster, index) => {
@@ -126,12 +149,15 @@ export function updateCombatMenu(player) {
         }
 
         // 종족 스킬 버튼
-        const racialSkill = player.cb.gameData.races[player.race]?.racial_skill;
+        /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
+        const racialSkill = player.cb?.gameData?.races?.[player.race]?.racial_skill;
         if (racialSkill) {
             addButton(combatMenu, `종족 스킬: ${racialSkill.name}`, () => {
-                const raceEffect = player.cb.gameData.races[player.race]?.racial_skill?.effect;
+                /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
+                const raceEffect = player.cb?.gameData?.races?.[player.race]?.racial_skill?.effect;
                 if (typeof raceEffect === 'function') {
-                    logMessage(`종족 스킬 [${racialSkill.name}]을(를) 사용합니다.`);
+                    // [신규] 스킬 로그 강조
+                    logMessage(`[SKILL] 종족 스킬 [${racialSkill.name}]을(를) 사용합니다: ${racialSkill.desc}`, 'skill-player');
                     raceEffect(player); // 스킬 효과 실행
                     if (player.inCombat) {
                        player.endTurn();
@@ -166,13 +192,15 @@ export function showCombatSkillsMenu(player) {
 
     menu.innerHTML = '<h4>사용할 스킬/마법 선택:</h4>';
 
-    const magic = player.cb.gameData.magic;
-    const essences = player.cb.gameData.essences;
+    /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
+    const magic = player.cb?.gameData?.magic || {};
+    const essences = player.cb?.gameData?.essences || {};
 
     const availableSkills = [];
 
     // 사용 가능한 마법 추가
-    player.spells.forEach(spellName => {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    player.spells?.forEach(spellName => {
         const spell = magic[spellName];
         if (spell) {
             // [수정] 스킬의 *전체* 정보를 넘깁니다.
@@ -187,24 +215,29 @@ export function showCombatSkillsMenu(player) {
     });
 
     // 사용 가능한 정수 스킬 추가
-    player.essence_skills.forEach(skillName => {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    player.essence_skills?.forEach(skillName => {
         let skillData = null;
-        for (const key of player.essences) {
+        let skillKey = null; // [신규] 원본 정수 키 저장 (effect 함수 참조용)
+        
+        /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+        for (const key of player.essences || []) {
             const ess = essences[key];
             if (ess && ess.active) {
                 const activeSkills = Array.isArray(ess.active) ? ess.active : [ess.active];
                 const foundSkill = activeSkills.find(s => s.name === skillName);
                 if (foundSkill) {
                     skillData = foundSkill;
+                    skillKey = key; // 원본 정수 키 (예: "오우거")
                     break;
                 }
             }
         }
         
         if (skillData) {
-            // [수정] 스킬의 *전체* 정보를 넘깁니다.
              availableSkills.push({
-                 ...skillData, // effect 함수 포함
+                 ...skillData, 
+                 essenceKey: skillKey, // [신규] 원본 키 저장
                  type: 'essence',
                  cost: skillData.mp_cost || 0,
                  desc: `[정수] ${skillData.desc || "설명 없음"}`
@@ -232,7 +265,7 @@ export function showCombatSkillsMenu(player) {
 }
 
 /**
- * [신규/수정] 스킬/마법 대상 선택 메뉴
+ * [신규/수정] 스킬/마법 대상 선택 메뉴 (모든 타겟팅 유형 지원)
  * @param {Player} player - 플레이어 객체
  * @param {object} skill - 선택된 스킬 *전체* 정보 객체
  */
@@ -242,42 +275,60 @@ function showTargetSelection(player, skill) {
 
     menu.innerHTML = `<h4>[${skill.name}] 대상 선택:</h4>`;
     const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
-    const skillDesc = skill.desc.toLowerCase();
-
-    // 1. 적 대상 (단일)
-    livingMonsters.forEach((monster) => {
-         const originalIndex = player.currentMonster.findIndex(m => m === monster);
-         addButton(menu, `적: ${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => {
-             if (skill.type === 'spell') player.playerSpell(skill.name, originalIndex);
-             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, originalIndex);
-         });
-    });
-
-    // 2. 광역(AOE) 대상
-    // 설명에 "광역", "모든 적", "범위 내" 등이 포함된 경우
-    if (skillDesc.includes("광역") || skillDesc.includes("모든 적") || skillDesc.includes("범위 내")) {
-         addButton(menu, `모든 적 (광역)`, () => {
-             if (skill.type === 'spell') player.playerSpell(skill.name, -1); // -1: 광역
-             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, -1);
-         });
+    const skillDesc = (skill.desc || "").toLowerCase();
+    
+    let targetType = 'enemy'; // 기본값
+    
+    // 타겟팅 유형 분석
+    if (skillDesc.includes("자신") || skillDesc.includes("시전자")) {
+        targetType = 'self';
+    } else if (skillDesc.includes("아군 1명") || skillDesc.includes("대상") || (skillDesc.includes("치유") && !skillDesc.includes("광역"))) {
+        targetType = 'ally_single';
+    } else if (skillDesc.includes("모든 아군") || (skillDesc.includes("치유") && skillDesc.includes("광역"))) {
+        targetType = 'ally_aoe';
+    } else if (skillDesc.includes("광역") || skillDesc.includes("모든 적") || skillDesc.includes("범위 내")) {
+        targetType = 'enemy_aoe';
+    } else {
+        targetType = 'enemy_single'; // 기본값 (적 단일)
     }
 
-    // 3. 자신 대상
-    // 설명에 "자신", "시전자", "아군" 등이 포함된 경우
-    if (skillDesc.includes("자신") || skillDesc.includes("시전자") || skillDesc.includes("아군")) {
-         addButton(menu, `자신`, () => {
-             if (skill.type === 'spell') player.playerSpell(skill.name, -2); // -2: 자신
-             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, -2);
-         });
+    // 스킬 실행 함수
+    const executeSkill = (targetIndex) => {
+        if (skill.type === 'spell') player.playerSpell(skill.name, targetIndex);
+        else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, targetIndex, skill.essenceKey); // essenceKey 전달
+    };
+
+    // 1. 적 단일 대상
+    if (targetType === 'enemy_single') {
+        livingMonsters.forEach((monster) => {
+             const originalIndex = player.currentMonster.findIndex(m => m === monster);
+             addButton(menu, `적: ${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => executeSkill(originalIndex));
+        });
+    }
+
+    // 2. 적 광역 대상
+    if (targetType === 'enemy_aoe') {
+         addButton(menu, `모든 적 (광역)`, () => executeSkill(-1)); // -1: 적 광역
     }
     
-    // 4. (임시) 대상이 불분명한 경우 기본값 (첫 번째 적)
-    if (livingMonsters.length > 0 && menu.children.length === 1) { // 뒤로가기 버튼만 있는 경우
-         const firstTargetIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
-         logMessage("대상이 불분명하여 첫 번째 적을 대상으로 자동 선택합니다.");
-         if (skill.type === 'spell') player.playerSpell(skill.name, firstTargetIndex);
-         else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, firstTargetIndex);
-         return;
+    // 3. 자신 대상
+    if (targetType === 'self') {
+         addButton(menu, `자신`, () => executeSkill(-2)); // -2: 자신
+    }
+
+    // 4. 아군 단일 대상 (자신 포함)
+    if (targetType === 'ally_single') {
+        addButton(menu, `자신 (HP: ${player.hp}/${player.maxHp})`, () => executeSkill(-2)); // -2: 자신
+        player.party.forEach((member, index) => {
+            if (member && member.hp > 0) {
+                 addButton(menu, `아군: ${member.name} (HP: ${member.hp}/${member.maxHp})`, () => executeSkill(100 + index)); // 100+: 아군 인덱스
+            }
+        });
+    }
+    
+    // 5. 아군 광역 대상 (자신 포함)
+    if (targetType === 'ally_aoe') {
+         addButton(menu, `모든 아군 (광역)`, () => executeSkill(-3)); // -3: 아군 광역
     }
 
     addButton(menu, "뒤로 (스킬 선택)", () => showCombatSkillsMenu(player));
@@ -300,33 +351,41 @@ export function showInventoryInCombat(player) {
 
     inventoryListDiv.innerHTML = '<h4>사용할 아이템 선택:</h4>';
 
-    const itemCounts = player.inventory.reduce((acc, item) => {
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    const itemCounts = player.inventory?.reduce((acc, item) => {
         acc[item] = (acc[item] || 0) + 1;
         return acc;
     }, {});
 
-    const allConsumableItems = {...player.cb.gameData.items, ...player.cb.gameData.numbersItems};
+    /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
+    const allConsumableItems = {
+        ...(player.cb?.gameData?.items || {}), 
+        ...(player.cb?.gameData?.numbersItems || {})
+    };
     let foundConsumable = false;
 
-    Object.entries(itemCounts).forEach(([itemName, count]) => {
-        const itemData = allConsumableItems[itemName];
-        // [수정] effect가 JSON에 없으므로, gameData.items에서 원본 데이터의 effect 함수 존재 여부 확인
-        const usableItemData = player.cb.gameData.items[itemName] || player.cb.gameData.numbersItems[itemName]; 
-        
-        if (usableItemData && typeof usableItemData.effect === 'function' && (!usableItemData.type || usableItemData.type === '소모품')) {
-             foundConsumable = true;
-             const btn = document.createElement('button');
-            btn.textContent = `사용: ${itemName} (${count}개) - ${usableItemData.desc}`;
-            btn.onclick = () => {
-                hideModal('#inventory-screen');
-                player.useItem(itemName); // useItem이 showStatus 호출
-                 if (player.inCombat) {
-                    player.endTurn();
-                 }
-            };
-            inventoryListDiv.appendChild(btn);
-        }
-    });
+    /* AUTO-FIX: Added null check for itemCounts */
+    if (itemCounts) {
+        Object.entries(itemCounts).forEach(([itemName, count]) => {
+            const itemData = allConsumableItems[itemName];
+            /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
+            const usableItemData = player.cb?.gameData?.items?.[itemName] || player.cb?.gameData?.numbersItems?.[itemName]; 
+            
+            if (usableItemData && typeof usableItemData.effect === 'function' && (!usableItemData.type || usableItemData.type === '소모품')) {
+                 foundConsumable = true;
+                 const btn = document.createElement('button');
+                btn.textContent = `사용: ${itemName} (${count}개) - ${usableItemData.desc}`;
+                btn.onclick = () => {
+                    hideModal('#inventory-screen');
+                    player.useItem(itemName); // useItem이 showStatus 호출
+                     if (player.inCombat) {
+                        player.endTurn();
+                     }
+                };
+                inventoryListDiv.appendChild(btn);
+            }
+        });
+    }
 
      if (!foundConsumable) {
          inventoryListDiv.innerHTML += "<p>전투 중에 사용할 수 있는 아이템이 없습니다.</p>";

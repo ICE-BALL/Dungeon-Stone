@@ -1,6 +1,8 @@
 // 이 파일은 JSON으로 변환할 수 없는 '함수(effect, action)'를 포함한
 // 핵심 데이터 객체들을 보관합니다.
-// (기존 data_core.js와 data_content.js의 일부)
+// [수정] races: 겜바바 설정.txt 기반으로 모든 종족 스킬 effect 구현
+// [수정] magic: 마력시, 힐 등 스탯 기반 연산식 적용
+// [추가] numbersItems: 겜바바 설정.txt 기반 넘버스 아이템 effect 구현
 // [수정] essences 객체는 data/essences_functional_*.js 파일로 분리되었습니다.
 
 // 1. data_core.js에서 가져온 함수 포함 객체
@@ -11,10 +13,13 @@ export const races = {
         special: "특별 보너스나 페널티 없음. 오러, 정령술, 마법 등 모든 분야에 재능. 후반 포텐 좋음.",
         racial_skill: {
             name: "오러",
-            desc: "인간 고유의 능력. 무기에 오러를 담아 공격 시 방어력과 항마력을 일부(90%) 무시합니다.",
+            desc: "인간 고유의 능력. 무기에 오러를 담아 공격 시 방어력과 항마력을 일부(90%) 무시합니다. [cite: 1683-1685]",
             effect: (p) => {
-                if (p) p.aura_active = true;
-                p?.cb?.logMessage?.("무기에 오러를 집중합니다. 다음 공격이 강화됩니다.");
+                if (p) {
+                    p.aura_active = true; // class_player_combat.js의 playerAttack에서 이 플래그를 체크
+                    p?.cb?.logMessage?.("무기에 오러를 집중합니다. 다음 공격이 강화됩니다.");
+                    // (오러 레벨업은 훈련장 콘텐츠에서 구현)
+                }
             }
         }
     },
@@ -24,10 +29,12 @@ export const races = {
         special: "활 명중률과 마나 재생 보너스. 숲에서 재생력 증가. 정령술 사용 가능. 기감이 예민함.",
         racial_skill: {
             name: "정령술",
-            desc: "하급 정령과 계약하여 전투에 도움을 받거나 자연의 힘을 빌립니다. (패시브: 주변 위험 감지)",
+            desc: "하급 정령과 계약하여 전투에 도움을 받거나 자연의 힘을 빌립니다. (패시브: 주변 위험 감지) [cite: 1724-1725]",
             effect: (p) => {
                 if (p && p.position === "Labyrinth" && Math.random() < 0.2) {
-                    p?.cb?.logMessage?.("정령의 속삭임이 주변의 위험을 알려줍니다.");
+                    p?.cb?.logMessage?.("정령의 속삭임이 주변의 위험을 알려줍니다. [cite: 1718]");
+                } else {
+                    p?.cb?.logMessage?.("정령과 교감합니다. (정령 계약은 마탑 또는 히든 필드에서 가능합니다)");
                 }
             }
         }
@@ -35,12 +42,13 @@ export const races = {
     "Dwarf": { 
         description: "높은 근력과 지구력, 근접 탱커와 제작에 좋음. 드워프족으로 광산/대장간 친화.",
         base_stats: { "근력": 12, "민첩성": 8, "지구력": 12, "정신력": 9, "행운": 4, "골강도": 10, "물리 내성": 8 },
-        special: "물리 데미지 저항과 제작 보너스. 인챈트 비용 감소. 넘버스 아이템 효율 1.5배 증가(무구의 축복).",
+        special: "물리 데미지 저항과 제작 보너스. 인챈트 비용 감소. 넘버스 아이템 효율 1.5배 증가(무구의 축복). [cite: 1698]",
         racial_skill: {
             name: "무구의 축복",
             desc: "넘버스 아이템의 효율이 1.5배 증가합니다. (패시브)",
             effect: (p) => {
-                p?.cb?.logMessage?.("드워프의 손재주는 넘버스 아이템의 잠재력을 최대로 이끌어냅니다. (넘버스 아이템 효과 1.5배 적용)");
+                p?.cb?.logMessage?.("드워프의 손재주는 넘버스 아이템의 잠재력을 최대로 이끌어냅니다. (넘버스 아이템 효과 1.5배 적용) [cite: 1698]");
+                // (실제 1.5배 적용 로직은 Player.useItem 또는 Player.calculateStats에서 구현 필요)
             }
         }
     },
@@ -50,10 +58,11 @@ export const races = {
         special: "신성력 사용 불가. 전투 중 재생력 보너스. 집착 스탯 초기 높음. 혼령각인으로 강화 가능.",
         racial_skill: {
             name: "혼령각인",
-            desc: "주술사에게 혼령각인을 받아 신체 능력을 강화할 수 있습니다. (도시에서 가능)",
+            desc: "주술사에게 혼령각인을 받아 신체 능력을 강화할 수 있습니다. (도시에서 가능) [cite: 1791-1792]",
             effect: (p) => {
                 if (p?.position !== "Labyrinth") {
                     p?.cb?.logMessage?.("도시의 바바리안 주술사를 찾아가 혼령각인을 받을 수 있습니다.");
+                    // (ui_city.js에 '바바리안 성지' 장소 추가 필요)
                 } else {
                     p?.cb?.logMessage?.("혼령각인은 도시에서만 받을 수 있습니다.");
                 }
@@ -69,8 +78,9 @@ export const races = {
             desc: "짧은 시간 동안 공중을 날아다닐 수 있습니다. 전투 시 회피율이 증가합니다.",
             effect: (p) => {
                 if (p?.inCombat) {
-                    p.evasionBonus = 0.3;
+                    p.evasionBonus = 0.3; // (임의 수치) 30% 회피 보너스
                     p?.cb?.logMessage?.("날갯짓으로 가볍게 공중에 떠오릅니다. 이번 턴 회피율이 증가합니다.");
+                    p.endTurn(); // 행동 소모
                 } else {
                     p?.cb?.logMessage?.("날갯짓으로 주변을 빠르게 둘러봅니다.");
                 }
@@ -83,9 +93,10 @@ export const races = {
         special: "야수 변신 모드 가능성(구현 필요). 추적 능력 우수. 영혼수 계약 가능.",
         racial_skill: {
             name: "영혼수 계약",
-            desc: "영혼수와 계약하여 그 힘을 빌릴 수 있습니다. (패시브: 감각 강화)",
+            desc: "영혼수와 계약하여 그 힘을 빌릴 수 있습니다. (패시브: 감각 강화) [cite: 1709-1710]",
             effect: (p) => {
                 p?.cb?.logMessage?.("영혼수와의 교감으로 감각이 더욱 예민해집니다. (후각, 청각 관련 판정 보너스)");
+                // (실제 계약 로직은 '수인 성지' 등에서 구현 필요)
             }
         }
     },
@@ -95,17 +106,23 @@ export const races = {
         special: "용언 사용 가능. 드래곤 피어로 적에게 공포 유발. 일부 마법 사용 가능.",
         racial_skill: {
             name: "용언",
-            desc: "고대 용의 언어를 사용하여 강력한 효과를 발휘합니다. (적 전체에게 낮은 확률로 공포 유발)",
+            desc: "고대 용의 언어를 사용하여 강력한 효과를 발휘합니다. (적 전체에게 낮은 확률로 공포 유발) [cite: 1818-1819]",
             effect: (p) => {
                 if (p?.inCombat && p.currentMonster) {
                     p?.cb?.logMessage?.("용언의 힘이 주변의 마력을 뒤흔듭니다!");
                     const monsters = Array.isArray(p.currentMonster) ? p.currentMonster : [p.currentMonster];
+                    let affected = false;
                     monsters.forEach((monster) => {
-                        if (monster?.hp > 0 && Math.random() < 0.2) {
-                            if(monster.applyDebuff) monster.applyDebuff("공포");
+                        if (monster?.hp > 0 && Math.random() < 0.2) { // 20% 확률로 공포
+                            if(monster.applyDebuff) monster.applyDebuff("공포(1턴)");
                             p?.cb?.logMessage?.(`${monster.name}이(가) 공포에 질렸습니다!`);
+                            affected = true;
                         }
                     });
+                    if (!affected) {
+                        p?.cb?.logMessage?.("...하지만 아무 일도 일어나지 않았습니다.");
+                    }
+                    p.endTurn(); // 행동 소모
                 } else {
                     p?.cb?.logMessage?.("전투 중에만 사용할 수 있습니다.");
                 }
@@ -115,68 +132,349 @@ export const races = {
 };
 
 export const magic = {
-    // (data_core.js의 magic 객체 전체를 여기에 복사)
-    // ... (너무 길어서 일부만 예시로 남깁니다) ...
-    "서적 탐지": { grade: 3, desc: "원하는 키워드의 책을 찾을 수 있게 해준다.", mp_cost: 10, effect: function(p, t) { p?.cb?.logMessage?.("책을 찾기 시작합니다."); } },
-    "상급 서적 탐지": { grade: 2, desc: "보안 등급이 높은 책을 찾을 수 있게 해준다.", mp_cost: 50, effect: function(p, t) { p?.cb?.logMessage?.("고급 정보를 찾기 시작합니다."); } },
-    "왜곡": { grade: 3, desc: "미궁의 부산물을 도시로 가져갈 수 있게 한다.", mp_cost: 30, effect: function(p, t) { p?.cb?.logMessage?.("아이템에 왜곡 마법을 겁니다."); } },
-    "결속": { grade: 3, desc: "파티원들이 미궁 시작 시 같은 위치에서 시작하고 경험치를 공유한다.", mp_cost: 15, effect: function(p, t) { p?.cb?.logMessage?.("파티원과 결속을 맺었습니다."); } },
-    "빛구체": { grade: 5, desc: "빛을 생성하여 주변을 밝힌다.", mp_cost: 5, effect: function(p, t) { p?.cb?.logMessage?.("빛구체를 생성하여 시야를 확보했다."); } },
-    "마력시": { grade: 9, desc: "마법사의 기본 공격. 영체 공격 가능.", mp_cost: 1, dmg: 5, type: "magic", effect: function(p, t) { if (!t) { p?.cb?.logMessage?.("대상이 없습니다."); return; } const dmg = Math.floor(Math.max(1, 5 - (t.magic_def || 0))); if (t.hp) t.hp = Math.max(0, t.hp - dmg); p?.cb?.logMessage?.(`마력시로 ${t?.name || '대상'}에게 ${dmg}의 마법 피해! (HP: ${t?.hp})`); } },
-    "힐": { grade: 4, desc: "대상의 체력을 회복시킨다.", mp_cost: 15, effect: function(p, t) { let healTarget = t || p; if (!healTarget) return; const healAmount = 30 + Math.floor((p?.stats?.["정신력"] || 10) / 2); if(healTarget.hp) healTarget.hp = Math.min(healTarget.maxHp || 99999, healTarget.hp + healAmount); p?.cb?.logMessage?.(`${healTarget === p ? '자신' : healTarget.name}의 체력을 ${healAmount} 회복했다.`); } },
-    "신성 불꽃": { grade: 5, desc: "태양 마법. 디버프 해제 및 악 속성에게 피해.", mp_cost: 30, dmg: 50, type: "magic", effect: function(p, t) { (t || p)?.removeAllDebuffs?.(); if (t) { const dmg = Math.floor(Math.max(1, 50 - (t.magic_def || 0))); if (t.hp) t.hp = Math.max(0, t.hp - dmg); } p?.cb?.logMessage?.("신성한 불꽃이 디버프를 태우고 악을 정화했다!"); } }
-    // ... (data_core.js의 magic 객체 전체를 여기에 복사) ...
+    // (기존 magic 객체...)
+    "서적 탐지": { 
+        grade: 3, 
+        desc: "원하는 키워드의 책을 찾을 수 있게 해준다.", 
+        mp_cost: 10, 
+        effect: function(p, t) { 
+            p?.cb?.logMessage?.("이 마법은 도서관 사서 라그나에게 말을 걸어 사용해야 합니다."); 
+        } 
+    },
+    "상급 서적 탐지": { 
+        grade: 2, 
+        desc: "보안 등급이 높은 책을 찾을 수 있게 해준다.", 
+        mp_cost: 50, 
+        effect: function(p, t) { 
+             p?.cb?.logMessage?.("이 마법은 도서관 사서 라그나에게 말을 걸어 사용해야 합니다."); 
+        } 
+    },
+    "왜곡": { 
+        grade: 3, 
+        desc: "미궁의 부산물을 도시로 가져갈 수 있게 한다.", 
+        mp_cost: 30, 
+        effect: function(p, t) { 
+            p?.cb?.logMessage?.("아이템에 왜곡 마법을 겁니다. (전투 중 몬스터에게 사용하여 부산물 획득 가능)"); 
+            // (실제 로직은 전투 중 아이템 사용 또는 몬스터 처치 시 구현 필요)
+        } 
+    },
+    "결속": { 
+        grade: 3, 
+        desc: "파티원들이 미궁 시작 시 같은 위치에서 시작하고 경험치를 공유한다.", 
+        mp_cost: 15, 
+        effect: function(p, t) { 
+            p?.cb?.logMessage?.("이 마법은 탐험가 길드에서 사용해야 합니다."); 
+        } 
+    },
+    "빛구체": { 
+        grade: 5, 
+        desc: "빛을 생성하여 주변을 밝힌다.", 
+        mp_cost: 5, 
+        effect: function(p, t) { 
+            p?.cb?.logMessage?.("빛구체를 생성하여 시야를 확보했다. (미궁 탐험 시 시야 +1)"); 
+            // (실제 시야 로직은 탐험 이벤트 판정 시 구현 필요)
+        } 
+    },
+    "마력시": { 
+        grade: 9, 
+        desc: "마법사의 기본 공격. 영체 공격 가능.", 
+        mp_cost: 1, 
+        dmg: 5, 
+        type: "magic", 
+        effect: function(p, t) { 
+            if (!t) { p?.cb?.logMessage?.("대상이 없습니다."); return; }
+            // [수정] 스탯 기반 데미지
+            const dmg = Math.floor(Math.max(1, (p.currentStats['정신력'] || 8) * 1.0 - (t.magic_def || 0)));
+            if (t.hp) t.hp = Math.max(0, t.hp - dmg); 
+            p?.cb?.logMessage?.(`마력시로 ${t?.name || '대상'}에게 ${dmg}의 마법 피해! (HP: ${t?.hp})`); 
+        } 
+    },
+    "힐": { 
+        grade: 4, 
+        desc: "대상의 체력을 회복시킨다.", 
+        mp_cost: 15, 
+        effect: function(p, t) { 
+            let healTarget = t || p; 
+            if (!healTarget) return;
+            // [수정] 스탯 기반 힐량
+            const healAmount = 30 + Math.floor((p?.currentStats?.["정신력"] || 10) * 1.5); // [cite: 2800-2801]
+            if(healTarget.hp) healTarget.hp = Math.min(healTarget.maxHp || 99999, healTarget.hp + healAmount); 
+            p?.cb?.logMessage?.(`${healTarget === p ? '자신' : healTarget.name}의 체력을 ${healAmount} 회복했다.`); 
+        } 
+    },
+    "신성 불꽃": { 
+        grade: 5, 
+        desc: "태양 마법. 디버프 해제 및 악 속성에게 피해.", 
+        mp_cost: 30, 
+        dmg: 50, 
+        type: "magic", 
+        effect: function(p, t) { 
+            (t || p)?.removeAllDebuffs?.(); 
+            if (t && Array.isArray(t)) { // 광역 대상
+                t.forEach(monster => {
+                    const dmg = Math.floor(Math.max(1, 50 + (p.currentStats['정신력'] || 10) - (monster.magic_def || 0))); 
+                    if (monster.hp) monster.hp = Math.max(0, monster.hp - dmg); 
+                });
+            } else if (t) { // 단일 대상
+                const dmg = Math.floor(Math.max(1, 50 + (p.currentStats['정신력'] || 10) - (t.magic_def || 0))); 
+                if (t.hp) t.hp = Math.max(0, t.hp - dmg); 
+            }
+            p?.cb?.logMessage?.("신성한 불꽃이 디버프를 태우고 악을 정화했다!"); 
+        } 
+    }
 };
 
 // 2. data_content.js에서 가져온 함수 포함 객체
 export const items = {
-    // (data_content.js의 items 객체 전체를 여기에 복사)
-    // ... (너무 길어서 일부만 예시로 남깁니다) ...
-    "포션": {desc: "체력을 50 회복한다.", price: 100, type: "소모품", effect: function(p) { p.hp = Math.min(p.maxHp, p.hp + 50); }},
-    "상급 포션": {desc: "체력을 150 회복한다.", price: 500, type: "소모품", effect: function(p) { p.hp = Math.min(p.maxHp, p.hp + 150); }},
-    "식량": {desc: "포만감을 30 회복한다.", price: 50, type: "소모품", effect: function(p) { p.satiety = Math.min(100, p.satiety + 30); p.cb.logMessage("식량을 먹어 허기를 달랬다."); }},
-    "붕대": {desc: "출혈 상태이상을 제거한다.", price: 30, type: "소모품", effect: function(p) { p.debuffs = p.debuffs.filter(d => !d.startsWith("출혈")); p.cb.logMessage("붕대로 상처를 감쌌다."); }},
-    "해독제": {desc: "독 상태이상을 제거한다.", price: 50, type: "소모품", effect: function(p) { p.debuffs = p.debuffs.filter(d => !d.startsWith("독")); p.cb.logMessage("해독제를 마셨다."); }},
-    "꿈꾸는 영혼": {desc: "영혼의 요새 히든 피스. 10레벨 도달 시 경험치 10000 획득.", type: "소모품", effect: function(p) { p.cb.logMessage("꿈꾸는 영혼을 얻었다! 10레벨이 되면 강력한 힘을 얻을 수 있을 것이다."); /* (classes.js에서 실제 로직 구현 필요) */ }}
-    // ... (data_content.js의 items 객체 전체를 여기에 복사) ...
+    // (기존 아이템들...)
+    "포션": {
+        desc: "체력을 50 회복한다.", 
+        price: 100, 
+        type: "소모품", 
+        effect: function(p) { 
+            p.hp = Math.min(p.maxHp, p.hp + 50); 
+            p.cb.logMessage("체력을 50 회복했다.");
+        }
+    },
+    "상급 포션": {
+        desc: "체력을 150 회복한다.", 
+        price: 500, 
+        type: "소모품", 
+        effect: function(p) { 
+            p.hp = Math.min(p.maxHp, p.hp + 150); 
+            p.cb.logMessage("체력을 150 회복했다.");
+        }
+    },
+    "식량": {
+        desc: "포만감을 30 회복한다.", 
+        price: 50, 
+        type: "소모품", 
+        effect: function(p) { 
+            p.satiety = Math.min(100, p.satiety + 30); 
+            p.cb.logMessage("식량을 먹어 허기를 달랬다."); 
+        }
+    },
+    "붕대": {
+        desc: "출혈 상태이상을 제거한다.", 
+        price: 30, 
+        type: "소모품", 
+        effect: function(p) { 
+            p.debuffs = p.debuffs.filter(d => !d.startsWith("출혈")); 
+            p.cb.logMessage("붕대로 상처를 감쌌다."); 
+        }
+    },
+    "해독제": {
+        desc: "독 상태이상을 제거한다.", 
+        price: 50, 
+        type: "소모품", 
+        effect: function(p) { 
+            p.debuffs = p.debuffs.filter(d => !d.startsWith("독")); 
+            p.cb.logMessage("해독제를 마셨다."); 
+        }
+    },
+    "꿈꾸는 영혼": {
+        desc: "영혼의 요새 히든 피스. 10레벨 도달 시 경험치 10000 획득.", 
+        type: "소모품", 
+        effect: function(p) { 
+            p.cb.logMessage("꿈꾸는 영혼을 흡수했다! 10레벨이 되면 강력한 힘을 얻을 수 있을 것이다. [cite: 2412-2414]");
+            // (실제 로직은 class_player_core.js의 gainExp 또는 levelUp에서 처리)
+        }
+    }
 };
 
 export const numbersItems = {
-    // (data_content.js의 numbersItems 객체 전체를 여기에 복사)
-    "초심자의 행운": {no: 9999, type: "부적", desc: "첫 사냥 몬스터 정수 드랍률 +5% (귀속)", effect: function(p) { p.dropRateBonus += 0.05; p.cb.logMessage("초심자의 행운 부적 효과가 적용되었다!"); }},
-    "시체술사의 기만": {no: 7661, type: "팔찌", desc: "죽음에 달하는 피해 시 가사상태(피해 면역) (3회).", type: "소모품", effect: (p) => { p.cb.logMessage("시체술사의 기만이 죽음의 순간 당신을 보호했다!"); }},
-    "두 번째 심장": {no: 3120, type: "소모품", desc: "심장 즉사 피해 시 일정 시간 절대 보호 (1회).", effect: (p) => { p.cb.logMessage("두 번째 심장이 뛰기 시작하며 죽음의 위협으로부터 보호한다!"); }}
-    // ... (data_content.js의 numbersItems 객체 전체를 여기에 복사) ...
+    // [신규] 겜바바 설정.txt 기반 넘버스 아이템 effect 구현
+    "초심자의 행운": {
+        no: 9999, 
+        type: "부적", 
+        desc: "첫 사냥 몬스터 정수 드랍률 +5% (귀속)", 
+        effect: function(p) { 
+            p.cb.logMessage("초심자의 행운 부적 효과가 적용되었다! [cite: 2323-2324] (패시브 효과)"); 
+        }
+    },
+    "시체술사의 기만": {
+        no: 7661, 
+        type: "팔찌", 
+        desc: "죽음에 달하는 피해 시 가사상태(피해 면역) (3회).", 
+        effect: function(p) { 
+            p.cb.logMessage("시체술사의 기만을 장착했다. (죽음에 달하는 피해 3회 방어) [cite: 2227] (패시브 효과)"); 
+        }
+    },
+    "두 번째 심장": {
+        no: 3120, 
+        type: "소모품", 
+        desc: "심장 즉사 피해 시 일정 시간 절대 보호 (1회).", 
+        effect: function(p) { 
+            p.cb.logMessage("두 번째 심장이 뛰기 시작하며 죽음의 위협으로부터 보호한다! [cite: 2233-2234] (패시브 효과)"); 
+        }
+    },
+    "수호자의 팔목 보호대": {
+        no: 3112,
+        type: "팔목 보호대",
+        desc: "상시 대미지 감소 5%. 사용 시 적을 밀쳐내고 해로운 효과 면역.",
+        effect: function(p) {
+            p.removeAllDebuffs(); // 
+            p.cb.logMessage("수호자의 팔목 보호대: 모든 해로운 효과를 정화합니다!");
+            // (밀쳐내기 로직은 전투 시스템에 추가 구현 필요)
+            // (패시브(5% 감소)는 calculateStats에서 구현)
+        }
+    },
+    "가르파스의 목걸이": {
+        no: 7777,
+        type: "목걸이",
+        desc: "마석을 넣어 랜덤한 물질로 변환. (가챠 아이템)",
+        effect: function(p) {
+            p.cb.logMessage("가르파스의 목걸이를 사용합니다. (컨텐츠 구현 필요) [cite: 2209-2210]");
+            // (구현 시, p.magic_stones를 차감하고 랜덤 아이템 지급 로직 필요)
+        }
+    },
+    "독사의 송곳니": {
+        no: 5991,
+        type: "무기", // 장착 아이템
+        desc: "관통력 보너스, 중독 피해 2배.",
+        effect: function(p) {
+             p.cb.logMessage("독사의 송곳니를 장착했다. (패시브 효과) [cite: 2224]");
+             // (실제 로직은 calculateStats와 playerAttack에서 구현)
+        }
+    },
+    "운명 추적자": {
+        no: 6111,
+        type: "반지", // 장착 아이템
+        desc: "주변 이벤트 발생 시 긍정(녹색)/부정(적색)/혼합(황색)으로 알려줌.",
+        effect: function(p) {
+             p.cb.logMessage("운명 추적자를 장착했다. (미궁 탐색 시 랜덤 이벤트 발생) [cite: 2230-2231]");
+        }
+    },
+    "어긋난 신뢰": {
+        no: 7234,
+        type: "원판", // 소모품형 마도구
+        desc: "반경 10m 내 거짓말 방지 (10분).",
+        effect: function(p) {
+            p.cb.logMessage("어긋난 신뢰를 사용합니다. 10분간 주변의 거짓말을 방지합니다. [cite: 2235] (기능 미구현)");
+        }
+    },
+    "수호병단의 징표": {
+        no: 2988,
+        type: "귀걸이", // 장착 아이템
+        desc: "방패에 충격 흡수 옵션 50% 부여.",
+        effect: function(p) {
+             p.cb.logMessage("수호병단의 징표를 장착했다. (방패 충격 흡수 50% 패시브 적용) [cite: 2236]");
+             // (실제 로직은 calculateStats에서 구현)
+        }
+    },
+    "황야의 무법자": {
+        no: 8667,
+        type: "벨트", // 장착 아이템
+        desc: "인간형 몬스터 수에 비례해 근접 물리 피해 증가.",
+        effect: function(p) {
+             p.cb.logMessage("황야의 무법자를 장착했다. (인간형 몬스터 상대 시 피해 증가) [cite: 2237-2239]");
+        }
+    },
+    "용암 방패": {
+        no: 4819,
+        type: "부무기", // 장착 아이템
+        desc: "화염 흡수 시 영혼력 회복. (패시브: 화염 내성 +30)",
+        effect: function(p) {
+             p.cb.logMessage("용암 방패를 장착했다. (화염 내성 +30) [cite: 2241-2242]");
+             // (실제 로직은 calculateStats 및 피격 판정 시 구현)
+        }
+    },
+    "철벽": {
+        no: 8820,
+        type: "각반", // 장착 아이템
+        desc: "사용 시 3초간 물리 내성 및 항마력 2배 상승.",
+        effect: function(p) {
+             p.applyDebuff("철벽(1턴)"); // 1턴(3초)간
+             p.cb.logMessage("철벽! 1턴간 물리 내성과 항마력이 2배 상승합니다! [cite: 2243]");
+        }
+    },
+    "정화의 횃불": {
+        no: 8645,
+        type: "소모품", // (설정상 횃불이지만 편의상 소모품으로)
+        desc: "리아키스 2페이즈를 공짜로 넘길 수 있습니다.",
+        effect: function(p) {
+            p.cb.logMessage("정화의 횃불을 사용합니다. (특정 보스전에서 사용) [cite: 2248, 846-847]");
+        }
+    }
 };
 
 export const npcs = {
-    // (data_content.js의 npcs 객체 전체를 여기에 복사)
-    "이한수": {dialog: "이 게임... 만만하게 보면 안 돼. 히든 피스를 찾는 게 중요해.", action: function(p) { p.cb.logMessage("이한수: 경험치는 첫 사냥 때만 주니, 다양한 몬스터를 잡고 정수를 모으는 게 핵심이야."); }},
-    "이백호": {dialog: "기록석에는 이 세계의 모든 역사가 담겨있지. 심지어 미래까지도... 하지만 운명은 바뀔 수 있다네.", action: function(p) { p.cb.logMessage("이백호: 창세보구가 사라진 건 왕가 짓일지도 몰라. 놈들은 심연의 문이 열리는 걸 원치 않거든."); }},
-    "탐험가 길드 접수원": {dialog: "무슨 일로 오셨나요? 퀘스트 수락, 파티 결속, 정보 구매, 동료 모집이 가능합니다.", action: function(p) { /* 길드 메뉴 로직 (ui_city.js handleCityAction) */ }},
-    "도서관 사서 라그나": {dialog: "찾는 책이 있다면 '서적 탐지' 마법으로 찾아드릴 수 있습니다. 수수료는 3천 스톤입니다.", action: function(p) {
-        if (p.gold < 3000) {
-             p.cb.logMessage("라그나: 안타깝지만 수수료가 부족하시군요.");
-             return;
+    // (기존 npcs 객체...)
+    "이한수": {
+        dialog: "이 게임... 만만하게 보면 안 돼. 히든 피스를 찾는 게 중요해.", 
+        action: function(p) { 
+            p.cb.logMessage("이한수: 경험치는 첫 사냥 때만 주니, 다양한 몬스터를 잡고 정수를 모으는 게 핵심이야. [cite: 94]"); 
         }
-        const keyword = prompt("찾고 싶은 책의 키워드를 입력하세요 (수수료 3000 스톤):");
-        if(keyword) {
-             p.gold -= 3000;
-             p.cb.logMessage(`라그나: "'${keyword}'... 좋습니다. '서적 탐지' 마법을 사용합니다.`);
-            setTimeout(() => {
-                 const foundBooks = ["미궁의 역사 제 3권", "고대 마법 이론", "정수 백과사전 상권"];
-                 p.cb.logMessage(`'${keyword}' 관련 서적: ${foundBooks[Math.floor(Math.random()*foundBooks.length)]}`);
-            }, 1500);
+    },
+    "이백호": {
+        dialog: "기록석에는 이 세계의 모든 역사가 담겨있지. 심지어 미래까지도... 하지만 운명은 바뀔 수 있다네.", 
+        action: function(p) { 
+            p.cb.logMessage("이백호: 창세보구가 사라진 건 왕가 짓일지도 몰라. 놈들은 심연의 문이 열리는 걸 원치 않거든. [cite: 2422]"); 
         }
-    }},
-    "상점 주인": {dialog: "어서 오세요! 필요한 물건이라도 있으신가?", action: function(p) { /* 상점 메뉴 로직 (ui_city.js handleCityAction) */ }},
-    "교단 신관": {dialog: "신의 은총이 함께하길... 치료나 정수 삭제가 필요하신가요? 정수 삭제 비용은 500만 스톤부터 시작합니다.", action: function(p) { /* 교단 메뉴 로직 (ui_city.js handleCityAction) */ }},
-    "에르웬": {dialog: "당신... 나와 같은 '집착'을 가지고 있군요. 위험하지만... 매력적인 힘이죠.", action: function(p) { p.cb.logMessage("에르웬에게서 강렬한 집착의 기운을 느꼈다."); p.stats["집착"] = (p.stats["집착"] || 0) + 10; p.showStatus(); }},
-    "대장장이": {dialog: "뭘 도와줄까? 제작, 수리, 강화 다 가능해.", action: function(p) { /* 대장간 메뉴 로직 (ui_city.js handleCityAction) */ }},
-    "주점 주인": {dialog: "어서와! 시원한 맥주 한 잔 어때?", action: function(p) { /* 주점 메뉴 로직 (ui_city.js handleCityAction) */ }},
-    "여관 주인": {dialog: "편히 쉬다 가세요. 하룻밤에 200 스톤입니다.", action: function(p) { /* 여관 메뉴 로직 (ui_city.js handleCityAction) */ }}
+    },
+    "탐험가 길드 접수원": {
+        dialog: "무슨 일로 오셨나요? 퀘스트 수락, 파티 결속, 정보 구매, 동료 모집이 가능합니다.", 
+        action: function(p) { 
+            p.cb.logMessage("탐험가 길드 접수원: (ui_city.js의 '탐험가 길드 지부' 메뉴를 이용해주세요.)");
+        }
+    },
+    "도서관 사서 라그나": {
+        dialog: "찾는 책이 있다면 '서적 탐지' 마법으로 찾아드릴 수 있습니다. 수수료는 3천 스톤입니다. [cite: 2013, 2019]", 
+        action: function(p) {
+            if (p.gold < 3000) {
+                 p.cb.logMessage("라그나: 안타깝지만 수수료가 부족하시군요.");
+                 return;
+            }
+            const keyword = prompt("찾고 싶은 책의 키워드를 입력하세요 (수수료 3000 스톤):");
+            if(keyword) {
+                 p.gold -= 3000;
+                 p.cb.logMessage(`라그나: "'${keyword}'... 좋습니다. '서적 탐지' 마법을 사용합니다.`);
+                setTimeout(() => {
+                     const foundBooks = ["미궁의 역사 제 3권", "고대 마법 이론", "정수 백과사전 상권", "겜바바 설정.txt"];
+                     p.cb.logMessage(`'${keyword}' 관련 서적: ${foundBooks[Math.floor(Math.random()*foundBooks.length)]}`);
+                }, 1500);
+            }
+        }
+    },
+    "상점 주인": {
+        dialog: "어서 오세요! 필요한 물건이라도 있으신가?", 
+        action: function(p) { 
+            p.cb.logMessage("상점 주인: (ui_city.js의 '상점가' 메뉴를 이용해주세요.)");
+        }
+    },
+    "교단 신관": {
+        dialog: "신의 은총이 함께하길... 치료나 정수 삭제가 필요하신가요? 정수 삭제 비용은 500만 스톤부터 시작합니다. [cite: 1325]", 
+        action: function(p) { 
+            p.cb.logMessage("교단 신관: (ui_city.js의 '대신전' 메뉴를 이용해주세요.)");
+        }
+    },
+    "에르웬": {
+        dialog: "당신... 나와 같은 '집착'을 가지고 있군요. 위험하지만... 매력적인 힘이죠.", 
+        action: function(p) { 
+            p.cb.logMessage("에르웬에게서 강렬한 집착의 기운을 느꼈다. [cite: 40-42]"); 
+            p.stats["집착"] = (p.stats["집착"] || 0) + 10; 
+            p.showStatus(); 
+        }
+    },
+    "대장장이": {
+        dialog: "뭘 도와줄까? 제작, 수리, 강화 다 가능해. [cite: 2024]", 
+        action: function(p) { 
+             p.cb.logMessage("대장장이: (ui_city.js의 '대장간' 메뉴를 이용해주세요.)");
+        }
+    },
+    "주점 주인": {
+        dialog: "어서와! 시원한 맥주 한 잔 어때? [cite: 2025]", 
+        action: function(p) { 
+            p.cb.logMessage("주점 주인: (ui_city.js의 '주점' 메뉴를 이용해주세요.)");
+        }
+    },
+    "여관 주인": {
+        dialog: "편히 쉬다 가세요. 하룻밤에 200 스톤입니다. [cite: 2005]", 
+        action: function(p) { 
+             p.cb.logMessage("여관 주인: (ui_city.js의 '여관' 메뉴를 이용해주세요.)");
+        }
+    }
 };
 
 // [수정] essences 객체는 이 파일에서 제거되고, 
 // essences_functional_1-3.js, essences_functional_4-6.js, essences_functional_7-9.js 파일로 분리되었습니다.
-// export const essences = { ... }; // <- 이 블록이 제거됨

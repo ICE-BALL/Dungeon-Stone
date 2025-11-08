@@ -19,15 +19,8 @@ const safeHpUpdate = (target, amount) => {
     
     // 피격 시 '진압', '수면', '석화' 등 해제
     if (amount < 0 && target.debuffs) {
-        if (target.debuffs.includes("진압(1턴)")) {
-            target.debuffs = target.debuffs.filter(d => d !== "진압(1턴)");
-        }
-        if (target.debuffs.includes("수면(1턴)")) {
-            target.debuffs = target.debuffs.filter(d => d !== "수면(1턴)");
-        }
-        if (target.debuffs.includes("석화(1턴)")) {
-            target.debuffs = target.debuffs.filter(d => d !== "석화(1턴)");
-        }
+        const debuffsToClear = ["진압(1턴)", "수면(1턴)", "석화(1턴)", "석화(2턴)", "속박(거품)", "속박(나무)", "속박(얼음)", "속박(무덤)", "속박(뱀)", "속박(늪)"];
+        target.debuffs = target.debuffs.filter(d => !debuffsToClear.includes(d));
     }
 };
 
@@ -57,6 +50,7 @@ const applyDebuff = (caster, target, debuffName) => {
 
 // --- 정수(Essences) 함수 구현부 ---
 export const essences = {
+  // --- 7등급 ---
   "시체골렘": {
     active: {
       effect: (caster, target) => {
@@ -241,6 +235,8 @@ export const essences = {
       }
     }
   },
+
+  // --- 8등급 ---
   "데스핀드": {
     active: {
       effect: (caster, target) => {
@@ -380,6 +376,8 @@ export const essences = {
       }
     ]
   },
+
+  // --- 9등급 ---
   "고블린": {
     active: {
       effect: (caster, target) => {
@@ -456,6 +454,8 @@ export const essences = {
       }
     }
   },
+
+  // --- 10등급 ---
   "어비스 스켈레톤": {
     active: {
       effect: (caster, target) => {
@@ -467,6 +467,8 @@ export const essences = {
       }
     }
   },
+
+  // --- 등급 없음 (Null) ---
   "벽두더지 여왕": {
     active: {
       effect: (caster, target) => {
