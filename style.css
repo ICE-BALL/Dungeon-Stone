@@ -551,3 +551,4 @@ button.disabled {
 .icon-essence:before { content: "E"; }
 .icon-spell:before { content: "S"; }
 .icon-party:before { content: "T"; }
+.icon-quest:before { content: "Q"; }

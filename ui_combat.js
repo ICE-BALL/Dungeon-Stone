@@ -1,22 +1,8 @@
 // 이 파일은 게임의 전투(Combat) UI 함수를 담당합니다.
-// (전투 상태, 전투 메뉴, 전투 중 스킬/인벤토리)
-// 기존 ui.js에서 분리됨
 // [수정] 몬스터 HP 바 추가
 // [수정] 파티원 HP 표시 추가
-// [수정] showCombatSkillsMenu: 모든 전투용 액티브 정수 스킬 표시 로직 수정
-// [오류 수정] 몬스터 처치 시 UI에서 '데이터 오류' 대신 '처치됨'을 표시하도록 로직 수정
-
-// --- 데이터 임포트 ---
-import {
-    races, // updateCombatMenu (종족 스킬)
-    essences, // showCombatSkillsMenu
-    magic // showCombatSkillsMenu
-} from './data_core.js';
-
-import {
-    items, // showInventoryInCombat
-    numbersItems // showInventoryInCombat
-} from './data_content.js';
+// [수정] showCombatSkillsMenu: 스킬 클릭 시 항상 showTargetSelection을 호출하도록 수정
+// [수정] showTargetSelection: 단일/광역/자신을 유저가 선택하도록 수정
 
 // --- 핵심 UI 유틸리티 임포트 ---
 import {
@@ -50,18 +36,16 @@ export function updateCombatStatus(player) {
     let combatStatusHtml = "<h4>몬스터</h4><ul class='monster-status-list'>";
     // 몬스터 상태 표시 (HP 바 포함)
     player.currentMonster.forEach((m, i) => {
-        // [오류 수정] 몬스터 객체 자체가 유효하지 않은 경우만 건너뛰고, HP를 기준으로 상태를 판단
-        if (!m) return; // 유효하지 않은 항목 (예: 이미 제거되었을 경우)
+        // [수정] 몬스터 객체 유효성 및 HP 기준으로 상태 판단
+        if (!m) return; 
 
         const maxHp = m.maxHp ?? m.hp ?? 1;
         const currentHp = m.hp ?? 0;
         const isDefeated = currentHp <= 0;
         
-        // 처치된 몬스터 표시
         if (isDefeated) {
              combatStatusHtml += `<li style="text-decoration: line-through; color: grey;">${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (처치됨)</li>`;
         } 
-        // 살아있는 몬스터 표시
         else { 
             combatStatusHtml += `
                 <li>
@@ -74,14 +58,13 @@ export function updateCombatStatus(player) {
     });
     combatStatusHtml += "</ul>";
 
-    // [신규] 파티원 상태 표시 (HP 바 포함)
+    // 파티원 상태 표시 (HP 바 포함)
     if (player.party && player.party.length > 0) {
-        combatStatusHtml += "<h4 style='margin-top: 15px;'>파티원</h4><ul class='party-status-list'>"; // CSS 스타일링용 클래스 추가
+        combatStatusHtml += "<h4 style='margin-top: 15px;'>파티원</h4><ul class='party-status-list'>";
         player.party.forEach((p, i) => {
             if (p) {
                 const maxHp = p.maxHp ?? 1;
                 const currentHp = p.hp ?? 0;
-                // 파티원 HP 바 추가 (CSS 클래스 부여)
                 combatStatusHtml += `
                     <li>
                         <b>${p.name || '동료'}</b> (${p.grade}등급/${p.trait})
@@ -99,7 +82,7 @@ export function updateCombatStatus(player) {
 
 
 /**
- * [수정] 전투 중 행동 메뉴 갱신 + 전투 BGM 재생
+ * 전투 중 행동 메뉴 갱신
  * @param {Player} player - 플레이어 객체
  */
 export function updateCombatMenu(player) {
@@ -112,16 +95,12 @@ export function updateCombatMenu(player) {
         return;
     }
 
-    // --- [BGM] 전투 BGM 재생 ---
-    if (player.inCombat && player.cb && player.cb.playMusic) {
-        player.cb.playMusic('bgm-combat');
-    }
-    // --- [BGM] 완료 ---
+    // BGM 재생은 Player 클래스의 startCombat에서 이미 호출됨
 
     combatMenu.innerHTML = ''; // 메뉴 초기화
-    menu.classList.add('hidden'); // 메인 메뉴 숨김
+    menu.classList.add('hidden');
     menu.style.display = 'none';
-    combatScreen.classList.remove('hidden'); // 전투 화면 표시
+    combatScreen.classList.remove('hidden');
     combatScreen.style.display = 'block';
 
     if (player.playerTurn && player.inCombat) {
@@ -131,12 +110,12 @@ export function updateCombatMenu(player) {
         // 공격 대상 선택 버튼 생성
         if (player.currentMonster && player.currentMonster.length > 0) {
             const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
-            if (livingMonsters.length > 1) { // 몬스터가 여러 마리일 경우
+            if (livingMonsters.length > 1) {
                 livingMonsters.forEach((monster, index) => {
-                     const originalIndex = player.currentMonster.findIndex(m => m === monster); // 원본 배열 인덱스 찾기
+                     const originalIndex = player.currentMonster.findIndex(m => m === monster);
                      addButton(combatMenu, `공격: ${monster.name} #${originalIndex} (기력 ${attackCost})`, () => player.playerAttack(originalIndex));
                 });
-            } else if (livingMonsters.length === 1) { // 몬스터가 한 마리일 경우
+            } else if (livingMonsters.length === 1) {
                  const originalIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
                 addButton(combatMenu, `공격: ${livingMonsters[0].name} (기력 ${attackCost})`, () => player.playerAttack(originalIndex));
             } else {
@@ -147,16 +126,15 @@ export function updateCombatMenu(player) {
         }
 
         // 종족 스킬 버튼
-        const racialSkill = races[player.race]?.racial_skill;
+        const racialSkill = player.cb.gameData.races[player.race]?.racial_skill;
         if (racialSkill) {
             addButton(combatMenu, `종족 스킬: ${racialSkill.name}`, () => {
-                if(typeof racialSkill.effect === 'function') {
+                const raceEffect = player.cb.gameData.races[player.race]?.racial_skill?.effect;
+                if (typeof raceEffect === 'function') {
                     logMessage(`종족 스킬 [${racialSkill.name}]을(를) 사용합니다.`);
-                    racialSkill.effect(player); // 스킬 효과 실행
-                    if (player.inCombat) { // 스킬 사용 후 전투가 계속되면 턴 종료
+                    raceEffect(player); // 스킬 효과 실행
+                    if (player.inCombat) {
                        player.endTurn();
-                    } else { // 스킬 사용으로 전투가 종료된 경우 (매우 드묾)
-                         if(player.cb && player.cb.updateMenu) player.cb.updateMenu(player); // 메인 메뉴 업데이트
                     }
                 } else {
                     logMessage("이 종족 스킬은 전투 중 사용할 수 없거나 효과가 정의되지 않았습니다.");
@@ -173,14 +151,13 @@ export function updateCombatMenu(player) {
         combatMenu.innerHTML = "<p>상대의 턴...</p>";
     }
 
-    // 전투 상태 UI 갱신 (항상 호출)
     if (player.inCombat) {
         updateCombatStatus(player);
     }
 }
 
 /**
- * 전투 중 스킬/마법 메뉴 표시
+ * [수정됨] 전투 중 스킬/마법 메뉴 표시
  * @param {Player} player - 플레이어 객체
  */
 export function showCombatSkillsMenu(player) {
@@ -189,16 +166,18 @@ export function showCombatSkillsMenu(player) {
 
     menu.innerHTML = '<h4>사용할 스킬/마법 선택:</h4>';
 
-    const availableSkills = [];
-    const livingMonsters = player.currentMonster?.filter(m => m && m.hp > 0) || [];
+    const magic = player.cb.gameData.magic;
+    const essences = player.cb.gameData.essences;
 
-    // 사용 가능한 마법 추가 (공격/디버프 계열만)
+    const availableSkills = [];
+
+    // 사용 가능한 마법 추가
     player.spells.forEach(spellName => {
         const spell = magic[spellName];
-        // 대상 지정이 필요하거나(effect 함수에 target 인자) 직접 데미지가 있는 경우
-        // 또는 대상 지정 없이 광역 피해를 주는 경우 (effect 함수만 있고 dmg 없는 광역기, 예: 냉기폭풍)
-        if (spell && (spell.dmg !== undefined || (spell.effect && spell.effect.toString().includes('target')) || (spell.effect && !spell.effect.toString().includes('target') && spell.type === 'magic' && spell.mp_cost > 0) )) {
+        if (spell) {
+            // [수정] 스킬의 *전체* 정보를 넘깁니다.
             availableSkills.push({
+                ...spell, // effect 함수 포함
                 name: spellName,
                 type: 'spell',
                 cost: spell.mp_cost || 0,
@@ -207,21 +186,25 @@ export function showCombatSkillsMenu(player) {
         }
     });
 
-    // 사용 가능한 정수 스킬 추가 (공격/디버프 계열만)
+    // 사용 가능한 정수 스킬 추가
     player.essence_skills.forEach(skillName => {
         let skillData = null;
         for (const key of player.essences) {
             const ess = essences[key];
-            if (ess && ess.active && ess.active.name === skillName) {
-                skillData = ess.active;
-                break;
+            if (ess && ess.active) {
+                const activeSkills = Array.isArray(ess.active) ? ess.active : [ess.active];
+                const foundSkill = activeSkills.find(s => s.name === skillName);
+                if (foundSkill) {
+                    skillData = foundSkill;
+                    break;
+                }
             }
         }
-        // 대상 지정이 필요하거나 직접 데미지가 있는 경우
-        // 또는 대상 지정 없이 광역 피해를 주는 경우 (effect 함수만 있고 dmg 없는 광역기, 예: 해일)
-        if (skillData && (skillData.dmg !== undefined || (skillData.effect && skillData.effect.toString().includes('target')) || (skillData.effect && !skillData.effect.toString().includes('target') && skillData.mp_cost > 0) )) {
+        
+        if (skillData) {
+            // [수정] 스킬의 *전체* 정보를 넘깁니다.
              availableSkills.push({
-                 name: skillName,
+                 ...skillData, // effect 함수 포함
                  type: 'essence',
                  cost: skillData.mp_cost || 0,
                  desc: `[정수] ${skillData.desc || "설명 없음"}`
@@ -229,77 +212,75 @@ export function showCombatSkillsMenu(player) {
         }
     });
 
-    // 사용 가능한 스킬이 없을 경우
     if (availableSkills.length === 0) {
         menu.innerHTML += '<p>사용 가능한 전투 스킬/마법이 없습니다.</p>';
     } else {
-        // 스킬 버튼 생성
         availableSkills.forEach(skill => {
             const btn = addButton(menu, `${skill.name} (MP ${skill.cost}) - ${skill.desc}`, () => {
                 if (player.mp < skill.cost) {
                     logMessage("MP가 부족합니다.");
                     return;
                 }
-                // 공격 대상 선택 필요 여부 확인 (대상이 필요하거나, 몬스터가 여러 마리인 경우)
-                // 광역기는 대상 선택 없이 바로 사용
-                const skillInfo = skill.type === 'spell' ? magic[skill.name] : essences[player.essences.find(eKey => essences[eKey]?.active?.name === skill.name)]?.active;
-                const requiresTarget = (skillInfo?.dmg !== undefined || (skillInfo?.effect && skillInfo.effect.toString().includes('target')));
-
-                if (requiresTarget && livingMonsters.length > 1) {
-                    showTargetSelection(player, skill); // 대상 선택 함수 호출
-                } else if (requiresTarget && livingMonsters.length === 1) { // 대상이 하나면 바로 사용
-                    const targetIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
-                    if (skill.type === 'spell') {
-                        player.playerSpell(skill.name, targetIndex);
-                    } else if (skill.type === 'essence') {
-                        player.playerEssenceSkill(skill.name, targetIndex);
-                    }
-                } else if (!requiresTarget && livingMonsters.length > 0) { // 광역기 등 대상 지정 불필요 스킬
-                     // 광역기의 경우 targetIndex를 -1 또는 null 로 전달하여 구분 가능하도록 함 (Player 클래스 수정 필요)
-                     // 여기서는 임시로 첫 번째 대상을 타겟으로 넘기거나 null을 넘김
-                     const targetIndex = livingMonsters.length > 0 ? player.currentMonster.findIndex(m => m === livingMonsters[0]) : -1; // 임시: 첫 몬스터 인덱스 또는 -1
-                    if (skill.type === 'spell') {
-                        player.playerSpell(skill.name, targetIndex); // Player 클래스에서 targetIndex가 -1일 때 광역 처리 필요
-                    } else if (skill.type === 'essence') {
-                        player.playerEssenceSkill(skill.name, targetIndex); // Player 클래스에서 targetIndex가 -1일 때 광역 처리 필요
-                    }
-                } else {
-                     logMessage("스킬을 사용할 대상이 없습니다.");
-                     updateCombatMenu(player); // 행동 메뉴로 복귀
-                }
+                // [수정] 클릭 시 대상 선택 메뉴를 항상 호출
+                showTargetSelection(player, skill);
             });
-            btn.disabled = player.mp < skill.cost; // MP 부족 시 비활성화
+            btn.disabled = player.mp < skill.cost;
         });
     }
 
-    addButton(menu, "뒤로 (행동 메뉴)", () => updateCombatMenu(player)); // 이전 메뉴로 돌아가기
+    addButton(menu, "뒤로 (행동 메뉴)", () => updateCombatMenu(player));
 }
 
 /**
- * 스킬/마법 대상 선택 메뉴 표시 (이 파일 내부에서만 사용)
+ * [신규/수정] 스킬/마법 대상 선택 메뉴
  * @param {Player} player - 플레이어 객체
- * @param {object} skill - 선택된 스킬 정보 ({name, type, cost, desc})
+ * @param {object} skill - 선택된 스킬 *전체* 정보 객체
  */
 function showTargetSelection(player, skill) {
     const menu = document.getElementById('combat-menu');
-    if (!menu || !player.inCombat || !player.playerTurn || !player.currentMonster || player.currentMonster.length <= 1) return;
+    if (!menu || !player.inCombat || !player.playerTurn || !player.currentMonster) return;
 
     menu.innerHTML = `<h4>[${skill.name}] 대상 선택:</h4>`;
     const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
+    const skillDesc = skill.desc.toLowerCase();
 
-    // 살아있는 몬스터 대상 버튼 생성
+    // 1. 적 대상 (단일)
     livingMonsters.forEach((monster) => {
          const originalIndex = player.currentMonster.findIndex(m => m === monster);
-         addButton(menu, `${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => {
-             if (skill.type === 'spell') {
-                 player.playerSpell(skill.name, originalIndex);
-             } else if (skill.type === 'essence') {
-                 player.playerEssenceSkill(skill.name, originalIndex);
-             }
+         addButton(menu, `적: ${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => {
+             if (skill.type === 'spell') player.playerSpell(skill.name, originalIndex);
+             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, originalIndex);
          });
     });
 
-    addButton(menu, "뒤로 (스킬 선택)", () => showCombatSkillsMenu(player)); // 이전 메뉴로 돌아가기
+    // 2. 광역(AOE) 대상
+    // 설명에 "광역", "모든 적", "범위 내" 등이 포함된 경우
+    if (skillDesc.includes("광역") || skillDesc.includes("모든 적") || skillDesc.includes("범위 내")) {
+         addButton(menu, `모든 적 (광역)`, () => {
+             if (skill.type === 'spell') player.playerSpell(skill.name, -1); // -1: 광역
+             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, -1);
+         });
+    }
+
+    // 3. 자신 대상
+    // 설명에 "자신", "시전자", "아군" 등이 포함된 경우
+    if (skillDesc.includes("자신") || skillDesc.includes("시전자") || skillDesc.includes("아군")) {
+         addButton(menu, `자신`, () => {
+             if (skill.type === 'spell') player.playerSpell(skill.name, -2); // -2: 자신
+             else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, -2);
+         });
+    }
+    
+    // 4. (임시) 대상이 불분명한 경우 기본값 (첫 번째 적)
+    if (livingMonsters.length > 0 && menu.children.length === 1) { // 뒤로가기 버튼만 있는 경우
+         const firstTargetIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
+         logMessage("대상이 불분명하여 첫 번째 적을 대상으로 자동 선택합니다.");
+         if (skill.type === 'spell') player.playerSpell(skill.name, firstTargetIndex);
+         else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, firstTargetIndex);
+         return;
+    }
+
+    addButton(menu, "뒤로 (스킬 선택)", () => showCombatSkillsMenu(player));
 }
 
 
@@ -317,45 +298,41 @@ export function showInventoryInCombat(player) {
          return;
      }
 
-    inventoryListDiv.innerHTML = '<h4>사용할 아이템 선택:</h4>'; // 모달 내용 초기화
+    inventoryListDiv.innerHTML = '<h4>사용할 아이템 선택:</h4>';
 
-    // 인벤토리 아이템 수량 계산
     const itemCounts = player.inventory.reduce((acc, item) => {
         acc[item] = (acc[item] || 0) + 1;
         return acc;
     }, {});
 
-    const allConsumableItems = {...items, ...numbersItems}; // 소비 아이템 데이터 통합
+    const allConsumableItems = {...player.cb.gameData.items, ...player.cb.gameData.numbersItems};
     let foundConsumable = false;
 
-    // 소비 가능한 아이템 버튼 생성
     Object.entries(itemCounts).forEach(([itemName, count]) => {
         const itemData = allConsumableItems[itemName];
-        // 소비 아이템만 (효과 함수가 있고, 타입이 없거나 '소모품'인 경우)
-        if (itemData && typeof itemData.effect === 'function' && (!itemData.type || itemData.type === '소모품')) {
+        // [수정] effect가 JSON에 없으므로, gameData.items에서 원본 데이터의 effect 함수 존재 여부 확인
+        const usableItemData = player.cb.gameData.items[itemName] || player.cb.gameData.numbersItems[itemName]; 
+        
+        if (usableItemData && typeof usableItemData.effect === 'function' && (!usableItemData.type || usableItemData.type === '소모품')) {
              foundConsumable = true;
              const btn = document.createElement('button');
-            btn.textContent = `사용: ${itemName} (${count}개) - ${itemData.desc}`;
+            btn.textContent = `사용: ${itemName} (${count}개) - ${usableItemData.desc}`;
             btn.onclick = () => {
-                hideModal('#inventory-screen'); // 아이템 사용 전 모달 닫기
-                player.useItem(itemName); // 아이템 사용 로직 호출 (classes.js)
-                 if (player.inCombat) { // 아이템 사용 후 전투가 계속되면 턴 종료
+                hideModal('#inventory-screen');
+                player.useItem(itemName); // useItem이 showStatus 호출
+                 if (player.inCombat) {
                     player.endTurn();
-                 } else { // 아이템 사용으로 전투가 종료된 경우
-                     if(player.cb && player.cb.updateMenu) player.cb.updateMenu(player); // 메인 메뉴 업데이트
                  }
             };
             inventoryListDiv.appendChild(btn);
         }
     });
 
-     // 사용 가능한 아이템이 없을 경우 메시지 표시
      if (!foundConsumable) {
          inventoryListDiv.innerHTML += "<p>전투 중에 사용할 수 있는 아이템이 없습니다.</p>";
      }
 
-    showModal('#inventory-screen'); // 모달 표시
-    // 모달 닫기 버튼 이벤트 설정
+    showModal('#inventory-screen');
     backButton.onclick = () => {
         hideModal('#inventory-screen');
     };

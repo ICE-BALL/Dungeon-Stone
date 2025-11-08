@@ -1,0 +1,142 @@
+{
+  "GUILD_001": {
+    "id": "GUILD_001",
+    "title": "1층 고블린 소탕",
+    "description": "수정동굴 북쪽 구역의 고블린들이 탐험가들에게 위협이 되고 있습니다. 고블린 10마리를 처치하여 안전을 확보해 주십시오.",
+    "type": "GUILD",
+    "giver": "탐험가 길드 접수원",
+    "objectives": [
+      {
+        "type": "KILL",
+        "target": "고블린",
+        "requiredCount": 10,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 100,
+      "gold": 500,
+      "items": [
+        { "item": "포션", "count": 3 }
+      ],
+      "reputation": 5
+    },
+    "startCondition": {
+      "level": 1
+    },
+    "endCondition": {
+      "npc": "탐험가 길드 접수원"
+    }
+  },
+  "GUILD_002": {
+    "id": "GUILD_002",
+    "title": "대장간의 재료 수급",
+    "description": "대장간에서 장비 제작에 필요한 '강철 조각'이 부족하다고 합니다. 고블린이나 노움에게서 강철 조각 5개를 모아 대장장이에게 가져다주세요.",
+    "type": "GUILD",
+    "giver": "탐험가 길드 접수원",
+    "objectives": [
+      {
+        "type": "COLLECT",
+        "target": "강철 조각",
+        "requiredCount": 5,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 75,
+      "gold": 300,
+      "items": [],
+      "reputation": 3
+    },
+    "startCondition": {
+      "level": 1
+    },
+    "endCondition": {
+      "npc": "대장장이"
+    }
+  },
+  "LIBRARIAN_001": {
+    "id": "LIBRARIAN_001",
+    "title": "사서의 부탁",
+    "description": "라비기온 중앙 도서관의 사서 라그나가 찾는 책이 있습니다. 미궁 어딘가에서 '고대 마법 이론' 서적을 찾아 그에게 가져다주십시오.",
+    "type": "NPC",
+    "giver": "도서관 사서 라그나",
+    "objectives": [
+      {
+        "type": "COLLECT",
+        "target": "고대 마법 이론",
+        "requiredCount": 1,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 200,
+      "gold": 1000,
+      "items": [
+        { "item": "마나 포션", "count": 5 }
+      ],
+      "reputation": 5
+    },
+    "startCondition": {
+      "level": 3
+    },
+    "endCondition": {
+      "npc": "도서관 사서 라그나"
+    }
+  },
+  "MAIN_001": {
+    "id": "MAIN_001",
+    "title": "미궁 입문",
+    "description": "탐험가로서의 첫걸음을 내딛으십시오. 탐험가 길드에 방문하여 '결속' 마법에 대해 알아보고, 1층 미궁에 진입하십시오.",
+    "type": "MAIN",
+    "giver": "SYSTEM",
+    "objectives": [
+      {
+        "type": "TALK",
+        "target": "탐험가 길드 접수원",
+        "requiredCount": 1,
+        "currentCount": 0
+      },
+      {
+        "type": "REACH",
+        "target": "1층",
+        "requiredCount": 1,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 50,
+      "gold": 200,
+      "items": [
+        { "item": "식량", "count": 2 }
+      ]
+    },
+    "startCondition": {
+      "level": 1
+    },
+    "endCondition": null
+  },
+  "HIDDEN_001": {
+    "id": "HIDDEN_001",
+    "title": "대현자의 기념비",
+    "description": "1층 중앙, 암흑지대에서 발견된 거대한 기념비... 이 미궁의 근원에 대한 단서가 숨겨져 있을지도 모릅니다.",
+    "type": "HIDDEN",
+    "giver": "SYSTEM",
+    "objectives": [
+      {
+        "type": "REACH",
+        "target": "1층 중앙 기념비",
+        "requiredCount": 1,
+        "currentCount": 0
+      }
+    ],
+    "rewards": {
+      "exp": 150,
+      "reputation": 10
+    },
+    "startCondition": {
+      "level": 1
+    },
+    "endCondition": null
+  }
+}
