@@ -4,6 +4,7 @@
 // [AUTO-FIX] static_content.json 로딩 오류를 해결하기 위해 loader.js 변경 사항을 반영 (L231-L241)
 // [AUTO-FIX] 확장 계획에 따라 showRiftEntryModal, showEssencePartyChoice 콜백 시그니처 수정
 // [리팩토링] Player 클래스를 3개 파일(core, combat, world)에서 임포트하고 프로토타입에 병합(Mixin)
+// [BGM 버그 수정] playMusic/stopCurrentMusic을 async/await 및 Promise 기반으로 수정하여 오디오 겹침 현상 해결
 
 // 1. 클래스 및 데이터 로더 임포트
 // [수정] class_player.js를 3개의 파일(core, combat, world)로 분리하여 임포트
@@ -138,7 +139,8 @@ const musicManager = {
         console.log("Music Manager Initialized", this.audioElements);
     },
 
-    playMusic: function(trackId) {
+    // [BGM 버그 수정] async/await 추가
+    playMusic: async function(trackId) {
         if (!this.audioElements[trackId]) {
             console.error(`Music track "${trackId}" not found.`);
             return;
@@ -146,7 +148,10 @@ const musicManager = {
         if (this.currentTrack === trackId && !this.audioElements[trackId].paused) {
             return;
         }
-        this.stopCurrentMusic();
+        
+        // [BGM 버그 수정] stopCurrentMusic이 완료되기를 기다림
+        await this.stopCurrentMusic();
+        
         const track = this.audioElements[trackId];
         track.currentTime = 0;
         track.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
@@ -163,26 +168,34 @@ const musicManager = {
         }
     },
 
+    // [BGM 버그 수정] Promise를 반환하도록 수정
     stopCurrentMusic: function() {
-        if (this.currentTrack && this.audioElements[this.currentTrack]) {
-            const track = this.audioElements[this.currentTrack];
-            if (this.fadeInterval) clearInterval(this.fadeInterval);
-            this.fadeInterval = setInterval(() => {
-                if (track.volume > 0.05) {
-                    track.volume = Math.max(0, track.volume - 0.1);
-                } else {
-                    clearInterval(this.fadeInterval);
-                    this.fadeInterval = null;
-                    track.pause();
-                    track.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
-                    this.currentTrack = null;
+        return new Promise((resolve) => {
+            if (this.currentTrack && this.audioElements[this.currentTrack]) {
+                const track = this.audioElements[this.currentTrack];
+                if (this.fadeInterval) clearInterval(this.fadeInterval);
+                
+                this.fadeInterval = setInterval(() => {
+                    if (track.volume > 0.05) {
+                        track.volume = Math.max(0, track.volume - 0.1);
+                    } else {
+                        clearInterval(this.fadeInterval);
+                        this.fadeInterval = null;
+                        track.pause();
+                        track.volume = 0.5; /* DEFAULT: 0.5 (검토 필요) */
+                        this.currentTrack = null;
+                        resolve(); // [BGM 버그 수정] 페이드아웃 완료 시 Promise 해결
+                    }
+                }, 50 /* DEFAULT: 50 (검토 필요) */);
+            }
+            else {
+                if (this.fadeInterval) {
+                     clearInterval(this.fadeInterval);
+                     this.fadeInterval = null;
                 }
-            }, 50 /* DEFAULT: 50 (검토 필요) */);
-        }
-        else if (this.fadeInterval) {
-             clearInterval(this.fadeInterval);
-             this.fadeInterval = null;
-        }
+                resolve(); // [BGM 버그 수정] 중지할 트랙이 없으면 즉시 해결
+            }
+        });
     },
 
     playSfx: function(sfxId) {
@@ -250,6 +263,9 @@ async function initGame() {
 
     // 3. 음악 관리자 초기화
     musicManager.init();
+
+    // [BGM 수정] 종족 선택 BGM (bgm-title) 즉시 재생
+    musicManager.playMusic('bgm-title');
 
     // 4. Player 객체가 사용할 콜백 객체 생성
     const gameCallbacks = {
@@ -332,7 +348,7 @@ async function initGame() {
 function unlockAudioContext() {
     console.log("Attempting to unlock audio context after user interaction...");
     let unlocked = false;
-    /* AUTO-FIX: added guard for musicManager.audioElements to avoid TypeError when undefined (Rule 8) */
+    /* AUTO-FIX: added guard for musicManager.audioElements to avoid TypeError when undefined (Rule 8); review required */
     Object.values(musicManager?.audioElements || {}).forEach(audio => {
         if (!audio) return; // [AUTO-FIX] 추가 방어
         audio.volume = 0.01; /* DEFAULT: 0.01 (검토 필요) */
