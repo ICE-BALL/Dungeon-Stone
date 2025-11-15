@@ -1,7 +1,11 @@
+// 파일: ui_main.js
 // 이 파일은 게임의 메인 흐름(비전투) UI 함수를 담당합니다.
 // (종족 선택, 도시, 탐험, 메인 모달창)
 // [수정] showPortalChoice: 8층 버그 수정을 위해 '현재 층 머무르기' 옵션 추가
 // [수정] updateMenu (Rift): 몬스터 없는 스테이지('녹색 탄광 3챕터' 등) 진행 불가 버그 수정
+// [수정] updateMenu (Labyrinth): 8층 탐색 불가 오류 수정 (8층 전용 균열 입장 메뉴 추가)
+// [수정] (v4) updateMenu (Labyrinth): 종족 스킬 사용 시 화면 흔들림 및 텍스트 박스 연출 추가
+// [수정] (v5) updateMenu (Rift): 'A or B' 보스 및 몬스터/보스 동시 출현 로직 버그 수정
 
 // --- 핵심 UI 유틸리티 임포트 ---
 import {
@@ -117,12 +121,41 @@ export function updateMenu(player) {
         const exploreButton = addButton(menu, `균열 탐사: ${stage.name} 진입`, () => {
             logMessage(`[${stage.name}]으로 진입합니다...`);
             
-            const monstersToCombat = stage.boss || stage.monsters;
-            
-            if (monstersToCombat && monstersToCombat.length > 0) {
-                player.startCombat(monstersToCombat);
+            // [BUG FIX] (v5) "A or B" 보스 및 몬스터/보스 동시 출현 로직 수정
+            let monstersToSpawn = [];
+
+            // 1. 일반 몬스터 추가 (예: 녹색 탄광 4챕터의 '슬라임')
+            if (stage.monsters && stage.monsters.length > 0) {
+                monstersToSpawn = monstersToSpawn.concat(stage.monsters);
+            }
+
+            // 2. 보스 몬스터 추가 (및 "or" 문자열 처리)
+            if (stage.boss) {
+                let chosenBoss = null;
+                // "A or B" 형태의 문자열 처리 (예: 핏빛성채 5챕터)
+                if (typeof stage.boss === 'string' && stage.boss.includes(" or ")) {
+                    const options = stage.boss.split(" or ");
+                    chosenBoss = options[Math.floor(Math.random() * options.length)];
+                    logMessage(`균열이 불안정합니다... [${chosenBoss}] (이)가 나타났습니다!`);
+                } else if (Array.isArray(stage.boss)) {
+                    // 보스가 이미 배열인 경우 (예: ["보스1", "보스2"])
+                    monstersToSpawn = monstersToSpawn.concat(stage.boss);
+                } else {
+                    // 보스가 단일 문자열인 경우 (예: "킹 슬라임")
+                    chosenBoss = stage.boss;
+                }
+                
+                if (chosenBoss) {
+                    monstersToSpawn.push(chosenBoss);
+                }
+            }
+            // [BUG FIX] 수정 끝
+
+            // 3. 최종 스폰 목록으로 전투 시작
+            if (monstersToSpawn.length > 0) {
+                player.startCombat(monstersToSpawn);
             } else {
-                // [버그 수정] 몬스터가 없는 스테이지(예: 녹색탄광 3챕터)에서 진행이 막히는 오류 수정
+                // 몬스터가 없는 스테이지 (예: 녹색탄광 3챕터) 처리
                 logMessage("이 구역에는 몬스터가 없는 것 같습니다... 다음 단계로 이동합니다.");
                 player.currentRiftStage++; // [수정] 스테이지 수동 증가
                 updateMenu(player); // [수정] 메뉴 즉시 갱신
@@ -162,134 +195,171 @@ export function updateMenu(player) {
         player.timeRemaining = player.timeRemaining !== undefined && player.timeRemaining > 0 ? player.timeRemaining : layer.time_limit;
         logMessage(`현재 위치: ${player.currentLayer}층 - ${layer.name} | 남은 시간: ${player.timeRemaining}시간`);
 
-        // 탐색 버튼
-        const exploreButton = addButton(menu, "탐색하기", () => {
-            player.explorationCount++;
-            player.fatigue += Math.max(1, 10 - Math.floor((player.stats["지구력"] || 10) / 2));
-            player.timeRemaining--; 
-            if(player.fatigue > 100) player.fatigue = 100;
-
-            if (player.explorationCount % 24 === 0) {
-                player.daysInLabyrinth++;
-                player.sleepCount = 0; 
-                logMessage("하루가 지났다...");
-            }
-            if (player.timeRemaining <= 0) {
-                logMessage("시간이 다 되어 강제로 도시로 귀환합니다.");
-                player.position = "라비기온 (7-13구역)";
-                player.timeRemaining = 0; 
-                updateMenu(player); 
-                return;
-            }
-
+        // [신규] 8층 (여명의 땅) 특별 로직
+        if (player.currentLayer === 8 || player.currentLayer === "8") {
+            logMessage("이곳은 안전지대입니다. 탐색 대신 층계의 균열에 도전할 수 있습니다.");
+            
             /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
-            const riftData = player.cb.gameData?.rifts?.[player.currentLayer];
-            /* AUTO-FIX: [Plan 4] Changed logic to call random rift modal popup */
-            if (riftData && riftData.length > 0 && Math.random() < 0.05) {
-                logMessage("땅이 흔들리며 기이한 균열이 나타났다!");
-                const randomRift = riftData[Math.floor(Math.random() * riftData.length)];
-                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
-                player.cb?.showRiftEntryModal(player, randomRift); // 새 모달 함수 호출
-                return; 
-            }
-
-            /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
-            const navigator = player.party?.find(m => m.trait === "인도자");
-            if (navigator && Math.random() < 0.2) {
-                logMessage(`[파티 보너스] 인도자 ${navigator.name}이(가) 다음 층으로 향하는 지름길을 발견했습니다!`);
-                const nextLayer = parseInt(player.currentLayer) + 1;
-                /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
-                if (player.cb.gameData?.layers?.[nextLayer]) {
-                    showPortalChoice(player, nextLayer);
-                } else {
-                    logMessage("...하지만 더 이상 나아갈 길이 없는 것 같습니다.");
-                }
-                return; 
-            }
-
-            const rand = Math.random();
-            let encounteredMonster = null;
-            /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
-            if (rand < 0.05 && player.cb.gameData?.monsters?.["균열 수호자"]) { 
-                 logMessage("땅이 흔들리며 균열이 나타났다!");
-                 encounteredMonster = "균열 수호자";
-            } else if (rand < 0.6) { 
-                logMessage("몬스터와 조우했다!");
-                 /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
-                 encounteredMonster = player.cb?.getRandomMonsters(player.currentLayer); // 콜백 사용
-            } else { 
-                 /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
-                 if (layer?.events && layer.events.length > 0) {
-                     const event = layer.events[Math.floor(Math.random() * layer.events.length)];
-
-                     if (event.effect?.type === "portal") {
-                         // [수정] 로컬 함수 호출
-                         showPortalChoice(player, event.effect.targetLayer);
-                     }
-                     else {
-                         logMessage(event.desc);
-                         if (event.effect) {
-                             player.handleEventEffect(event.effect); 
-                         }
-                     }
-                 } else {
-                     logMessage("아무 일도 일어나지 않았다.");
-                 }
-            }
-
-            if (encounteredMonster) {
-                 player.startCombat(encounteredMonster); 
-            }
-
-            player.showStatus();
-        });
-        /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
-        if (player.inCombat || player.isWaitingForEssenceChoice) exploreButton.disabled = true;
-
-        // 잠자기 버튼
-        const sleepButton = addButton(menu, `잠자기 (피로/체력/MP/기력 회복) [${player.sleepCount}/3]`, () => {
-            if (player.sleepCount >= 3) {
-                logMessage("오늘은 이미 너무 많이 잤다.");
-                return;
-            }
-            player.sleepCount++;
-            if (player.party.length > 0) { 
-                player.fatigue = 0;
-                player.hp = player.maxHp;
-                player.mp = player.maxMp;
-                player.stamina = player.maxStamina;
-                player.party.forEach(member => {
-                    member.hp = member.maxHp;
-                    member.mp = member.maxMp;
+            const riftData = player.cb.gameData?.rifts?.[player.currentLayer]; // rifts["8"]
+            
+            if (riftData && riftData.length > 0) {
+                // 8층은 균열이 여러 개일 수 있으므로 모두 표시
+                riftData.forEach(rift => {
+                    const riftButton = addButton(menu, `균열 입장: [${rift.name}]`, () => {
+                        logMessage(`[${rift.name}] 균열 입구를 발견했습니다.`);
+                        /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                        player.cb?.showRiftEntryModal(player, rift); // 균열 입장 모달 호출
+                    });
+                    if (player.inCombat || player.isWaitingForEssenceChoice) riftButton.disabled = true;
                 });
-                logMessage(`${player.party[0].name}이(가) 보초를 서는 동안 안전하게 잠을 자 모든 것을 회복했다.`);
-            } else { 
-                logMessage("동료가 없어 불안한 마음에 잠을 청한다...");
-                if (Math.random() < 0.4) { 
-                    logMessage("잠든 사이 몬스터의 습격을 받았다!");
+            } else {
+                logMessage("오류: 8층 균열 데이터를 찾을 수 없습니다. (world_data.json 확인 필요)");
+            }
+            // 8층은 안전지대이므로 "탐색하기" 및 "잠자기" 버튼을 생성하지 않습니다.
+
+        } 
+        // [신규] 8층이 아닌 경우 (기존 탐색 로직)
+        else {
+            
+            // 탐색 버튼 (기존 로직)
+            const exploreButton = addButton(menu, "탐색하기", () => {
+                player.explorationCount++;
+                player.fatigue += Math.max(1, 10 - Math.floor((player.stats["지구력"] || 10) / 2));
+                player.timeRemaining--; 
+                if(player.fatigue > 100) player.fatigue = 100;
+
+                if (player.explorationCount % 24 === 0) {
+                    player.daysInLabyrinth++;
+                    player.sleepCount = 0; 
+                    logMessage("하루가 지났다...");
+                }
+                if (player.timeRemaining <= 0) {
+                    logMessage("시간이 다 되어 강제로 도시로 귀환합니다.");
+                    player.position = "라비기온 (7-13구역)";
+                    player.timeRemaining = 0; 
+                    updateMenu(player); 
+                    return;
+                }
+
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                const riftData = player.cb.gameData?.rifts?.[player.currentLayer];
+                /* AUTO-FIX: [Plan 4] Changed logic to call random rift modal popup */
+                if (riftData && riftData.length > 0 && Math.random() < 0.05) { // 8층이 아니므로 5% 확률 유지
+                    logMessage("땅이 흔들리며 기이한 균열이 나타났다!");
+                    const randomRift = riftData[Math.floor(Math.random() * riftData.length)];
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                    player.cb?.showRiftEntryModal(player, randomRift); // 새 모달 함수 호출
+                    return; 
+                }
+
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                const navigator = player.party?.find(m => m.trait === "인도자");
+                if (navigator && Math.random() < 0.2) {
+                    logMessage(`[파티 보너스] 인도자 ${navigator.name}이(가) 다음 층으로 향하는 지름길을 발견했습니다!`);
+                    const nextLayer = parseInt(player.currentLayer) + 1;
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                    if (player.cb.gameData?.layers?.[nextLayer]) {
+                        showPortalChoice(player, nextLayer);
+                    } else {
+                        logMessage("...하지만 더 이상 나아갈 길이 없는 것 같습니다.");
+                    }
+                    return; 
+                }
+
+                const rand = Math.random();
+                let encounteredMonster = null;
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                if (rand < 0.05 && player.cb.gameData?.monsters?.["균열 수호자"]) { 
+                     logMessage("땅이 흔들리며 균열이 나타났다!");
+                     encounteredMonster = "균열 수호자";
+                } else if (rand < 0.6) { 
+                    logMessage("몬스터와 조우했다!");
                      /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
-                     const monsterToAttack = player.cb?.randomMonsterFromLayer(player.currentLayer); // 콜백 사용
-                     if (monsterToAttack) player.startCombat(monsterToAttack);
-                } else {
+                     encounteredMonster = player.cb?.getRandomMonsters(player.currentLayer); // 콜백 사용
+                } else { 
+                     /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
+                     if (layer?.events && layer.events.length > 0) {
+                         const event = layer.events[Math.floor(Math.random() * layer.events.length)];
+
+                         if (event.effect?.type === "portal") {
+                             // [수정] 로컬 함수 호출
+                             showPortalChoice(player, event.effect.targetLayer);
+                         }
+                         else {
+                             logMessage(event.desc);
+                             if (event.effect) {
+                                 player.handleEventEffect(event.effect); 
+                             }
+                         }
+                     } else {
+                         logMessage("아무 일도 일어나지 않았다.");
+                     }
+                }
+
+                if (encounteredMonster) {
+                     player.startCombat(encounteredMonster); 
+                }
+
+                player.showStatus();
+            });
+            /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+            if (player.inCombat || player.isWaitingForEssenceChoice) exploreButton.disabled = true;
+
+            // 잠자기 버튼 (기존 로직) - 8층이 아닐 때만
+            const sleepButton = addButton(menu, `잠자기 (피로/체력/MP/기력 회복) [${player.sleepCount}/3]`, () => {
+                if (player.sleepCount >= 3) {
+                    logMessage("오늘은 이미 너무 많이 잤다.");
+                    return;
+                }
+                player.sleepCount++;
+                if (player.party.length > 0) { 
                     player.fatigue = 0;
                     player.hp = player.maxHp;
                     player.mp = player.maxMp;
                     player.stamina = player.maxStamina;
-                    logMessage("다행히 아무 일도 일어나지 않았다. 모든 것을 회복했다.");
+                    player.party.forEach(member => {
+                        member.hp = member.maxHp;
+                        member.mp = member.maxMp;
+                    });
+                    logMessage(`${player.party[0].name}이(가) 보초를 서는 동안 안전하게 잠을 자 모든 것을 회복했다.`);
+                } else { 
+                    logMessage("동료가 없어 불안한 마음에 잠을 청한다...");
+                    if (Math.random() < 0.4) { 
+                        logMessage("잠든 사이 몬스터의 습격을 받았다!");
+                         /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                         const monsterToAttack = player.cb?.randomMonsterFromLayer(player.currentLayer); // 콜백 사용
+                         if (monsterToAttack) player.startCombat(monsterToAttack);
+                    } else {
+                        player.fatigue = 0;
+                        player.hp = player.maxHp;
+                        player.mp = player.maxMp;
+                        player.stamina = player.maxStamina;
+                        logMessage("다행히 아무 일도 일어나지 않았다. 모든 것을 회복했다.");
+                    }
                 }
-            }
-            player.showStatus();
-            updateMenu(player); 
-        });
-        /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
-        if (player.sleepCount >= 3 || player.inCombat || player.isWaitingForEssenceChoice) sleepButton.disabled = true;
+                player.showStatus();
+                updateMenu(player); 
+            });
+            /* AUTO-FIX: [Optimization] Disable button during combat AND if waiting for essence choice */
+            if (player.sleepCount >= 3 || player.inCombat || player.isWaitingForEssenceChoice) sleepButton.disabled = true;
+        }
 
-        // 종족 스킬 버튼
+
+        // 종족 스킬 버튼 (8층 포함 공통)
         /* AUTO-FIX: added optional chaining ?. for safety (Rule 4); review required */
         const racialSkill = player.cb.gameData?.races?.[player.race]?.racial_skill; 
         if (racialSkill) {
             const racialSkillButton = addButton(menu, `종족 스킬: ${racialSkill.name}`, () => {
+                
+                // [신규] (v4) 스킬 연출 (화면 흔들림 + 텍스트 박스)
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                player.cb?.showScreenEffect?.('shake');
+                /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                // [수정] racial_skill.name을 사용
+                player.cb?.logMessage?.(`[${racialSkill.name}]!`, 'log-skill-player');
+                
                 if(typeof racialSkill.effect === 'function') {
+                    // [수정] (v4) 텍스트 박스 출력 후 효과 설명 로그 표시
                     logMessage(`종족 스킬 [${racialSkill.name}]을(를) 사용합니다: ${racialSkill.desc}`);
                     racialSkill.effect(player);
                     player.showStatus();
@@ -301,7 +371,7 @@ export function updateMenu(player) {
             if (player.inCombat || player.isWaitingForEssenceChoice) racialSkillButton.disabled = true;
         }
 
-        // 도시 귀환 버튼
+        // 도시 귀환 버튼 (8층 포함 공통)
         const returnButton = addButton(menu, "도시로 귀환", () => {
             player.position = "라비기온 (7-13구역)";
             logMessage("안전하게 도시로 귀환했다.");
@@ -513,12 +583,20 @@ export function showInventory(player) {
                 btn.style.borderLeftColor = 'var(--color-stamina)'; 
             }
             // 2. 장착 가능한 장비
-            else if (itemData.type && ['투구', '갑옷', '장갑', '각반', '무기', '부무기', '팔찌', '목걸이', '반지', '귀걸이', '벨트'].includes(itemData.type)) {
-                const isEquipped = player.equipment[itemData.type] === itemName;
+            else if (itemData.type && ['투구', '갑옷', '장갑', '각반', '무기', '부무기', '팔찌', '목걸이', '반지', '귀걸이', '벨트', '방패', '검', '창', '부츠', '시계', '횃불'].includes(itemData.type)) {
+                
+                // [수정] 장착 부위 재-매핑 (예: "검" -> "무기")
+                let slot = itemData.type;
+                if (['검', '창', '횃불'].includes(slot)) slot = '무기';
+                if (['방패', '시계'].includes(slot)) slot = '부무기';
+                if (['부츠'].includes(slot)) slot = '각반';
+
+                const isEquipped = player.equipment[slot] === itemName;
+                
                 if (isEquipped) {
                     btn.textContent = `[해제] ${itemName} (${count}개) - ${itemData.desc}`;
                     btn.onclick = () => {
-                        player.unequipItem(itemData.type);
+                        player.unequipItem(slot);
                         showInventory(player); // 모달 갱신
                     }
                     btn.style.borderLeftColor = 'var(--color-health)';
@@ -565,7 +643,13 @@ export function showEssences(player) {
          return;
      }
 
-    essencesListDiv.innerHTML = `<p style="text-align: right;"><b>보유 정수 (${player.essences.length}/${player.level * 3})</b></p>`;
+    // [수정] 디아몬트 패시브 반영
+    let maxEssences = player.level * 3;
+    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    if (player.essences?.includes("디아몬트")) {
+        maxEssences -= 1;
+    }
+    essencesListDiv.innerHTML = `<p style="text-align: right;"><b>보유 정수 (${player.essences.length}/${maxEssences})</b></p>`;
 
     if (player.essences.length === 0) {
         essencesListDiv.innerHTML += "<p>흡수한 정수가 없습니다.</p>";

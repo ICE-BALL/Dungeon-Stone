@@ -1,7 +1,9 @@
+// 파일: ui_combat.js
 // 이 파일은 게임의 전투(Combat) UI 함수를 담당합니다.
 // [수정] updateCombatStatus: 2등급 이하 보스 몬스터 전용 HP 바 추가
 // [수정] showCombatSkillsMenu: 스킬 클릭 시 항상 showTargetSelection을 호출하도록 수정
-// [수정] showTargetSelection: 단일/광역/자신/아군/모든 아군 선택 로직 개선
+// [수정] (v5) showTargetSelection: 아군/적군 타겟팅 제한을 제거하고,
+//        모든 스킬에 대해 항상 적, 자신, 아군을 선택할 수 있도록 수정
 
 // --- 핵심 UI 유틸리티 임포트 ---
 import {
@@ -156,8 +158,13 @@ export function updateCombatMenu(player) {
                 /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
                 const raceEffect = player.cb?.gameData?.races?.[player.race]?.racial_skill?.effect;
                 if (typeof raceEffect === 'function') {
-                    // [신규] 스킬 로그 강조
-                    logMessage(`[SKILL] 종족 스킬 [${racialSkill.name}]을(를) 사용합니다: ${racialSkill.desc}`, 'skill-player');
+                    // [신규] (v4) 스킬 연출 (화면 흔들림 + 텍스트 박스)
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                    player.cb?.showScreenEffect?.('shake');
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                    player.cb?.logMessage?.(`[${racialSkill.name}]!`, 'log-skill-player');
+                    
+                    logMessage(`종족 스킬 [${racialSkill.name}]을(를) 사용합니다: ${racialSkill.desc}`, 'skill-player');
                     raceEffect(player); // 스킬 효과 실행
                     if (player.inCombat) {
                        player.endTurn();
@@ -265,7 +272,8 @@ export function showCombatSkillsMenu(player) {
 }
 
 /**
- * [신규/수정] 스킬/마법 대상 선택 메뉴 (모든 타겟팅 유형 지원)
+ * [수정] (v5) 스킬/마법 대상 선택 메뉴
+ * 타겟팅 유형 분석 로직을 제거하고, 항상 모든 대상(적, 아군, 자신)을 표시합니다.
  * @param {Player} player - 플레이어 객체
  * @param {object} skill - 선택된 스킬 *전체* 정보 객체
  */
@@ -275,60 +283,44 @@ function showTargetSelection(player, skill) {
 
     menu.innerHTML = `<h4>[${skill.name}] 대상 선택:</h4>`;
     const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
-    const skillDesc = (skill.desc || "").toLowerCase();
     
-    let targetType = 'enemy'; // 기본값
+    // [신규] (v5) 타겟팅 유형 분석 로직 제거.
     
-    // 타겟팅 유형 분석
-    if (skillDesc.includes("자신") || skillDesc.includes("시전자")) {
-        targetType = 'self';
-    } else if (skillDesc.includes("아군 1명") || skillDesc.includes("대상") || (skillDesc.includes("치유") && !skillDesc.includes("광역"))) {
-        targetType = 'ally_single';
-    } else if (skillDesc.includes("모든 아군") || (skillDesc.includes("치유") && skillDesc.includes("광역"))) {
-        targetType = 'ally_aoe';
-    } else if (skillDesc.includes("광역") || skillDesc.includes("모든 적") || skillDesc.includes("범위 내")) {
-        targetType = 'enemy_aoe';
-    } else {
-        targetType = 'enemy_single'; // 기본값 (적 단일)
-    }
-
     // 스킬 실행 함수
     const executeSkill = (targetIndex) => {
         if (skill.type === 'spell') player.playerSpell(skill.name, targetIndex);
         else if (skill.type === 'essence') player.playerEssenceSkill(skill.name, targetIndex, skill.essenceKey); // essenceKey 전달
     };
 
-    // 1. 적 단일 대상
-    if (targetType === 'enemy_single') {
-        livingMonsters.forEach((monster) => {
-             const originalIndex = player.currentMonster.findIndex(m => m === monster);
-             addButton(menu, `적: ${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => executeSkill(originalIndex));
-        });
+    // 1. 적 단일 대상 (항상 표시)
+    livingMonsters.forEach((monster) => {
+         const originalIndex = player.currentMonster.findIndex(m => m === monster);
+         const btn = addButton(menu, `[적 단일] ${originalIndex}: ${monster.name} (HP: ${monster.hp})`, () => executeSkill(originalIndex));
+         btn.style.borderLeftColor = "var(--color-health)"; // 적 대상 강조
+    });
+
+    // 2. 적 광역 대상 (항상 표시)
+    if (livingMonsters.length > 0) {
+        const aoeBtn = addButton(menu, `[적 광역] 모든 적`, () => executeSkill(-1)); // -1: 적 광역
+        aoeBtn.style.borderLeftColor = "var(--color-health)";
     }
 
-    // 2. 적 광역 대상
-    if (targetType === 'enemy_aoe') {
-         addButton(menu, `모든 적 (광역)`, () => executeSkill(-1)); // -1: 적 광역
-    }
-    
-    // 3. 자신 대상
-    if (targetType === 'self') {
-         addButton(menu, `자신`, () => executeSkill(-2)); // -2: 자신
-    }
+    // 3. 자신 대상 (항상 표시)
+    const selfBtn = addButton(menu, `[자신] (HP: ${player.hp}/${player.maxHp})`, () => executeSkill(-2)); // -2: 자신
+    selfBtn.style.borderLeftColor = "var(--color-stamina)"; // 아군 대상 강조
 
-    // 4. 아군 단일 대상 (자신 포함)
-    if (targetType === 'ally_single') {
-        addButton(menu, `자신 (HP: ${player.hp}/${player.maxHp})`, () => executeSkill(-2)); // -2: 자신
-        player.party.forEach((member, index) => {
-            if (member && member.hp > 0) {
-                 addButton(menu, `아군: ${member.name} (HP: ${member.hp}/${member.maxHp})`, () => executeSkill(100 + index)); // 100+: 아군 인덱스
-            }
-        });
-    }
+    // 4. 아군 단일 대상 (항상 표시)
+    player.party.forEach((member, index) => {
+        if (member && member.hp > 0) {
+             const allyBtn = addButton(menu, `[아군 단일] ${member.name} (HP: ${member.hp}/${member.maxHp})`, () => executeSkill(100 + index)); // 100+: 아군 인덱스
+             allyBtn.style.borderLeftColor = "var(--color-stamina)";
+        }
+    });
     
-    // 5. 아군 광역 대상 (자신 포함)
-    if (targetType === 'ally_aoe') {
-         addButton(menu, `모든 아군 (광역)`, () => executeSkill(-3)); // -3: 아군 광역
+    // 5. 아군 광역 대상 (항상 표시)
+    if (player.party.length > 0) {
+        const allyAoeBtn = addButton(menu, `[아군 광역] 모든 아군 (자신 포함)`, () => executeSkill(-3)); // -3: 아군 광역
+        allyAoeBtn.style.borderLeftColor = "var(--color-stamina)";
     }
 
     addButton(menu, "뒤로 (스킬 선택)", () => showCombatSkillsMenu(player));
@@ -377,6 +369,11 @@ export function showInventoryInCombat(player) {
                 btn.textContent = `사용: ${itemName} (${count}개) - ${usableItemData.desc}`;
                 btn.onclick = () => {
                     hideModal('#inventory-screen');
+                    
+                    // [신규] (v4) 아이템 사용 시 연출 (스킬보다는 약하게)
+                    /* AUTO-FIX: added optional chaining ?. for safety (Rule 8); review required */
+                    player.cb?.logMessage?.(`[${itemName}] 사용!`, 'log-skill-player');
+                    
                     player.useItem(itemName); // useItem이 showStatus 호출
                      if (player.inCombat) {
                         player.endTurn();

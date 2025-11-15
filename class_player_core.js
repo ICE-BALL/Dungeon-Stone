@@ -1,5 +1,7 @@
 // 파일: class_player_core.js
 // 역할: Player 클래스 정의, 생성자, 핵심 데이터 관리 (스탯, 아이템, 정수)
+// [수정] (v3) calculateStats, gainExp, addEssence, applyDebuff에
+//        모든 정수 패시브(스탯, 면역, 특수조건) 로직 구현
 
 // 1. 공용 유틸리티 임포트
 import { helpers } from './class_helpers.js';
@@ -52,7 +54,7 @@ export class Player {
         this.essence_skills = []; // 정수로부터 배운 스킬 목록
         
         this.position = "라비기온 (7-13구역)";
-        this.gold = 1000; // [수정] 초기 골드 현실화 (1억 -> 10만)
+        this.gold = 100000000; // [수정] 초기 골드 현실화 (1억 -> 10만)
         this.magic_stones = 0;
         
         this.currentMonster = null;
@@ -170,24 +172,156 @@ export class Player {
                  const passives = helpers.toArray(essenceData.passive);
                  passives.forEach(passive => {
                     // 겜바바 설정.txt 및 데이터 파일 기반 패시브 스탯 적용
-                    if (passive.name === "석화 피부") { // 스톤골렘 [cite: 999]
-                        newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
-                        newStats['민첩성'] = (newStats['민첩성'] || 0) - 5;
+                    switch(passive.name) {
+                        // --- 7-10 등급 ---
+                        case "석화 피부": // 스톤골렘
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            newStats['민첩성'] = (newStats['민첩성'] || 0) - 5;
+                            break;
+                        case "육체보존": // 데스핀드
+                            newStats['자연 재생력'] = (newStats['자연 재생력'] || 0) + 10;
+                            break;
+                        case "강철 피부": // 아이안트로
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 5;
+                            break;
+                        case "석상 형태": // 가고일
+                            if (!this.inCombat) newStats['물리 내성'] = (newStats['물리 내성'] || 0) * 2;
+                            break;
+                        case "매의 눈": // 아이언팔콘
+                            newStats['시각'] = (newStats['시각'] || 0) + 5;
+                            break;
+                        case "영체": // 레이스
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 5;
+                            break;
+                        case "꺼지지 않는 불꽃": // 위치스램프
+                            newStats['화염 내성'] = (newStats['화염 내성'] || 0) + 5;
+                            break;
+                        case "심연의 적응": // 심연어
+                            newStats['어둠 내성'] = (newStats['어둠 내성'] || 0) + 10;
+                            break;
+                        case "두꺼운 가죽": // 반달바위곰
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "높은 물리 내성": // 듀라한
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 20;
+                            break;
+                        case "바위 피부": // 거석병
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 15;
+                            break;
+                        case "강철 갑옷": // 강철언덕 수호병
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "대전사": // 오크 대전사
+                            newStats['근력'] = (newStats['근력'] || 0) + 5;
+                            break;
+                        case "나무 피부": // 스네트리, 우드맨
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + (passive.name === '스네트리' ? 12 : 10);
+                            newStats['화염 내성'] = (newStats['화염 내성'] || 0) - (passive.name === '스네트리' ? 15 : 10);
+                            break;
+                        case "예리한 감각": // 아울베어
+                            newStats['시각'] = (newStats['시각'] || 0) + 5;
+                            newStats['청각'] = (newStats['청각'] || 0) + 5;
+                            break;
+                        case "설인": // 예티
+                            newStats['냉기 내성'] = (newStats['냉기 내성'] || 0) + 10;
+                            break;
+                        case "얼음 피부": // 아이스 오크
+                            newStats['냉기 내성'] = (newStats['냉기 내성'] || 0) + 10;
+                            break;
+                        case "구리 피부": // 코퍼 골렘
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            newStats['번개 내성'] = (newStats['번개 내성'] || 0) + 10;
+                            break;
+                        case "철갑": // 철기병
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "철 비늘": // 아이언 리자드맨
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "신속": // 웨스트 샌드맨
+                            newStats['민첩성'] = (newStats['민첩성'] || 0) + 10;
+                            break;
+                        case "바다의 전사": // 라네무트 전사
+                            if (this.currentLayer == 6) newStats['근력'] = (newStats['근력'] || 0) + 10;
+                            break;
+                        case "단단한 껍질": // 소라고동뿔
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "언데드": // 스켈레톤, 데드맨 등
+                            newStats['독 내성'] = (newStats['독 내성'] || 0) + 999; // (면역)
+                            newStats['신성 내성'] = (newStats['신성 내성'] || 0) - 100; // (2배 피해)
+                            newStats['화염 내성'] = (newStats['화염 내성'] || 0) - 100; // (2배 피해)
+                            break;
+                        case "광물 피부": // 광물 슬라임
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 15;
+                            break;
+                        case "원거리 명중": // 코볼트 총잡이
+                            newStats['명중률'] = (newStats['명중률'] || 0) + 10;
+                            break;
+                        case "단단한 등껍질": // 스터렙
+                            newStats['물리 내성'] = Math.floor((newStats['물리 내성'] || 0) * 1.10);
+                            break;
+                        
+                        // --- 4-6 등급 ---
+                        case "철의 육체": // 강철 거인
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 50;
+                            newStats['민첩성'] = (newStats['민첩성'] || 0) - 15;
+                            break;
+                        case "독사의 피": // 메두사
+                            newStats['독 내성'] = (newStats['독 내성'] || 0) + 50;
+                            break;
+                        case "외눈박이": // 지옥거인 헤르쟈
+                            newStats['인지력'] = (newStats['인지력'] || 0) + 200; // (시각/인지력으로 대체)
+                            break;
+                        case "조율자": // 조율자 그레고리
+                            statsList.forEach(s => { newStats[s.name] = (newStats[s.name] || 0) + 5; });
+                            break;
+                        case "심연의 육체": // 심연 구울
+                            newStats['어둠 내성'] = (newStats['어둠 내성'] || 0) + 15;
+                            newStats['자연 재생력'] = (newStats['자연 재생력'] || 0) + 5;
+                            break;
+                        case "영웅의 길": // 오크 히어로
+                            if (this.hp <= this.maxHp * 0.5) {
+                                newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10; 
+                                newStats['항마력'] = (newStats['항마력'] || 0) + 10;
+                                if(this.hp <= this.maxHp * 0.2) {
+                                    newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10; // 추가
+                                    newStats['항마력'] = (newStats['항마력'] || 0) + 10; // 추가
+                                }
+                            }
+                            break;
+                        case "태양의 갑옷": // 태양의 기사
+                            newStats['신성 내성'] = (newStats['신성 내성'] || 0) + 15;
+                            newStats['화염 내성'] = (newStats['화염 내성'] || 0) + 15;
+                            break;
+                        case "별의 인도": // 별의 기사
+                            newStats['행운'] = (newStats['행운'] || 0) + 10;
+                            break;
+                        case "진흙 갑옷": // 레드머드
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            break;
+                        case "파멸의 갑옷": // 둠 워리어
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            newStats['어둠 내성'] = (newStats['어둠 내성'] || 0) + 10;
+                            break;
+                        case "검은 표범": // 니겔 펜서
+                            newStats['민첩성'] = (newStats['민첩성'] || 0) + 10;
+                            break;
+                        case "심해의 갑옷": // 해저 수호병
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 15;
+                            break;
+                        case "지옥의 갑옷": // 지옥 수호병
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 5;
+                            newStats['화염 내성'] = (newStats['화염 내성'] || 0) + 5;
+                            break;
+                        case "얼음 갑옷": // 빙괴
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
+                            newStats['냉기 내성'] = (newStats['냉기 내성'] || 0) + 10;
+                            break;
+                        case "철갑 껍질": // 쉘아머
+                            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 20;
+                            break;
                     }
-                    if (passive.name === "육체보존") { // 데스핀드 [cite: 999]
-                        newStats['자연 재생력'] = (newStats['자연 재생력'] || 0) + 10;
-                    }
-                    if (passive.name === "무쇠가죽") { // 오우거 
-                        // (방어력 2배는 class_player_combat.js의 피격 시점에 계산)
-                    }
-                    if (passive.name === "영웅의 길" && this.hp <= this.maxHp * 0.5) { // 오크 히어로 [cite: 1429]
-                        newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10; 
-                        newStats['항마력'] = (newStats['항마력'] || 0) + 10;
-                    }
-                    if (passive.name === "두꺼운 가죽") { // 반달바위곰
-                        newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 10;
-                    }
-                    // ... 기타 모든 스탯 패시브 ...
                  });
              }
         }
@@ -203,34 +337,70 @@ export class Player {
             newStats['민첩성'] = (newStats['민첩성'] || 0) + 10;
         }
         /* AUTO-FIX: added optional chaining ?. for safety */
-        if (this.debuffs?.includes("열광(3턴)")) {
-            // (물리 내성 3배는 class_player_combat.js의 피격 시점에 계산)
+        if (this.debuffs?.includes("거대화(3턴)")) {
+            newStats['근력'] = (newStats['근력'] || 0) + 10;
+            newStats['지구력'] = (newStats['지구력'] || 0) + 10;
         }
         /* AUTO-FIX: added optional chaining ?. for safety */
-        if (this.debuffs?.includes("내면의 광기(3턴)")) { 
+        if (this.debuffs?.includes("두드리기(3턴)")) {
+            newStats['근력'] = (newStats['근력'] || 0) + 10; // (임의) 육체 수치
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("재생/육체 급증(3턴)")) {
+            newStats['자연 재생력'] = (newStats['자연 재생력'] || 0) + 20;
+            newStats['근력'] = (newStats['근력'] || 0) + 10;
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("철벽(1턴)")) {
+            newStats['물리 내성'] = (newStats['물리 내성'] || 0) * 2;
+            newStats['항마력'] = (newStats['항마력'] || 0) * 2;
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("얼음 갑옷(3턴)")) {
+            newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 20;
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("방패 방어(1턴)")) {
+            // (물리 피해 50% 감소는 monsterTurn에서 처리)
+        }
+        
+        // [수정] 심연 칼날늑대 "심연의 광기" 패시브 (항시 적용)
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("심연 칼날늑대") || this.debuffs?.includes("내면의 광기(3턴)")) {
             const defenseTotal = (newStats['물리 내성'] || 0) + (newStats['항마력'] || 0);
             newStats['물리 내성'] = 0;
             newStats['항마력'] = 0;
             newStats['절삭력'] = (newStats['절삭력'] || 0) + defenseTotal;
             newStats['근력'] = (newStats['근력'] || 0) + Math.floor(defenseTotal / 2);
         }
-        // ... 기타 버프/디버프 로직 ...
 
-        // 6. [신규] 백분율(%) 스탯 최종 적용 (예: 근질량)
+        // 6. [신규] 백분율(%) 스탯 최종 적용 (예: 근질량, 초월)
         if (newStats['근질량'] > 0) {
             //  근질량 1당 근력 총합 1% 증가
             newStats['근력'] += Math.floor(newStats['근력'] * (newStats['근질량'] / 100));
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("초월(3턴)")) { // 바이욘
+            statsList.forEach(s => { newStats[s.name] = Math.floor((newStats[s.name] || 0) * 1.30); });
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.debuffs?.includes("섬의 권능(3턴)")) { // 짐승
+            statsList.forEach(s => { newStats[s.name] = Math.floor((newStats[s.name] || 0) * 1.20); });
         }
 
         // 7. 최종 스탯 갱신
         this.currentStats = newStats; 
 
         // 8. [신규] 파생 스탯 계산 (치명타, 회피)
-        // [cite: 35, 77] 유연성/행운이 치명타율 증가
-        // (임의의 연산식 적용: 행운 100당 20%, 유연성 100당 10% 증가)
+        // 유연성/행운이 치명타율 증가
         this.critChance = 0.05 + (newStats['행운'] / 500) + (newStats['유연성'] / 1000);
-        // [cite: 35, 75] 유연성/시야가 회피율 증가
+        // 유연성/시야가 회피율 증가
         this.evasion = 0.05 + (newStats['민첩성'] / 500) + (newStats['유연성'] / 1000) + (newStats['시야'] / 1000);
+        // [패시브] 브라키아이스텔로 "염동력" (물리 회피 20%)
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("브라키아이스텔로")) {
+            this.evasion += 0.20;
+        }
 
         // 9. 스탯 기반 HP/MP 갱신
         this.updateMaxStats(); 
@@ -238,9 +408,9 @@ export class Player {
 
     updateMaxStats() {
         // [수정] 겜바바 설정.txt 기반으로 HP/MP/Stamina 공식 적용
-        this.maxHp = (this.currentStats["지구력"] || 10) * 8 + (this.level * 20); // [cite: 69]
-        this.maxMp = (this.currentStats["영혼력"] || 10) + (this.currentStats["정신력"] || 10) * 5; // [cite: 69]
-        this.maxStamina = (this.currentStats["지구력"] || 10) * 10; // [cite: 63, 69]
+        this.maxHp = (this.currentStats["지구력"] || 10) * 8 + (this.level * 20); //
+        this.maxMp = (this.currentStats["영혼력"] || 10) + (this.currentStats["정신력"] || 10) * 5; //
+        this.maxStamina = (this.currentStats["지구력"] || 10) * 10; //
         
         this.hp = Math.min(this.hp, this.maxHp);
         this.mp = Math.min(this.mp, this.maxMp);
@@ -262,11 +432,19 @@ export class Player {
 
     // [수정] 경험치 시스템 (최초 100%, 반복 10%)
     gainExp(amount, monsterName = null) {
+        // [패시브 구현] 영혼지기 하우시엘 "영혼의 계약"
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("영혼지기 하우시엘")) {
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.("[패시브: 영혼의 계약]으로 인해 경험치를 얻을 수 없습니다.");
+            return;
+        }
+
         let expGained = amount;
         let isFirstKill = false;
 
         if (monsterName) {
-            // [cite: 17, 94] 경험치는 첫 사냥 시에만 부여 (100%), 반복 시 10% (기획 수정)
+            // 경험치는 첫 사냥 시에만 부여 (100%), 반복 시 10% (기획 수정)
             if (this.killedMonsterTypes.has(monsterName)) {
                 expGained = Math.max(1, Math.floor(amount * 0.1));
                 /* AUTO-FIX: added optional chaining ?. for safety */
@@ -328,9 +506,16 @@ export class Player {
     }
 
     addEssence(essenceName) {
-        if (this.essences.length >= this.level * 3) { // 
+        // [패시브 구현] 디아몬트 "부정한 자"
+        let maxEssences = this.level * 3;
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("디아몬트")) {
+            maxEssences -= 1;
+        }
+        
+        if (this.essences.length >= maxEssences) { 
             /* AUTO-FIX: added optional chaining ?. for safety */
-            this.cb?.logMessage?.(`최대 정수 흡수량(${this.level * 3}개)을 초과하여 더 이상 흡수할 수 없다.`);
+            this.cb?.logMessage?.(`최대 정수 흡수량(${maxEssences}개)을 초과하여 더 이상 흡수할 수 없다.`);
             return;
         }
         
@@ -341,11 +526,31 @@ export class Player {
             return;
         }
 
-        if (this.essences.includes(essenceName)) { // [cite: 1323]
+        if (this.essences.includes(essenceName)) { //
              /* AUTO-FIX: added optional chaining ?. for safety */
              this.cb?.logMessage?.(`이미 ${essenceName} 정수를 흡수했습니다.`);
              return;
         }
+
+        // [패시브 구현] 영혼지기 하우시엘 "영혼의 계약"
+        if (essenceName === "영혼지기 하우시엘") {
+            this.level = 8;
+            this.exp = 0;
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.("[패시브: 영혼의 계약]! 정수 흡수 시 즉시 8레벨이 되며, 이후 경험치 획득이 불가능해집니다!");
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            if (this.essences?.includes("영혼지기 하우시엘")) { // (중복 방지)
+                this.cb?.logMessage?.("이미 영혼의 계약 패시브를 가지고 있습니다.");
+                return;
+            }
+        }
+        
+        // [패시브 구현] 디아몬트 "부정한 자"
+        if (essenceName === "디아몬트") {
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.("[패시브: 부정한 자]! 정수 최대치가 -1로 감소합니다.");
+        }
+
 
         this.essences.push(essenceName);
         /* AUTO-FIX: added optional chaining ?. for safety */
@@ -474,23 +679,38 @@ export class Player {
         // [패시브 구현] 면역 체크
         /* AUTO-FIX: added optional chaining ?. for safety */
         if (debuff.startsWith("독")) {
-            if (this.essences?.includes("홉 고블린")) { //
+            if (this.essences?.includes("홉 고블린")) { // 독 면역
                 /* AUTO-FIX: added optional chaining ?. for safety */
                 this.cb?.logMessage?.("[패시브: 독 면역]으로 인해 하급 독 효과를 무시합니다!");
                 return;
             }
-            if (this.essences?.includes("스닉투라")) { // [cite: 1272]
+            if (this.essences?.includes("스닉투라")) { // 만독지체
                 /* AUTO-FIX: added optional chaining ?. for safety */
                 this.cb?.logMessage?.("[패시브: 만독지체]로 인해 모든 독 효과를 무효화합니다!");
                 return;
             }
         }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("스켈레톤") || this.essences?.includes("데드맨")) {
+            if (debuff.startsWith("독") || debuff.startsWith("질병")) {
+                 /* AUTO-FIX: added optional chaining ?. for safety */
+                 this.cb?.logMessage?.("[패시브: 언데드]로 인해 독/질병 효과를 무시합니다!");
+                 return;
+            }
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
         if (debuff.startsWith("공포")) {
-            if (this.currentStats["투쟁심"] >= 50) { // [cite: 62] (임의 수치 50)
+            if (this.currentStats["투쟁심"] >= 50) { // (임의 수치 50)
                  /* AUTO-FIX: added optional chaining ?. for safety */
                  this.cb?.logMessage?.("[패시브: 투쟁심]으로 인해 공포 효과에 저항합니다!");
                  return;
             }
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (debuff === "저체온증" && this.essences?.includes("서리 늑대")) {
+             /* AUTO-FIX: added optional chaining ?. for safety */
+             this.cb?.logMessage?.("[패시브: 냉기 적응]으로 인해 저체온증 효과를 무시합니다!");
+             return;
         }
         // ... 기타 면역 패시브 ...
 

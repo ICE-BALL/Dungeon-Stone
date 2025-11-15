@@ -42,6 +42,7 @@ export class NPC {
             this.skills.push({ 
                 name: "마력시", 
                 cost: 1, 
+                fromEssence: null, // 기본 스킬
                 effect: (caster, target) => {
                     const dmg = Math.max(1, Math.floor((caster.currentStats['정신력'] || 8) * 1.0 - (target?.magic_def || 0))); 
                     if (target) helpers.safeHpUpdate(target, -dmg); 
@@ -52,6 +53,7 @@ export class NPC {
              this.skills.push({ 
                 name: "힐", 
                 cost: 15, 
+                fromEssence: null, // 기본 스킬
                 effect: (caster, target) => { 
                     const healAmount = 30 + Math.floor((caster?.currentStats?.["정신력"] || 10) * 1.5);
                     if(target.hp) target.hp = Math.min(target.maxHp || 99999, target.hp + healAmount); 
@@ -64,6 +66,7 @@ export class NPC {
             this.skills.push({ 
                 name: "강타", 
                 cost: 3, 
+                fromEssence: null, // 기본 스킬
                 effect: (caster, target) => { 
                     const dmg = Math.max(1, Math.floor((caster.currentStats['근력'] || 8) * 1.2 - (target?.def || 0))); 
                     if (target) helpers.safeHpUpdate(target, -dmg); 
@@ -155,6 +158,9 @@ export class NPC {
                     if (passive.name === "육체보존") { // 데스핀드
                         newStats['자연 재생력'] = (newStats['자연 재생력'] || 0) + 10;
                     }
+                    if (passive.name === "강철 피부") { // 아이안트로
+                        newStats['물리 내성'] = (newStats['물리 내성'] || 0) + 5;
+                    }
                     // ... 기타 모든 스탯 패시브 ...
                  });
              }
@@ -164,6 +170,9 @@ export class NPC {
         if (this.debuffs?.includes("광분(3턴)")) {
             newStats['근력'] = (newStats['근력'] || 0) + 15;
             newStats['민첩성'] = (newStats['민첩성'] || 0) + 10;
+        }
+        if (this.debuffs?.includes("열광(3턴)")) {
+            // (물리 내성 3배는 class_player_combat.js의 monsterTurn에서 처리)
         }
         
         // 6. [신규] 백분율(%) 스탯 최종 적용 (예: 근질량)
@@ -186,8 +195,14 @@ export class NPC {
 
     // [신규] NPC용 정수 추가/적용
     addEssence(essenceName, showLog = true) {
-        if (this.essences.length >= this.level * 3) { // NPC도 동일한 제한
-            if (showLog) this.cb?.logMessage(`${this.name}의 최대 정수 흡수량(${this.level * 3}개)을 초과했습니다.`);
+        let maxEssences = this.level * 3;
+        // [패시브 구현] 디아몬트 "부정한 자"
+        if (this.essences.includes("디아몬트")) {
+            maxEssences -= 1;
+        }
+
+        if (this.essences.length >= maxEssences) { // NPC도 동일한 제한
+            if (showLog) this.cb?.logMessage(`${this.name}의 최대 정수 흡수량(${maxEssences}개)을 초과했습니다.`);
             return;
         }
         const essenceData = (this.gameData.essences && this.gameData.essences[essenceName]);
@@ -201,6 +216,19 @@ export class NPC {
              return;
         }
 
+        // [패시브 구현] 영혼지기 하우시엘 "영혼의 계약"
+        if (essenceName === "영혼지기 하우시엘") {
+            this.level = 8;
+            this.exp = 0;
+            if (showLog) this.cb?.logMessage(`[패시브: 영혼의 계약]! ${this.name}이(가) 즉시 8레벨이 되며, 이후 경험치 획득이 불가능해집니다!`);
+            if (this.essences.includes("영혼지기 하우시엘")) return; // 중복 방지
+        }
+        
+        // [패시브 구현] 디아몬트 "부정한 자"
+        if (essenceName === "디아몬트") {
+            if (showLog) this.cb?.logMessage(`[패시브: 부정한 자]! ${this.name}의 정수 최대치가 -1로 감소합니다.`);
+        }
+
         this.essences.push(essenceName);
         if (showLog) this.cb?.logMessage(`${this.name}이(가) ${essenceName} 정수를 흡수했다.`);
         this.applyEssenceEffect(essenceData, showLog);
@@ -212,14 +240,24 @@ export class NPC {
             const skillsToAdd = helpers.toArray(essence.active);
             skillsToAdd.forEach(skill => {
                 if (!this.skills.find(s => s.name === skill.name)) {
-                    // [수정] data_functional.js에 병합된 effect 함수를 참조하기 위해 이름만 저장하지 않고 스킬 객체 전체를 복사
-                    // (단, effect 함수 자체는 main.js의 GameData.essences에 병합된 것을 참조해야 함)
-                    // -> class_player_combat.js에서 NPC 스킬을 사용할 때, GameData에서 effect 함수를 다시 찾아야 함.
-                    // -> [로직 변경] skill 객체 전체를 복사 (effect 함수 포함)
+                    // [수정] GameData (JSON + functional)에서 effect 함수가 포함된
+                    // 완전한 스킬 객체를 찾아서 복사해야 함.
                     
-                    const functionalSkill = this.gameData.essences[essence.name]?.active.find(s => s.name === skill.name) || skill;
+                    let functionalSkill = null;
+                    // essence.name (예: "고블린")을 키로 사용
+                    const sourceEssence = this.gameData.essences[essence.name]; 
+                    
+                    if (sourceEssence && sourceEssence.active) {
+                         const sourceSkills = helpers.toArray(sourceEssence.active);
+                         functionalSkill = sourceSkills.find(s => s.name === skill.name);
+                    }
 
-                    this.skills.push({ ...functionalSkill, fromEssence: essence.name });
+                    // GameData에서 못찾으면 원본(JSON) skill 객체라도 사용
+                    const skillToAdd = functionalSkill ? { ...functionalSkill } : { ...skill };
+                    
+                    skillToAdd.fromEssence = essence.name; // 스킬의 출처 정수 기록
+                    
+                    this.skills.push(skillToAdd);
                     if (showLog) this.cb?.logMessage(`${this.name}이(가) 정수 스킬 '${skill.name}'을 배웠다.`);
                 }
             });
@@ -268,6 +306,13 @@ export class NPC {
         let defense = target.def ?? target.currentStats?.['물리 내성'] ?? 0;
         let dmg = helpers.calculateDamage(this.currentStats['근력'] || 10, defense);
         
+        // [패시브] NPC의 공격 시 패시브 (플레이어와 동일하게 적용)
+        if (this.essences.includes("뱀파이어")) { // 흡혈
+             const healAmount = Math.floor(dmg * 0.10);
+             helpers.safeHpUpdate(this, healAmount);
+             this.cb?.logMessage(`[${this.name} 패시브: 흡혈]! ${healAmount}의 HP를 흡수했습니다.`);
+        }
+        
         helpers.safeHpUpdate(target, -dmg);
         /* AUTO-FIX: added optional chaining ?. for safety */
         this.cb?.logMessage(`${this.name}의 공격! ${target.name || '플레이어'}에게 ${dmg}의 피해. (${target.name || '플레이어'} HP: ${target.hp})`);
@@ -289,7 +334,8 @@ export class NPC {
         const availableSkills = this.skills.filter(skill => 
             (skill.cost || 0) <= this.mp &&
             !skill.name.includes("힐") && 
-            !skill.name.includes("치유")
+            !skill.name.includes("치유") &&
+            !skill.name.includes("보물창고") // 비전투 스킬 제외
         );
         
         if (availableSkills.length === 0) {
@@ -304,6 +350,7 @@ export class NPC {
         this.cb?.logMessage(`[SKILL] ${this.name}이(가) 스킬 [${skillToUse.name}]을(를) 사용!`);
 
         try {
+            // [수정] NPC 스킬은 this.skills에 effect 함수가 포함되어 있음 (addEssence에서 복사)
             if (typeof skillToUse.effect === 'function') {
                 // 광역 스킬인지 단일 스킬인지 판단 (임시: target이 배열이면 광역)
                 const isAOE = Array.isArray(target);
@@ -325,6 +372,11 @@ export class NPC {
 
 
     gainExp(amount) {
+        // [패시브 구현] 영혼지기 하우시엘 "영혼의 계약"
+        if (this.essences.includes("영혼지기 하우시엘")) {
+            return; // 경험치 획득 불가
+        }
+        
         this.exp += amount;
         /* AUTO-FIX: added guard for this.gameData.expToLevel to avoid TypeError */
         const requiredExp = (this.gameData.expToLevel && this.gameData.expToLevel[this.level]) || Infinity;
@@ -357,6 +409,16 @@ export class NPC {
     }
 
     applyDebuff(debuff) {
+        // [패시브 구현] NPC용 디버프 면역 (플레이어와 동일)
+        if (debuff.startsWith("독")) {
+            if (this.essences.includes("홉 고블린")) return; // 독 면역
+            if (this.essences.includes("스닉투라")) return; // 만독지체
+        }
+        if (this.essences.includes("스켈레톤") || this.essences.includes("데드맨")) {
+            if (debuff.startsWith("독") || debuff.startsWith("질병")) return; // 언데드
+        }
+        if (debuff === "저체온증" && this.essences.includes("서리 늑대")) return; // 냉기 적응
+        
         if (!this.debuffs.includes(debuff)) {
             this.debuffs.push(debuff);
         }

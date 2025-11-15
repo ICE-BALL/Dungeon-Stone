@@ -1,10 +1,9 @@
 // 파일: class_player_combat.js
 // 역할: Player 클래스의 전투 관련 메서드 (턴 관리, 공격, 스킬 사용)
-// [수정] playerAttack: '오러' 스킬(방어 90% 무시) 로직 적용
-// [수정] monsterTurn: 2등급 이하 보스 몬스터 '페이즈 2' 로직 추가
-// [수정] handleMonsterDefeat: 2등급 이하 몬스터 '넘버스 아이템' 드랍 로직 추가
-// [수정] endCombat: 8층 균열 클리어 시 9층 이동/잔류 선택지(showPortalChoice)를 호출하도록 버그 수정
-// [수정] playerSpell/playerEssenceSkill: 스킬 사용 시 로그 강조
+// [수정] monsterTurn: 몬스터의 (1턴) 디버프가 제거되지 않아 무한 기절/속박에 걸리던 버그 수정
+// [수정] (v4) playerAttack, monsterTurn, playerSpell, playerEssenceSkill, partyTurn:
+//        스킬 사용 시 화면 흔들림(showScreenEffect) 및 스킬 텍스트 박스(logMessage 클래스) 연출 추가
+// [수정] (v5) playerAttack: 치명타 발생 시 'log-critical-hit' (노란색) 텍스트 박스 연출 추가
 
 import { helpers } from './class_helpers.js';
 
@@ -37,7 +36,8 @@ export const PlayerCombatMethods = {
             monster.currentStats = {
                 '근력': monster.atk,
                 '물리 내성': monster.def,
-                '항마력': monster.magic_def
+                '항마력': monster.magic_def,
+                ...(monster.stats || {}) // [수정] 몬스터의 원본 스탯도 currentStats에 포함
             };
             
             monster.applyDebuff = function(debuff) {
@@ -70,7 +70,10 @@ export const PlayerCombatMethods = {
     },
 
 
-    // [수정] 정수 분배 및 레이드 보상 드랍
+    /**
+     * [수정] 정수 분배 및 레이드 보상 드랍 + 처치 시 패시브
+     * @param {object} monster - 처치된 몬스터 객체
+     */
     handleMonsterDefeat(monster) {
         /* AUTO-FIX: added optional chaining ?. for safety */
         this.cb?.logMessage?.(`${monster.name}을(를) 처치했다!`);
@@ -87,6 +90,15 @@ export const PlayerCombatMethods = {
 
         let magicStoneAmount = Math.max(1, (10 - gradeNum) * (Math.floor(Math.random() * 5) + 1));
         this.magic_stones += magicStoneAmount;
+
+        // [패시브 구현] 처치 시 패시브 (예: 소울이터)
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("소울이터")) {
+            const mpHeal = Math.floor(this.maxMp * 0.10);
+            this.mp = Math.min(this.maxMp, this.mp + mpHeal);
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.(`[패시브: 영혼 갈취]! ${monster.name} 처치! MP를 ${mpHeal} 회복합니다!`);
+        }
 
         let droppedEssence = null;
         /* AUTO-FIX: added optional chaining ?. for safety */
@@ -111,9 +123,8 @@ export const PlayerCombatMethods = {
                     /* AUTO-FIX: added optional chaining ?. for safety */
                     this.cb?.logMessage?.(`[${essenceDisplayName}]을(를) 획득했습니다! 누구에게 주시겠습니까?`);
                     /* AUTO-FIX: added optional chaining ?. for safety */
+                    // [수정] 3번째 인자로 몬스터 이름(essenceKey)을 전달 (ui_party.js의 타이틀 표시용)
                     this.cb?.showEssencePartyChoice?.(this, essenceKey, essenceDisplayName);
-                    
-                    droppedEssence = essenceDisplayName;
                 }
             }
         }
@@ -172,13 +183,14 @@ export const PlayerCombatMethods = {
                 this.addItem("균열석"); 
                 
                 // [신규] 8층 버그 수정: 8층에서 균열 클리어 시
-                if (this.currentLayer === 8) {
+                if (this.currentLayer === 8 || this.currentLayer === "8") {
                     /* AUTO-FIX: added optional chaining ?. for safety */
                     this.cb?.logMessage?.("9층으로 향하는 포탈과 8층으로 돌아가는 포탈이 열렸습니다.");
                     this.currentRift = null;
                     this.currentRiftStage = 0;
                     // 9층으로 가거나 8층(현재층)에 머무를지 선택
-                    this.cb?.showPortalChoice?.(this, 9, 8); // (ui_main.js 수정 필요)
+                    /* AUTO-FIX: added optional chaining ?. for safety */
+                    this.cb?.showPortalChoice?.(this, 9, 8);
                     return; 
                 }
 
@@ -245,8 +257,7 @@ export const PlayerCombatMethods = {
 
 
     /**
-     * [수정] 플레이어의 공격 로직
-     * '오러' (방어 90% 무시) 적용
+     * [수정] (v5) 치명타 연출 추가
      */
     playerAttack(targetIndex) {
         if (!this.playerTurn || !this.inCombat || !this.currentMonster) return;
@@ -270,6 +281,16 @@ export const PlayerCombatMethods = {
         
         let baseDamage = this.currentStats["근력"] || 10;
         let targetDefense = target.currentStats?.['물리 내성'] || 0;
+        
+        // [패시브 구현] '오러' (방어력 90% 무시)
+        if (this.aura_active) {
+            let defense_penetration = targetDefense * 0.9; // 방어력 90% 무시
+            targetDefense = targetDefense - defense_penetration;
+            this.aura_active = false;
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.("오러의 힘으로 방어력을 90% 무시합니다!");
+        }
+
         let dmg = helpers.calculateDamage(baseDamage, targetDefense);
         dmg *= fatiguePenalty;
 
@@ -290,39 +311,48 @@ export const PlayerCombatMethods = {
             this.debuffs = this.debuffs.filter(d => d !== "사형선고(1회)");
         }
 
+        let isCritical = false;
         if (Math.random() < critChance) {
             dmg *= 2;
-            /* AUTO-FIX: added optional chaining ?. for safety */
-            this.cb?.logMessage?.("치명타!");
+            isCritical = true;
         }
+        
         this.criticalHitBoost = false;
-
-        // [신규] 종족 스킬 '오러' 효과 적용 (방어력 90% 무시)
-        if (this.aura_active) {
-            let defense_penetration = targetDefense * 0.9; // 방어력 90% 무시
-            dmg = helpers.calculateDamage(baseDamage, targetDefense - defense_penetration); // 무시된 방어력으로 데미지 재계산
-            dmg *= fatiguePenalty; // 피로도 다시 적용
-            this.aura_active = false;
-            /* AUTO-FIX: added optional chaining ?. for safety */
-            this.cb?.logMessage?.("오러의 힘으로 방어력을 90% 무시합니다!");
-        }
         dmg = Math.floor(dmg);
 
         helpers.safeHpUpdate(target, -dmg);
+
+        // [신규] (v4) 스킬 연출 (화면 흔들림)
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        this.cb?.showScreenEffect?.('shake');
+        
+        // [신규] (v5) 치명타 연출 (노란색 텍스트 박스)
+        if (isCritical) {
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.(`치명타!`, 'log-critical-hit');
+        }
+        
         /* AUTO-FIX: added optional chaining ?. for safety */
         this.cb?.logMessage?.(`플레이어의 공격! ${target.name}에게 ${dmg}의 피해. (몬스터 HP: ${target.hp})`);
 
-        // [패시브 구현] 공격 시 발동 패시브
+        // [패시브 구현] 공격 시 발동 패시브 (흡혈, 독 부여 등)
         /* AUTO-FIX: added optional chaining ?. for safety */
-        if (this.essences?.includes("고블린")) { //
-            if (Math.random() < 0.1) helpers.safeApplyDebuff(this, target, "마비독(약)");
+        if (this.essences?.includes("고블린")) { // 마비독
+            if (Math.random() < 0.1) helpers.safeApplyDebuff(this, target, "둔화(마비독)");
         }
         /* AUTO-FIX: added optional chaining ?. for safety */
-        if (this.essences?.includes("고블린 궁수")) { //
+        if (this.essences?.includes("고블린 궁수")) { // 독화살
             /* AUTO-FIX: added optional chaining ?. for safety */
             if (this.equipment["무기"]?.includes("활")) { // (활 착용 시 - 임의)
                  helpers.safeApplyDebuff(this, target, "독(약)");
             }
+        }
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (this.essences?.includes("뱀파이어")) { // 흡혈
+            const healAmount = Math.floor(dmg * 0.10);
+            helpers.safeHpUpdate(this, healAmount);
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            this.cb?.logMessage?.(`[패시브: 흡혈]! ${healAmount}의 HP를 흡수했습니다.`);
         }
         // ... 기타 공격 시 패시브 ...
 
@@ -348,6 +378,9 @@ export const PlayerCombatMethods = {
     },
 
 
+    /**
+     * [신규] (v4) 스킬 사용 시 연출 추가
+     */
     playerSpell(spellName, targetIndex) {
         if (!this.playerTurn || !this.inCombat || !this.currentMonster) return;
 
@@ -372,6 +405,14 @@ export const PlayerCombatMethods = {
         } else if (targetIndex === -2) { // 자신 또는 아군 대상
              target = this;
              targets.push(target);
+        } else if (targetIndex >= 100) { // [신규] 아군 단일 대상
+            const partyIndex = targetIndex - 100;
+            if (partyIndex >= 0 && partyIndex < this.party.length && this.party[partyIndex].hp > 0) {
+                target = this.party[partyIndex];
+                targets.push(target);
+            }
+        } else if (targetIndex === -3) { // [신규] 아군 광역 대상
+            targets = [this, ...this.party].filter(p => p && p.hp > 0);
         } else { // 단일 적 대상
              if (isNaN(targetIndex) || targetIndex < 0 || targetIndex >= this.currentMonster.length || !this.currentMonster[targetIndex] || this.currentMonster[targetIndex].hp <= 0) {
                 /* AUTO-FIX: added optional chaining ?. for safety */
@@ -394,20 +435,24 @@ export const PlayerCombatMethods = {
 
 
         this.mp -= spellCost;
-        // [신규] 전투 연출 요청 - 스킬 로그 강조
+        
+        // [신규] 스킬 연출 (화면 흔들림 + 텍스트 박스)
         /* AUTO-FIX: added optional chaining ?. for safety */
-        this.cb?.logMessage?.(`[SKILL] '${spellName}' 주문을 시전했다!`);
+        this.cb?.showScreenEffect?.('shake');
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        this.cb?.logMessage?.(`[${spellName}]!`, 'log-skill-player');
+
 
         try {
              if (typeof spell.effect === 'function') {
-                 // 힐 스킬 등은 target(첫번째 적) 대신 자신(target)을 받도록 함
-                 if (targetIndex === -2) {
-                     spell.effect(this, this); // 자신 대상
-                 } else {
-                     spell.effect(this, targetIndex === -1 ? targets : target); // 광역(targets) 또는 단일(target)
-                 }
+                 // [수정] 모든 타겟팅 유형 전달
+                 if (targetIndex === -1) spell.effect(this, targets); // 적 광역
+                 else if (targetIndex === -2) spell.effect(this, this); // 자신
+                 else if (targetIndex === -3) spell.effect(this, targets); // 아군 광역
+                 else if (targetIndex >= 100) spell.effect(this, target); // 아군 단일
+                 else spell.effect(this, target); // 적 단일
              } 
-             else if (spell.dmg !== undefined) {
+             else if (spell.dmg !== undefined) { // effect가 없는 기본 마법
                   targets.forEach(t => {
                      let magicDefense = t.currentStats?.['항마력'] || 0;
                      let spellDamage = spell.dmg + (this.currentStats['정신력'] || 10);
@@ -419,7 +464,7 @@ export const PlayerCombatMethods = {
              }
 
              targets.forEach(t => {
-                 if (t.hp <= 0) {
+                 if (t.hp <= 0 && t !== this && !this.party.includes(t)) { // 대상이 몬스터일 경우
                      this.handleMonsterDefeat(t);
                  }
              });
@@ -447,27 +492,35 @@ export const PlayerCombatMethods = {
     },
 
 
+    /**
+     * [수정] (v4) 스킬 사용 시 연출 추가
+     * @param {string} skillName - 사용할 스킬 이름
+     * @param {number} targetIndex - 대상 인덱스 (-1: 적 광역, -2: 자신, -3: 아군 광역, 100+: 아군)
+     */
     playerEssenceSkill(skillName, targetIndex) {
         if (!this.playerTurn || !this.inCombat || !this.currentMonster) return;
 
         let essenceData = null;
-        let essenceKey = null;
+        let effectFunction = null;
+
+        // [수정] GameData.essences에서 직접 effect 함수를 찾음
         for (const key of this.essences) {
-            const ess = (this.gameData.essences && this.gameData.essences[key]);
+            /* AUTO-FIX: added optional chaining ?. for safety */
+            const ess = this.gameData.essences?.[key];
             if (ess && ess.active) {
-                const skills = helpers.toArray(ess.active);
-                const foundSkill = skills.find(s => s.name === skillName);
-                if (foundSkill) {
+                const activeSkills = helpers.toArray(ess.active);
+                const foundSkill = activeSkills.find(s => s.name === skillName);
+                if (foundSkill && typeof foundSkill.effect === 'function') {
                     essenceData = foundSkill;
-                    essenceKey = key;
+                    effectFunction = foundSkill.effect;
                     break;
                 }
             }
         }
 
-        if (!essenceData) {
+        if (!essenceData || !effectFunction) {
             /* AUTO-FIX: added optional chaining ?. for safety */
-            this.cb?.logMessage?.(`오류: '${skillName}' 정수 스킬을 찾을 수 없습니다.`);
+            this.cb?.logMessage?.(`오류: '${skillName}' 정수 스킬의 effect 함수를 찾을 수 없습니다.`);
             return;
         }
 
@@ -486,6 +539,14 @@ export const PlayerCombatMethods = {
         } else if (targetIndex === -2) { // 자신 또는 아군 대상
              target = this; 
              targets.push(target);
+        } else if (targetIndex >= 100) { // [신규] 아군 단일 대상
+            const partyIndex = targetIndex - 100;
+            if (partyIndex >= 0 && partyIndex < this.party.length && this.party[partyIndex].hp > 0) {
+                target = this.party[partyIndex];
+                targets.push(target);
+            }
+        } else if (targetIndex === -3) { // [신규] 아군 광역 대상
+            targets = [this, ...this.party].filter(p => p && p.hp > 0);
         } else { // 단일 적 대상
              if (isNaN(targetIndex) || targetIndex < 0 || targetIndex >= this.currentMonster.length || !this.currentMonster[targetIndex] || !this.currentMonster[targetIndex].hp > 0) {
                 /* AUTO-FIX: added optional chaining ?. for safety */
@@ -508,45 +569,24 @@ export const PlayerCombatMethods = {
 
 
         this.mp -= skillCost;
-        // [신규] 전투 연출 요청 - 스킬 로그 강조
+        
+        // [신규] 스킬 연출 (화면 흔들림 + 텍스트 박스)
         /* AUTO-FIX: added optional chaining ?. for safety */
-        this.cb?.logMessage?.(`[SKILL] '${skillName}' 정수 스킬을 사용했다!`);
+        this.cb?.showScreenEffect?.('shake');
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        this.cb?.logMessage?.(`[${skillName}]!`, 'log-skill-player');
+
 
         try {
-            // [수정] data_functional.js에 병합된 effect 함수 찾기
-            // [로직 수정] GameData.essences에서 직접 effect 함수를 찾음
-            const functionalSkill = (this.gameData.essences?.[essenceKey]?.active);
-            let effectFunction = null;
-
-            if (Array.isArray(functionalSkill)) {
-                effectFunction = functionalSkill.find(s => s.name === skillName)?.effect;
-            } else if (functionalSkill && typeof functionalSkill.effect === 'function') {
-                effectFunction = functionalSkill.effect;
-            }
-
-            if (typeof effectFunction === 'function') {
-                 if (targetIndex === -2) {
-                     effectFunction(this, this); // 자신 대상
-                 } else {
-                     effectFunction(this, targetIndex === -1 ? targets : target); // 광역(targets) 또는 단일(target)
-                 }
-            }
-            else if (essenceData.dmg !== undefined) {
-                 targets.forEach(t => {
-                     let defense = (essenceData.type === 'magic') ? (t.currentStats?.['항마력'] || 0) : (t.currentStats?.['물리 내성'] || 0);
-                     let finalDamage = helpers.calculateDamage(essenceData.dmg || 0, defense);
-                     helpers.safeHpUpdate(t, -finalDamage);
-                     /* AUTO-FIX: added optional chaining ?. for safety */
-                     this.cb?.logMessage?.(`스킬 ${skillName}(으)로 ${t.name}에게 ${finalDamage}의 피해! (몬스터 HP: ${t.hp})`);
-                 });
-            }
-            else {
-                 /* AUTO-FIX: added optional chaining ?. for safety */
-                 this.cb?.logMessage?.(`경고: '${skillName}' 스킬의 효과(effect 또는 dmg)가 정의되지 않았습니다.`);
-            }
+            // [수정] 모든 타겟팅 유형 전달
+            if (targetIndex === -1) effectFunction(this, targets); // 적 광역
+            else if (targetIndex === -2) effectFunction(this, this); // 자신
+            else if (targetIndex === -3) effectFunction(this, targets); // 아군 광역
+            else if (targetIndex >= 100) effectFunction(this, target); // 아군 단일
+            else effectFunction(this, target); // 적 단일
 
              targets.forEach(t => {
-                 if (t.hp <= 0) {
+                 if (t.hp <= 0 && t !== this && !this.party.includes(t)) { // 대상이 몬스터일 경우
                      this.handleMonsterDefeat(t);
                  }
              });
@@ -610,7 +650,8 @@ export const PlayerCombatMethods = {
 
     /**
      * [수정] 몬스터의 턴 로직
-     * 보스 페이즈 시스템 추가
+     * [BUG FIX] 몬스터의 (1턴) 디버프가 제거되지 않던 무한 기절/속박 버그 수정
+     * [신규] (v4) 몬스터 공격/스킬 사용 시 연출 추가
      */
     monsterTurn() {
         if (!this.inCombat) return;
@@ -634,18 +675,55 @@ export const PlayerCombatMethods = {
                 this.cb?.logMessage?.(`[BOSS] ${monster.name}이(가) 광폭화합니다! (Phase 2 돌입)`);
             }
 
+            
+            // --- [BUG FIX] 턴 시작 시 몬스터 디버프 처리 ---
+            let turnSkipped = false;
+            let debuffsToRemove = [];
+            let hadStunDebuff = false;
+            const oneTurnDebuffs = [
+                "기절(1턴)", "석화(1턴)", "수면(1턴)", "빙결(1턴)", 
+                "속박(늪)", "속박(뱀)", "속박(나무)", "속박(거품)", 
+                "속박(얼음)", "속박(무덤)", "속박(중력)", "속박(뿌리)"
+            ];
+
             /* AUTO-FIX: added optional chaining ?. for safety */
-            if(monster.debuffs?.includes("공포") && Math.random() < 0.5) {
-                /* AUTO-FIX: added optional chaining ?. for safety */
-                this.cb?.logMessage?.(`${monster.name}은(는) 공포에 질려 아무것도 하지 못했다!`);
-                return; 
+            (monster.debuffs || []).forEach(debuff => {
+                // 1. (1턴)으로 끝나는 디버프 제거 목록에 추가
+                if (debuff.endsWith("(1턴)")) {
+                    debuffsToRemove.push(debuff);
+                    // 2. 해당 디버프가 행동 불가 디버프인지 확인
+                    if (oneTurnDebuffs.includes(debuff)) {
+                        turnSkipped = true;
+                        hadStunDebuff = true;
+                    }
+                }
+                
+                // 3. (1턴)이 아닌 공포 등 별도 턴 스킵 체크
+                if (debuff.startsWith("공포") && Math.random() < 0.5) {
+                    turnSkipped = true;
+                }
+            });
+
+            // 4. 턴 경과 디버프 실제 제거
+            if (debuffsToRemove.length > 0) {
+                monster.debuffs = monster.debuffs.filter(d => !debuffsToRemove.includes(d));
             }
-            /* AUTO-FIX: added optional chaining ?. for safety */
-            if(monster.debuffs?.includes("기절(1턴)") || monster.debuffs?.includes("석화(1턴)") || monster.debuffs?.includes("수면(1턴)") || monster.debuffs?.includes("빙결(1턴)") || monster.debuffs?.includes("속박(늪)") || monster.debuffs?.includes("속박(뱀)")) {
-                 /* AUTO-FIX: added optional chaining ?. for safety */
-                 this.cb?.logMessage?.(`${monster.name}은(는) 행동할 수 없다!`);
-                return;
+            // --- [BUG FIX] 끝 ---
+
+
+            // [수정] 턴 스킵 처리
+            if (turnSkipped) {
+                if (hadStunDebuff) {
+                    /* AUTO-FIX: added optional chaining ?. for safety */
+                    // [기절(1턴), 속박(늪)] 처럼 표시
+                    this.cb?.logMessage?.(`${monster.name}은(는) [${debuffsToRemove.filter(d => oneTurnDebuffs.includes(d)).join(', ')}] 효과로 행동할 수 없다!`);
+                } else {
+                    /* AUTO-FIX: added optional chaining ?. for safety */
+                    this.cb?.logMessage?.(`${monster.name}은(는) 공포에 질려 아무것도 하지 못했다!`);
+                }
+                return; // 턴 행동 종료 (forEach의 다음 몬스터로)
             }
+
 
             const potentialTargets = [this, ...this.party].filter(p => p && p.hp > 0);
             if (potentialTargets.length === 0) return;
@@ -660,6 +738,21 @@ export const PlayerCombatMethods = {
             
             const isTargetPlayer = (target === this);
             
+            // [수정] 플레이어 대상 회피 체크 (파생 스탯 evasion 사용)
+            if (isTargetPlayer) {
+                let evasionChance = this.evasion + this.evasionBonus; // 기본 회피 + 스킬 보너스
+                /* AUTO-FIX: added optional chaining ?. for safety */
+                if (this.essences?.includes("브라키아이스텔로")) { // 염동력
+                    evasionChance += 0.20;
+                }
+                evasionChance = Math.min(0.8, evasionChance);
+                if (Math.random() < evasionChance) {
+                    /* AUTO-FIX: added optional chaining ?. for safety */
+                    this.cb?.logMessage?.(`${monster.name}의 '${atk.name}' 공격! 하지만 민첩하게 회피했다!`);
+                    return;
+                }
+            }
+
             if(atk.type === "magic") {
                  defense = target.currentStats?.["항마력"] || 5;
                  dmg = helpers.calculateDamage(atk.dmg || monster.atk || 10, defense);
@@ -667,21 +760,22 @@ export const PlayerCombatMethods = {
                 defense = target.currentStats?.["물리 내성"] || 5;
                 dmg = helpers.calculateDamage(atk.dmg || monster.atk || 10, defense);
                 
+                // [패시브 구현] 피격 시 물리 피해 감소 (플레이어 대상)
                 if (isTargetPlayer) {
                     /* AUTO-FIX: added optional chaining ?. for safety */
-                    if (this.essences?.includes("레이스")) {
-                        dmg *= 0.5; // "영체" 물리 피해 50% 감소
+                    if (this.essences?.includes("레이스") || this.essences?.includes("영혼의 거신병") || this.essences?.includes("벤시 퀸")) { // "영체"
+                        dmg *= 0.5;
                         /* AUTO-FIX: added optional chaining ?. for safety */
                         this.cb?.logMessage?.("[패시브: 영체]로 받는 물리 피해가 50% 감소합니다!");
                     }
                     /* AUTO-FIX: added optional chaining ?. for safety */
-                    if (this.essences?.includes("슬라임")) {
-                        dmg *= 0.9; // "끈적이는 신체" 물리 피해 10% 감소
+                    if (this.essences?.includes("슬라임")) { // "끈적이는 신체"
+                        dmg *= 0.9; // 10% 감소
                     }
                     /* AUTO-FIX: added optional chaining ?. for safety */
-                    if (this.essences?.includes("오우거")) {
+                    if (this.essences?.includes("오우거")) { // "무쇠가죽"
                         // (임의) 베기 공격 유형 체크
-                        if (atk.name.includes("베기") || atk.name.includes("할퀴기") || atk.name.includes("손톱")) {
+                        if (atk.name.includes("베기") || atk.name.includes("할퀴기") || atk.name.includes("손톱") || atk.name.includes("절삭")) {
                             let boostedDefense = (target.currentStats?.["물리 내성"] || 5) * 2;
                             dmg = helpers.calculateDamage(atk.dmg || monster.atk || 10, boostedDefense);
                             /* AUTO-FIX: added optional chaining ?. for safety */
@@ -690,21 +784,17 @@ export const PlayerCombatMethods = {
                     }
                 }
             }
-
-            // [수정] 플레이어 대상 회피 체크 (파생 스탯 evasion 사용)
-            if (isTargetPlayer) {
-                let evasionChance = this.evasion + this.evasionBonus; // 기본 회피 + 스킬 보너스
-                evasionChance = Math.min(0.8, evasionChance);
-                if (Math.random() < evasionChance) {
-                    /* AUTO-FIX: added optional chaining ?. for safety */
-                    this.cb?.logMessage?.(`${monster.name}의 '${atk.name}' 공격! 하지만 민첩하게 회피했다!`);
-                    return;
-                }
-            }
             
              dmg = Math.floor(dmg);
-             helpers.safeHpUpdate(target, -dmg);
+             helpers.safeHpUpdate(target, -dmg); // HP 감소 (부활 패시브 여기서 체크됨)
              const targetName = isTargetPlayer ? '플레이어' : target.name;
+
+             // [신규] 스킬 연출 (화면 흔들림 + 텍스트 박스)
+             /* AUTO-FIX: added optional chaining ?. for safety */
+             this.cb?.showScreenEffect?.('shake');
+             /* AUTO-FIX: added optional chaining ?. for safety */
+             this.cb?.logMessage?.(`[${atk.name}]!`, 'log-skill-monster');
+             
              /* AUTO-FIX: added optional chaining ?. for safety */
              this.cb?.logMessage?.(`${monster.name}의 '${atk.name}' 공격! ${targetName}에게 ${dmg}의 피해. (${targetName} HP: ${target.hp})`);
              /* AUTO-FIX: added optional chaining ?. for safety */
@@ -734,6 +824,9 @@ export const PlayerCombatMethods = {
         }
     },
 
+    /**
+     * [신규] (v4) 파티원 스킬 사용 시 연출 추가
+     */
     partyTurn() {
         /* AUTO-FIX: added optional chaining ?. for safety */
         if (!this.inCombat || !this.currentMonster || this.currentMonster?.every(m => !m || m.hp <= 0)) {
@@ -776,12 +869,26 @@ export const PlayerCombatMethods = {
                 if (healSkill && healTarget) {
                     member.mp -= (healSkill.cost || 0);
                     const targetName = healTarget === this ? '플레이어' : healTarget.name;
+                    
+                    // [신규] 스킬 연출 (화면 흔들림 + 텍스트 박스)
                     /* AUTO-FIX: added optional chaining ?. for safety */
-                    // [신규] 전투 연출 요청 - 스킬 로그 강조
-                    this.cb?.logMessage?.(`[SKILL] ${member.name}이(가) 스킬 [${healSkill.name}]을(를) ${targetName}에게 시전!`);
+                    this.cb?.showScreenEffect?.('shake');
+                    /* AUTO-FIX: added optional chaining ?. for safety */
+                    this.cb?.logMessage?.(`[${healSkill.name}]! - ${member.name}`, 'log-skill-player');
                     
                     try {
-                        healSkill.effect(member, healTarget); // effect 함수 직접 호출
+                        // [수정] NPC 스킬 effect 함수 찾기 (main.js에서 병합된 것)
+                        const functionalSkill = (this.gameData.magic?.[healSkill.name]) || // 마법 힐
+                                                (this.gameData.essences?.[healSkill.fromEssence]?.active.find(s => s.name === healSkill.name)); // 정수 힐
+                        
+                        if (functionalSkill && typeof functionalSkill.effect === 'function') {
+                            functionalSkill.effect(member, healTarget);
+                        } else {
+                             // 예비 힐 로직
+                             const healAmount = 30 + Math.floor((member.currentStats["정신력"] || 10) * 1.5);
+                             helpers.safeHpUpdate(healTarget, healAmount);
+                             this.cb?.logMessage?.(`${targetName}의 체력을 ${healAmount} 회복했다.`);
+                        }
                     } catch (e) {
                          /* AUTO-FIX: added optional chaining ?. for safety */
                          this.cb?.logMessage?.(`${member.name}의 힐 스킬 사용 중 오류 발생: ${e.message}`);
@@ -804,8 +911,12 @@ export const PlayerCombatMethods = {
 
              const offensiveSkills = member.skills.filter(s => (s.cost || 0) <= member.mp && !s.name.includes("힐") && !s.name.includes("치유"));
              if (offensiveSkills.length > 0 && Math.random() < 0.4) {
+                 // [신규] 스킬 연출 (useSkill 내부에서 처리)
                  member.useSkill(targetMonster); 
              } else {
+                 // [신규] 기본 공격 연출
+                 /* AUTO-FIX: added optional chaining ?. for safety */
+                 this.cb?.showScreenEffect?.('shake');
                  member.attack(targetMonster);
              }
 
@@ -838,6 +949,7 @@ export const PlayerCombatMethods = {
     /**
      * [패시브 구현] 플레이어 턴 시작 로직
      * "공포", "파멸의 각인", "악취" 등 턴 시작 시 발동하는 디버프/패시브 처리
+     * [수정] DOT(지속 피해) 및 HOT(지속 회복) 로직 추가
      */
      startPlayerTurn() {
          if (!this.inCombat) return;
@@ -853,15 +965,15 @@ export const PlayerCombatMethods = {
              turnSkipped = true;
          }
          /* AUTO-FIX: added optional chaining ?. for safety */
-         else if (this.debuffs?.includes("기절(1턴)") || this.debuffs?.includes("석화(1턴)") || this.debuffs?.includes("수면(1턴)") || this.debuffs?.includes("빙결(1턴)") || this.debuffs?.includes("속박(늪)") || this.debuffs?.includes("속박(뱀)")) {
+         else if (this.debuffs?.includes("기절(1턴)") || this.debuffs?.includes("석화(1턴)") || this.debuffs?.includes("수면(1턴)") || this.debuffs?.includes("빙결(1턴)") || this.debuffs?.includes("속박(늪)") || this.debuffs?.includes("속박(뱀)") || this.debuffs?.includes("속박(나무)") || this.debuffs?.includes("속박(거품)") || this.debuffs?.includes("속박(얼음)") || this.debuffs?.includes("속박(무덤)") || this.debuffs?.includes("속박(중력)") || this.debuffs?.includes("속박(뿌리)")) {
              /* AUTO-FIX: added optional chaining ?. for safety */
-             this.cb?.logMessage?.(`[${this.debuffs.find(d => d.includes("턴"))}] 효과로 행동할 수 없다!`);
+             this.cb?.logMessage?.(`[${this.debuffs.find(d => d.includes("턴") || d.includes("속박"))}] 효과로 행동할 수 없다!`);
              turnSkipped = true;
          }
 
-         // 2. 지속 피해 디버프
+         // 2. 지속 피해(DOT) 디버프
          /* AUTO-FIX: added optional chaining ?. for safety */
-         if (this.debuffs?.includes("파멸의 각인(영구)")) { //
+         if (this.debuffs?.includes("파멸의 각인(영구)")) { // 인면조
              let dmg = Math.floor(this.maxHp * 0.01);
              helpers.safeHpUpdate(this, -dmg);
              /* AUTO-FIX: added optional chaining ?. for safety */
@@ -870,18 +982,36 @@ export const PlayerCombatMethods = {
          /* AUTO-FIX: added optional chaining ?. for safety */
          if (this.debuffs?.some(d => d.startsWith("독("))) {
              let poisonDmg = 5; // (임의) 기본 독 데미지
+             if (this.debuffs.includes("독(중)")) poisonDmg = 10;
+             if (this.debuffs.includes("독(강)")) poisonDmg = 20;
+             if (this.debuffs.includes("독(최상급)")) poisonDmg = 50;
+             
              /* AUTO-FIX: added optional chaining ?. for safety */
              if (this.debuffs?.includes("악취(디버프)")) { // (몬스터가 이 디버프를 걸었다고 가정)
                  poisonDmg *= 2;
                  /* AUTO-FIX: added optional chaining ?. for safety */
                  this.cb?.logMessage?.("[패시브: 악취] 효과로 독 피해가 2배 증가합니다!");
              }
+             if (this.debuffs.includes("치명적 중독(8배)")) { // 스닉투라
+                 poisonDmg *= 8;
+             }
+             
              helpers.safeHpUpdate(this, -poisonDmg);
              /* AUTO-FIX: added optional chaining ?. for safety */
              this.cb?.logMessage?.(`[독] 효과로 ${poisonDmg}의 피해!`);
          }
          
-         // 3. 턴 경과 처리 (간단하게 1턴짜리만 제거)
+         // 3. 지속 회복(HOT) 버프
+         /* AUTO-FIX: added optional chaining ?. for safety */
+         if (this.debuffs?.includes("초재생(1턴)")) { // 스닉투라
+             let healAmount = 1000;
+             helpers.safeHpUpdate(this, healAmount);
+             /* AUTO-FIX: added optional chaining ?. for safety */
+             this.cb?.logMessage?.(`[불멸의 의지] 효과로 체력을 ${healAmount} 회복합니다!`);
+         }
+         
+         // 4. 턴 경과 처리 (간단하게 1턴짜리만 제거)
+         // [수정] (1턴)으로 끝나는 모든 디버프/버프 제거
          this.debuffs = this.debuffs.filter(d => !d.endsWith("(1턴)"));
          // (3턴짜리 등은 더 복잡한 턴 매니저 필요)
 

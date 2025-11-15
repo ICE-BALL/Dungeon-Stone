@@ -607,3 +607,101 @@ button.disabled {
         font-size: 1.05rem; /* 폰트 살짝 키움 */
     }
 }
+
+/* ---
+[신규 추가] (v4)
+스킬 연출 및 로그 메시지 스타일
+--- */
+
+/* 1. ui_core.js에서 사용될 로그 메시지 기본 스타일 (기존 누락분 보충) */
+.log-message {
+    margin: 2px 0;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: background-color 0.3s, transform 0.2s;
+    font-size: 0.9rem;
+}
+
+.log-message.combat {
+    color: var(--color-health); /* 전투 관련 (피해) */
+    font-style: italic;
+}
+.log-message.reward {
+    color: var(--color-stamina); /* 보상 관련 (획득) */
+}
+.log-message.magic {
+    color: var(--color-magic); /* 마법/정수 관련 */
+}
+.log-message.system {
+    color: var(--color-accent); /* 시스템/퀘스트 관련 */
+    font-weight: bold;
+}
+
+/* 2. 스킬 팝업 애니메이션 */
+@keyframes skillPopup {
+    0% {
+        transform: scale(0.9) translateY(10px);
+        opacity: 0.5;
+    }
+    20% {
+        transform: scale(1.05); /* 살짝 커졌다가 */
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1.0) translateY(0); /* 제자리로 */
+    }
+}
+
+/* 3. 스킬 텍스트 박스 스타일 (플레이어) */
+.log-message.log-skill-player {
+    font-size: 1.2rem; /* 폰트 크게 */
+    font-weight: bold;
+    font-family: var(--font-title); /* 타이틀 폰트 */
+    text-align: center;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    animation: skillPopup 0.4s ease-out; /* 팝업 애니메이션 */
+    
+    /* 플레이어 스킬 색상 (긍정적/기력) */
+    background-color: rgba(106, 171, 125, 0.15); /* var(--color-stamina) 15% */
+    border: 2px solid var(--color-stamina);
+    color: #ffffff; /* 흰색 텍스트 */
+    text-shadow: 0 0 5px var(--color-stamina);
+}
+
+/* 4. 스킬 텍스트 박스 스타일 (몬스터) */
+.log-message.log-skill-monster {
+    font-size: 1.1rem; /* 폰트 살짝 작게 (플레이어보다) */
+    font-weight: bold;
+    font-family: var(--font-title);
+    text-align: center;
+    margin: 10px 0;
+    padding: 10px;
+    border-radius: var(--border-radius);
+    animation: skillPopup 0.3s ease-out;
+
+    /* 몬스터 스킬 색상 (부정적/체력) */
+    background-color: rgba(171, 106, 106, 0.15); /* var(--color-health) 15% */
+    border: 2px solid var(--color-health);
+    color: #ffffff;
+    text-shadow: 0 0 5px var(--color-health);
+}
+
+/* 5. [신규] 치명타 텍스트 박스 스타일 */
+.log-message.log-critical-hit {
+    font-size: 1.2rem; /* 폰트 크게 */
+    font-weight: bold;
+    font-family: var(--font-title); /* 타이틀 폰트 */
+    text-align: center;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: var(--border-radius);
+    animation: skillPopup 0.4s ease-out; /* 팝업 애니메이션 */
+    
+    /* 치명타 색상 (노란색/포인트) */
+    background-color: rgba(138, 109, 59, 0.15); /* var(--color-accent) 15% */
+    border: 2px solid var(--color-accent);
+    color: #ffffff; /* 흰색 텍스트 */
+    text-shadow: 0 0 5px var(--color-accent);
+}

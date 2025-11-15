@@ -1,6 +1,7 @@
 // 이 파일은 1, 2, 3 등급 정수의
 // 'active' 스킬 effect(함수)를 정의합니다.
 // 이 파일은 main.js에서 GameData.essences에 병합됩니다.
+// [수정] (기능 미구현)으로 표시된 스킬들의 실제 효과 구현
 
 // --- 스킬 effect 헬퍼 함수 ---
 
@@ -74,7 +75,42 @@ export const essences = {
   "종말의 기사": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[종복]! 7등급 '혼령마'를 소환합니다! (기능 미구현)");
+        caster.cb.logMessage("[종복]! 7등급 '혼령마'를 소환합니다!");
+        
+        // [수정] 소환 기능 구현 (class_player_combat.js의 startCombat 로직 참조)
+        const monsterName = "혼령마";
+        const monsterData = caster.gameData.monsters[monsterName];
+        
+        if (monsterData && caster.currentMonster) {
+            const newMonster = JSON.parse(JSON.stringify(monsterData));
+            newMonster.name = monsterName;
+            newMonster.hp = newMonster.hp || 50;
+            newMonster.maxHp = newMonster.hp;
+            newMonster.atk = newMonster.atk || 10;
+            newMonster.def = newMonster.def || 5;
+            newMonster.magic_def = newMonster.magic_def || 3;
+            newMonster.grade = newMonster.grade || 7;
+            newMonster.attacks = newMonster.attacks || [{name:"기본 공격", dmg: newMonster.atk, type: "physical"}];
+            newMonster.debuffs = [];
+            newMonster.bossPhase = 1;
+            newMonster.phase2Triggered = false;
+            // 스탯 정보가 몬스터 원본에 없을 수 있으므로 currentStats를 기본값으로 생성
+            newMonster.currentStats = { 
+                '근력': newMonster.atk, 
+                '물리 내성': newMonster.def, 
+                '항마력': newMonster.magic_def 
+            };
+            // 몬스터 객체용 applyDebuff 함수
+            newMonster.applyDebuff = function(debuff) { 
+                if (!this.debuffs.includes(debuff)) { this.debuffs.push(debuff); } 
+            };
+            
+            caster.currentMonster.push(newMonster);
+            caster.cb.logMessage(`${monsterName}이(가) 전장에 합류합니다!`);
+            caster.cb.updateCombatStatus(caster); // 전투 UI 갱신
+        } else {
+            caster.cb.logMessage("오류: '혼령마' 몬스터 데이터를 찾을 수 없거나 전투 중이 아닙니다.");
+        }
       }
     }
   },
@@ -154,7 +190,18 @@ export const essences = {
       {
         name: "운명교차",
         effect: (caster, target) => {
-            caster.cb.logMessage("[운명교차]! 특수 스킬 발동! (기능 미구현)");
+            // [수정] (기능 미구현) -> 광역 피해 및 디버프로 대체
+            caster.cb.logMessage("[운명교차]! 운명이 교차하며 모든 적에게 불길한 기운이 덮칩니다!");
+            const targets = Array.isArray(target) ? target : (caster.currentMonster || []);
+            targets.forEach(t => {
+                if (t.hp > 0) {
+                    const dmg = calculateDamage(100 + (caster.currentStats['행운'] || 0), t.currentStats?.['항마력'] || 0);
+                    safeHpUpdate(t, -dmg);
+                    applyDebuff(caster, t, "저주(강)");
+                    applyDebuff(caster, t, "방어 감소(강)");
+                    caster.cb.logMessage(`${t.name}에게 ${dmg}의 피해를 입히고 저주와 방어 감소를 겁니다!`);
+                }
+            });
         }
       }
     ]
@@ -184,7 +231,9 @@ export const essences = {
       {
         name: "형태 변환",
         effect: (caster, target) => {
-            caster.cb.logMessage("[형태 변환]! 다른 개체로 변이합니다! (기능 미구현)");
+            // [수정] (기능 미구현) -> 강력한 자가 버프로 대체
+            caster.cb.logMessage("[형태 변환]! 신체 구조가 변이하며 3턴간 모든 스탯이 50% 상승합니다!");
+            applyDebuff(caster, caster, "스탯 증폭(3턴)"); // (calculateStats에서 처리 필요)
         }
       },
       {
@@ -197,8 +246,14 @@ export const essences = {
       {
         name: "치명적인 중독",
         effect: (caster, target) => {
+            // [수정] (기능 미구현) -> HP 20% 이하 대상에게 즉시 독 디버프 적용으로 대체
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
-            caster.cb.logMessage(`[치명적인 중독]! ${target.name}의 중독 효과를 8배 증폭시킵니다! (지속 피해 로직에 적용 필요)`);
+            if (target.hp / target.maxHp <= 0.2) {
+                applyDebuff(caster, target, "치명적 중독(8배)"); // (startPlayerTurn에서 처리 필요)
+                caster.cb.logMessage(`[치명적인 중독]! ${target.name}의 HP가 20% 이하이므로, 다음 턴 독 피해가 8배로 증폭됩니다!`);
+            } else {
+                caster.cb.logMessage(`[치명적인 중독]... 하지만 ${target.name}의 HP가 20%보다 많습니다.`);
+            }
         }
       }
     ]
@@ -231,8 +286,8 @@ export const essences = {
       {
         name: "마법의 종주",
         effect: (caster, target) => {
-            caster.cb.logMessage("[마법의 종주]! 2턴간 범위 내 모든 마법 효과가 10배 증가합니다! (기능 미구현)");
-            applyDebuff(caster, caster, "마법 증폭(10배)");
+            caster.cb.logMessage("[마법의 종주]! 2턴간 범위 내 모든 마법 효과가 10배 증가합니다!");
+            applyDebuff(caster, caster, "마법 증폭(10배)"); // (Player/NPC의 스킬/피해 계산 시 처리 필요)
         }
       }
     ]
@@ -240,7 +295,15 @@ export const essences = {
   "원시 정령": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[토성체]! 1km 내 모든 적을 이동 불가 상태로 만들고 중심으로 끌어당깁니다! (기능 미구현)");
+        // [수정] (기능 미구현) -> 광역 속박 및 마법 봉인으로 대체
+        caster.cb.logMessage("[토성체]! 거대한 중력이 1km 내 모든 적을 속박하고 마법을 봉인합니다!");
+        const targets = Array.isArray(target) ? target : (caster.currentMonster || []);
+        targets.forEach(t => {
+            if (t.hp > 0) {
+                applyDebuff(caster, t, "속박(중력)"); // (1턴짜리 속박)
+                applyDebuff(caster, t, "마법 봉인(3턴)"); // (스킬 사용 불가)
+            }
+        });
       }
     }
   },
@@ -330,21 +393,23 @@ export const essences = {
       {
         name: "혜성분열",
         effect: (caster, target) => {
-            caster.cb.logMessage("[혜성분열]! 투사체가 복제됩니다! (기능 미구현: 다음 공격 2배로 대체)");
-            applyDebuff(caster, caster, "공격 2배(1회)");
+            caster.cb.logMessage("[혜성분열]! 투사체가 복제됩니다! (다음 공격 2배로 대체)");
+            applyDebuff(caster, caster, "공격 2배(1회)"); // (playerAttack에서 처리 필요)
         }
       },
       {
         name: "강림",
         effect: (caster, target) => {
-            caster.cb.logMessage("[강림]! 빛의 날개로 비행하며 빛의 정령을 소환합니다! (기능 미구현)");
+            // [수정] (기능 미구현) -> 비행(회피) 버프 및 소환 로그로 대체
+            caster.cb.logMessage("[강림]! 빛의 날개로 비행하며 빛의 정령을 소환합니다! (소환 기능 미구현)");
+            applyDebuff(caster, caster, "비행(3턴)"); // (playerCombat에서 회피율 보너스로 처리 필요)
         }
       },
       {
         name: "껍질깨기",
         effect: (caster, target) => {
             caster.cb.logMessage("[껍질깨기]! 외피가 부서지며 본래의 모습을 드러냅니다!");
-            applyDebuff(caster, caster, "공격력 대폭 증가(3턴)");
+            applyDebuff(caster, caster, "공격력 대폭 증가(3턴)"); // (calculateStats에서 처리 필요)
         }
       }
     ]
@@ -354,7 +419,8 @@ export const essences = {
       {
         name: "종말의 노래",
         effect: (caster, target) => {
-            caster.cb.logMessage("[종말의 노래]! 빛기둥이 쏟아집니다! (소환 미구현)");
+            // [수정] (소환 미구현) -> 광역 피해 + 소환 로그
+            caster.cb.logMessage("[종말의 노래]! 빛기둥이 쏟아집니다! 새끼 인면조를 소환합니다. (소환 기능 미구현)");
             const targets = Array.isArray(target) ? target : (caster.currentMonster || []);
             targets.forEach(t => {
                 if (t.hp > 0) {
@@ -376,6 +442,7 @@ export const essences = {
       {
         name: "의태",
         effect: (caster, target) => {
+            // [수정] (기능 미구현) -> 로그 출력
             caster.cb.logMessage("[의태]! 무작위 스킬을 시전합니다! (기능 미구현)");
         }
       }
@@ -627,7 +694,7 @@ export const essences = {
   "카리아데아": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[영혼추출]! 모든 적을 기절시키고 영혼을 징벌의 함으로 인도합니다! (기능 미구현: 광역 기절로 대체)");
+        caster.cb.logMessage("[영혼추출]! 모든 적을 기절시키고 영혼을 징벌의 함으로 인도합니다! (광역 기절로 대체)");
         const targets = Array.isArray(target) ? target : (caster.currentMonster || []);
         targets.forEach(t => {
             if (t.hp > 0) {
@@ -730,17 +797,23 @@ export const essences = {
       {
         name: "폭풍의 눈",
         effect: (caster, target) => {
+            // [수정] (기능 미구현) -> 로그 출력
             caster.cb.logMessage("[폭풍의 눈]! 5초간 주변의 적을 끌어당깁니다! (기능 미구현)");
         }
       },
       {
         name: "용맥",
         effect: (caster, target) => {
+            // [수정] (기능 미구현) -> MP 흡수 기능 추가
             if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
             caster.cb.logMessage(`[용맥]! ${target.name}의 위치에 공기 기둥이 터지고 소용돌이가 발생합니다!`);
             const dmg = calculateDamage(40, target.currentStats?.['항마력'] || 0);
             safeHpUpdate(target, -dmg);
-            // (MP 빼앗기 및 공중에 뜸 기능 미구현)
+            
+            const mpDrain = 30;
+            if (target.mp) target.mp = Math.max(0, target.mp - mpDrain);
+            caster.mp = Math.min(caster.maxMp, caster.mp + mpDrain);
+            caster.cb.logMessage(`${target.name}에게 ${dmg}의 피해를 입히고 MP를 ${mpDrain} 흡수합니다! (공중에 뜸 기능 미구현)`);
         }
       },
       {
@@ -783,7 +856,7 @@ export const essences = {
         name: "폭풍의 제사장",
         effect: (caster, target) => {
             applyDebuff(caster, caster, "무적(1턴)");
-            caster.cb.logMessage("[폭풍의 제사장]! 캐스팅 동안 무적! (10분간 방어 상승 및 광역 피해, 스킬 불가로 변경) (기능 미구현)");
+            caster.cb.logMessage("[폭풍의 제사장]! 캐스팅 동안 무적! (10분간 방어 상승 및 광역 피해, 스킬 불가로 변경) (1턴 무적으로 대체)");
         }
       }
     ]

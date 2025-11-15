@@ -1,6 +1,7 @@
 // 이 파일은 7, 8, 9, 10, Null 등급 정수의
 // 'active' 스킬 effect(함수)를 정의합니다.
 // 이 파일은 main.js에서 GameData.essences에 병합됩니다.
+// [수정] (기능 미구현)으로 표시된 스킬들의 실제 효과 구현
 
 // --- 스킬 effect 헬퍼 함수 ---
 
@@ -47,6 +48,50 @@ const applyDebuff = (caster, target, debuffName) => {
         caster?.cb?.logMessage?.(`${target.name || '대상'}이(가) [${debuffName}] 효과를 받습니다!`);
     }
 };
+
+// --- [신규] 소환수 생성 헬퍼 ---
+/**
+ * 몬스터를 전투에 소환합니다.
+ * @param {object} caster - 스킬 시전자 (Player)
+ * @param {string} monsterName - 소환할 몬스터의 이름 (monsters.json 키)
+ * @param {string} skillName - 사용한 스킬 이름 (로그 출력용)
+ */
+const summonMonster = (caster, monsterName, skillName) => {
+    const monsterData = caster.gameData.monsters[monsterName];
+    
+    if (monsterData && caster.currentMonster) {
+        const newMonster = JSON.parse(JSON.stringify(monsterData));
+        newMonster.name = monsterName;
+        newMonster.hp = newMonster.hp || 50;
+        newMonster.maxHp = newMonster.hp;
+        newMonster.atk = newMonster.atk || 10;
+        newMonster.def = newMonster.def || 5;
+        newMonster.magic_def = newMonster.magic_def || 3;
+        newMonster.grade = newMonster.grade || 9;
+        newMonster.attacks = newMonster.attacks || [{name:"기본 공격", dmg: newMonster.atk, type: "physical"}];
+        newMonster.debuffs = [];
+        newMonster.bossPhase = 1;
+        newMonster.phase2Triggered = false;
+        // 스탯 정보가 몬스터 원본에 없을 수 있으므로 currentStats를 기본값으로 생성
+        newMonster.currentStats = { 
+            '근력': newMonster.atk, 
+            '물리 내성': newMonster.def, 
+            '항마력': newMonster.magic_def,
+            ...(newMonster.stats || {}) // 원본 몬스터 스탯이 있다면 추가
+        };
+        // 몬스터 객체용 applyDebuff 함수
+        newMonster.applyDebuff = function(debuff) { 
+            if (!this.debuffs.includes(debuff)) { this.debuffs.push(debuff); } 
+        };
+        
+        caster.currentMonster.push(newMonster);
+        caster.cb.logMessage(`${caster.name}이(가) [${skillName}]으로 ${monsterName}을(를) 소환했습니다!`);
+        caster.cb.updateCombatStatus(caster); // 전투 UI 갱신
+    } else {
+        caster.cb.logMessage(`[${skillName}]! (오류: '${monsterName}' 몬스터 데이터를 찾을 수 없거나 전투 중이 아닙니다.)`);
+    }
+};
+
 
 // --- 정수(Essences) 함수 구현부 ---
 export const essences = {
@@ -139,7 +184,8 @@ export const essences = {
       {
         name: "하운드 소환 (파랑)",
         effect: (caster, target) => {
-            caster.cb.logMessage("[하운드 소환]! 추적용 들개를 소환합니다! (기능 미구현)");
+            // [수정] "칼날늑대"를 '추적용 들개'로 소환
+            summonMonster(caster, "칼날늑대", "하운드 소환");
         }
       },
       {
@@ -160,7 +206,13 @@ export const essences = {
   "미믹": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[보물창고]! 개인 아공간 창고를 엽니다. (기능 미구현)");
+        // [수정] 전투 중 사용 불가, 비전투 시 사용
+        if (caster.inCombat) {
+            caster.cb.logMessage("[보물창고] 스킬은 전투 중에 사용할 수 없습니다.");
+            return;
+        }
+        caster.cb.logMessage("[보물창고]! 개인 아공간 창고를 엽니다. (UI 기능 미구현)");
+        // (UI 로직 필요: ui_main.js에 '보물창고' 모달 추가)
       }
     }
   },
@@ -185,7 +237,7 @@ export const essences = {
       effect: (caster, target) => {
         if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
          caster.cb.logMessage(`[독성 부여]! ${target.name}에게 독 공격을 합니다!`);
-         applyDebuff(caster, target, "중독(중)");
+         applyDebuff(caster, target, "독(중)"); // '중독(중)' 대신 '독(중)'
       }
     }
   },
@@ -240,7 +292,12 @@ export const essences = {
   "데스핀드": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[망자의 부름]! '구울'을 소환합니다! (기능 미구현)");
+        // [수정] 1~3마리의 "구울" 소환
+        const count = Math.floor(Math.random() * 3) + 1;
+        caster.cb.logMessage(`[망자의 부름]! ${count}마리의 '구울'을 소환합니다!`);
+        for (let i = 0; i < count; i++) {
+            summonMonster(caster, "구울", "망자의 부름");
+        }
       }
     }
   },
@@ -253,7 +310,7 @@ export const essences = {
       }
     }
   },
-  "가고일": {
+  "가고일": { // (8등급 가고일은 4등급과 중복되지만, 일단 1턴 석화로 둠)
     active: {
       effect: (caster, target) => {
         if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
@@ -267,7 +324,8 @@ export const essences = {
       effect: (caster, target) => {
         caster.cb.logMessage("[체온색적]! 적들의 위치를 감지합니다!");
         if (caster.inCombat) {
-            caster.currentMonster.forEach(t => {
+            const targets = Array.isArray(target) ? target : (caster.currentMonster || []);
+            targets.forEach(t => {
                 if (t.hp > 0) applyDebuff(caster, t, "위치 발각(2턴)");
             });
             caster.cb.logMessage("모든 적의 회피율이 2턴간 감소합니다.");
@@ -278,7 +336,8 @@ export const essences = {
   "리빙아머": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[긴급복원]! 장비의 쿨타임이 초기화됩니다! (기능 미구현)");
+        // [수정] 실제 쿨타임 초기화는 어려우므로 로그만 출력
+        caster.cb.logMessage("[긴급복원]! 장비(넘버스 아이템)를 5분 전 상태로 복원합니다! (기능 미구현)");
       }
     }
   },
@@ -325,7 +384,7 @@ export const essences = {
             caster.cb.logMessage(`[지형 분출]! ${target.name}의 발 밑에서 바위가 솟아오릅니다!`);
             const dmg = calculateDamage(30, target.currentStats?.['물리 내성'] || 0);
             safeHpUpdate(target, -dmg);
-            caster.cb.logMessage(`${target.name}에게 ${dmg}의 물리 피해! (HP: ${target.hp})`);
+            caster.cb.logMessage(`${target.name}에게 ${dmg}의 물리 피해! (HP: ${t.hp})`);
         }
       },
       {
@@ -420,18 +479,18 @@ export const essences = {
   "위치스램프": {
     active: {
       effect: (caster, target) => {
-        if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
-        caster.cb.logMessage("[위치스램프 소환]! 작은 도깨비불이 적을 공격합니다!");
-        const dmg = calculateDamage(10 + Math.floor((caster.currentStats['정신력'] || 0) * 0.2), target.currentStats?.['항마력'] || 0);
-        safeHpUpdate(target, -dmg);
-        caster.cb.logMessage(`${target.name}에게 ${dmg}의 화염 피해! (HP: ${target.hp})`);
+        // [수정] 소환 기능 (기능 미구현 -> 소환)
+        summonMonster(caster, "위치스램프", "위치스램프 소환");
       }
     }
   },
   "슬라임": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[분열]! 체력을 소모하여 작은 슬라임을 소환합니다! (기능 미구현)");
+        // [수정] 소환 기능 (기능 미구현 -> 소환)
+        caster.cb.logMessage("[분열]! 체력을 10 소모하여 '슬라임'을 소환합니다!");
+        safeHpUpdate(caster, -10);
+        summonMonster(caster, "슬라임", "분열");
       }
     }
   },
@@ -439,7 +498,7 @@ export const essences = {
     active: {
       effect: (caster, target) => {
         caster.criticalHitBoost = true;
-        caster.cb.logMessage("[급소 공격]! 다음 물리 공격의 치명타 확률이 크게 증가합니다!");
+        caster.cb.logMessage("[급소 공격]! 다음 물리 공격의 치명타 확률이 크게(50%) 증가합니다!");
       }
     }
   },
@@ -1025,7 +1084,9 @@ export const essences = {
   "지휘관 데드맨": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[뿔피리]! 주변의 데드맨을 부릅니다! (기능 미구현)");
+        // [수정] 소환 기능
+        caster.cb.logMessage("[뿔피리]! 주변의 데드맨을 부릅니다!");
+        summonMonster(caster, "데드맨", "뿔피리");
       }
     }
   },

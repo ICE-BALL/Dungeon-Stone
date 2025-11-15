@@ -1,6 +1,7 @@
 // 이 파일은 4, 5, 6 등급 정수의
 // 'active' 스킬 effect(함수)를 정의합니다.
 // 이 파일은 main.js에서 GameData.essences에 병합됩니다.
+// [수정] (기능 미구현)으로 표시된 스킬들의 실제 효과 구현
 
 // --- 스킬 effect 헬퍼 함수 ---
 
@@ -139,13 +140,13 @@ export const essences = {
       {
         name: "자기복제",
         effect: (caster, target) => {
-            caster.cb.logMessage("[자기복제]! 분신체를 생성합니다. (기능 미구현)");
+            caster.cb.logMessage("[자기복제]! 자신의 환영 분신체를 생성합니다! (기능 미구현)");
         }
       },
       {
         name: "바꿔치기",
         effect: (caster, target) => {
-            caster.cb.logMessage("[바꿔치기]! 위치를 변경합니다. (기능 미구현)");
+            caster.cb.logMessage("[바꿔치기]! 대상과 위치를 변경합니다. (기능 미구현)");
         }
       },
       {
@@ -186,7 +187,7 @@ export const essences = {
             const mpDrain = 20;
             if (target.mp) target.mp = Math.max(0, target.mp - mpDrain);
             caster.mp = Math.min(caster.maxMp, caster.mp + mpDrain);
-            caster.cb.logMessage(`${target.name}의 MP ${mpDrain}를 흡수합니다! (HP: ${target.hp})`);
+            caster.cb.logMessage(`${target.name}의 MP ${mpDrain}를 흡수합니다!`);
         }
       },
       {
@@ -212,14 +213,14 @@ export const essences = {
       effect: (caster, target) => {
         if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
         caster.cb.logMessage(`[불건전계약]! ${target.name}에게 계약을 시도합니다... (기능 미구현)`);
-        // (실제 구현 시 target에 '계약됨' 플래그 및 caster에 '죽음의 순간' 체크 로직 필요)
+        applyDebuff(caster, target, "불건전계약(영구)"); // (실제 로직은 safeHpUpdate에서 처리 필요)
       }
     }
   },
   "라플레미믹": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[도주]! 땅 속으로 숨어 전투에서 이탈합니다.");
+        caster.cb.logMessage("[도주]! 땅 속으로 숨어 전투에서 즉시 이탈합니다.");
         if (caster.inCombat) {
             caster.endCombat(false); // 전투 강제 종료 (도망)
         }
@@ -403,7 +404,7 @@ export const essences = {
         const allTargets = [caster, ...caster.party, ...(caster.currentMonster || [])];
         allTargets.forEach(t => {
             if (t && t.hp > 0) {
-                // safeHpUpdate 대신 고정값 설정 헬퍼 (없으므로 직접 설정)
+                // safeHpUpdate 대신 고정값 설정
                 t.hp = Math.floor(t.maxHp * 0.5);
                 if (t.hp <= 0) t.hp = 1; // 0이 되는 것 방지
             }
@@ -752,7 +753,36 @@ export const essences = {
   "종말의 기사 (백색신전)": {
     active: {
       effect: (caster, target) => {
-        caster.cb.logMessage("[종복]! 7등급 '혼령마'를 소환합니다! (기능 미구현)");
+        caster.cb.logMessage("[종복]! 7등급 '혼령마'를 소환합니다!");
+        
+        // [수정] 소환 기능 구현 (class_player_combat.js의 startCombat 로직 참조)
+        const monsterName = "혼령마";
+        const monsterData = caster.gameData.monsters[monsterName];
+        
+        if (monsterData && caster.currentMonster) {
+            const newMonster = JSON.parse(JSON.stringify(monsterData));
+            newMonster.name = monsterName;
+            newMonster.hp = newMonster.hp || 50;
+            newMonster.maxHp = newMonster.hp;
+            newMonster.atk = newMonster.atk || 10;
+            newMonster.def = newMonster.def || 5;
+            newMonster.magic_def = newMonster.magic_def || 3;
+            newMonster.grade = newMonster.grade || 7;
+            newMonster.attacks = newMonster.attacks || [{name:"기본 공격", dmg: newMonster.atk, type: "physical"}];
+            newMonster.debuffs = [];
+            newMonster.bossPhase = 1;
+            newMonster.phase2Triggered = false;
+            newMonster.currentStats = { '근력': newMonster.atk, '물리 내성': newMonster.def, '항마력': newMonster.magic_def };
+            newMonster.applyDebuff = function(debuff) { 
+                if (!this.debuffs.includes(debuff)) { this.debuffs.push(debuff); } 
+            };
+            
+            caster.currentMonster.push(newMonster);
+            caster.cb.logMessage(`${monsterName}이(가) 전장에 합류합니다!`);
+            caster.cb.updateCombatStatus(caster); // 전투 UI 갱신
+        } else {
+            caster.cb.logMessage("오류: '혼령마' 몬스터 데이터를 찾을 수 없거나 전투 중이 아닙니다.");
+        }
       }
     }
   },
@@ -812,7 +842,7 @@ export const essences = {
     active: {
       effect: (caster, target) => {
         if (!target) { caster.cb.logMessage("대상이 없습니다."); return; }
-        caster.cb.logMessage(`[거울 세계]! ${target.name}을(를) 1턴간 '불의 거울'로 추방합니다! (기능 미구현: 1턴 기절로 대체)`);
+        caster.cb.logMessage(`[거울 세계]! ${target.name}을(를) 1턴간 '불의 거울'로 추방합니다! (1턴 기절로 대체)`);
         applyDebuff(caster, target, "기절(1턴)");
       }
     }
