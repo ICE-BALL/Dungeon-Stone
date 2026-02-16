@@ -39,6 +39,45 @@
             <main id="main-content">
                 <div id="menu"></div>
 
+                <div id="exploration-screen" class="hidden">
+                    <h2><i class="icon-map"></i> 미궁 탐험</h2>
+                    
+                    <div id="map-container">
+                        <div id="map-grid"></div>
+                        <div id="player-fixed">@</div>
+                        
+                        <div id="map-overlay-message" class="hidden"></div>
+                    </div>
+
+                    <div id="interaction-prompt" class="hidden">
+                        <p id="interaction-desc">무언가 발견했습니다.</p>
+                        <button id="interaction-btn">조사하기 (Space)</button>
+                    </div>
+
+                    <div id="map-controls">
+                        <div class="d-pad">
+                            <button id="btn-up" class="d-btn">▲</button>
+                            <div class="d-row">
+                                <button id="btn-left" class="d-btn">◀</button>
+                                <button id="btn-down" class="d-btn">▼</button>
+                                <button id="btn-right" class="d-btn">▶</button>
+                            </div>
+                        </div>
+                        <div class="action-pad">
+                            <button id="btn-wait" class="d-btn action">대기</button>
+                            <button id="btn-inventory" class="d-btn action">인벤토리 (I)</button>
+                        </div>
+                    </div>
+
+                    <div id="map-legend">
+                        <span><b>◆</b> 몬스터</span>
+                        <span><b>◎</b> 포탈</span>
+                        <span><b>✸</b> 균열</span>
+                        <span><b>✦</b> 이벤트/상호작용</span>
+                        <span><b>✚</b> 아이템</span>
+                    </div>
+                </div>
+
                 <div id="combat-screen" class="hidden">
                     <h2><i class="icon-combat"></i> 전투 중</h2>
                     <div id="combat-status"></div>
@@ -50,6 +89,9 @@
                 <h3><i class="icon-log"></i> 게임 로그</h3>
                 <div id="log"></div>
             </div>
+
+            <button id="toggle-status-panel" class="panel-toggle panel-toggle-status" type="button" aria-controls="status-panel" aria-expanded="true">상태 펼치기</button>
+            <button id="toggle-log-panel" class="panel-toggle panel-toggle-log" type="button" aria-controls="log-panel" aria-expanded="true">로그 펼치기</button>
         </div>
 
         <div id="inventory-screen" class="modal-overlay hidden">
@@ -91,6 +133,14 @@
                 <button id="back-to-menu" class="modal-close-btn">닫기</button>
             </div>
         </div>
+
+        <div id="character-status-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-user"></i> 캐릭터 상태</h2>
+                <div id="character-status-content"></div>
+                <button id="character-status-close" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
         
         <div id="essence-choice-screen" class="modal-overlay hidden">
             <div class="modal-content">
@@ -110,7 +160,16 @@
                     </div>
                 </div>
         </div>
+
+        <div id="portal-choice-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 id="portal-choice-title"><i class="icon-map"></i> [차원 비석] 발견</h2>
+                <p id="portal-choice-desc">다음 층으로 이동할 수 있는 차원 비석을 발견했습니다.</p>
+                <div id="portal-choice-buttons">
+                </div>
+            </div>
         </div>
+    </div>
 
     <div id="audio-container">
         <audio id="bgm-title" src="music/adventure-begins-148729.mp3" loop preload="auto"></audio>
@@ -118,7 +177,7 @@
         <audio id="bgm-dungeon" src="music/bgm_dungeon_snowfall.mp3" loop preload="auto"></audio>
         <audio id="bgm-combat" src="music/Battle Of The Creek  By Alexander Nakarada  [Royalty Free] - Medieval Battle Music.mp3" loop preload="auto"></audio>
         <audio id="sfx-event" src="music/162. Get Fanfare - Key Item (Breath of the Wild Soundtrack).mp3" preload="auto"></audio>
-        </div>
+    </div>
 
     <script type="module" src="main.js"></script>
 </body>

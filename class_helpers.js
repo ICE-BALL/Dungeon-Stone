@@ -1,4 +1,7 @@
 // 파일: class_helpers.js
+// [수정] (v6) safeHpUpdate: 피격 시 HP바 시각 효과(흔들림, 번쩍임)를
+//        호출하기 위해 options 객체(isSkillHit)를 받도록 수정
+//        및 콜백(cb.triggerHpEffect) 호출 로직 추가
 
 /**
  * Player와 NPC가 공통으로 사용하는 유틸리티 함수 모음
@@ -17,8 +20,13 @@ export const helpers = {
      * [패시브 구현] 대상의 HP를 안전하게 변경합니다.
      * '진압', '수면' 등 피격 시 해제되는 디버프를 처리합니다.
      * '시체 결합', '영혼의 함' 등 사망 시 발동하는 부활 패시브를 처리합니다.
+     * [신규] (v6) 피격 시 UI 효과(흔들림, 번쩍임)를 콜백으로 요청합니다.
+     * @param {object} target - HP를 변경할 대상 (Player, NPC, Monster)
+     * @param {number} amount - 변경할 HP 양 (양수: 회복, 음수: 피해)
+     * @param {object} [options={}] - (선택) 추가 옵션
+     * @param {boolean} [options.isSkillHit=false] - 이 피해가 스킬로 인한 것인지 여부
      */
-    safeHpUpdate: (target, amount) => {
+    safeHpUpdate: (target, amount, options = {}) => { // [수정] options 객체 추가
         /* AUTO-FIX: Added null check */
         if (!target) return;
 
@@ -61,6 +69,21 @@ export const helpers = {
         if(target.maxHp) {
             target.hp = Math.min(target.maxHp, target.hp);
         }
+
+        // [신규] (v6) 피격 시 HP바 흔들림/번쩍임 효과 요청
+        // amount < 0 (피해) 이고, target이 cb(콜백)을 가진 플레이어 또는 NPC일 경우
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        if (amount < 0 && target.cb && target.cb.triggerHpEffect) {
+            
+            // 1. 기본 흔들림 효과
+            target.cb.triggerHpEffect(target, 'hp-shake');
+
+            // 2. 스킬 피격 시 번쩍임 효과
+            if (options.isSkillHit) {
+                target.cb.triggerHpEffect(target, 'hp-flash-skill');
+            }
+        }
+        // [신규] (v6) 수정 끝
 
         // [패시브 구현] 피격 시 해제되는 디버프 처리
         /* AUTO-FIX: added optional chaining ?. for safety */

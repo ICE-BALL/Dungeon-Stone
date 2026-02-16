@@ -28,21 +28,37 @@ export function showQuestLog(player) {
     const allQuests = player.cb.gameData.quests;
     const questManager = player.questManager;
 
-    questLogListDiv.innerHTML = '<h3><i class="icon-quest"></i> 진행 중인 임무</h3>';
+    questLogListDiv.innerHTML = `
+        <div class="modal-grid-head">
+            <h3><i class="icon-quest"></i> 임무 일지</h3>
+            <span>진행 ${questManager.activeQuests.length} | 완료 ${questManager.completedQuests.length}</span>
+        </div>
+        <section class="modal-grid-section">
+            <h4>진행 중인 임무</h4>
+            <div class="modal-card-grid quest-card-grid" id="active-quest-grid"></div>
+        </section>
+        <section class="modal-grid-section">
+            <h4>완료한 임무</h4>
+            <div class="modal-card-grid quest-card-grid" id="completed-quest-grid"></div>
+        </section>
+    `;
+
+    const activeGrid = document.getElementById('active-quest-grid');
+    const completedGrid = document.getElementById('completed-quest-grid');
+    if (!activeGrid || !completedGrid) return;
 
     // 1. 활성 퀘스트 표시
     if (questManager.activeQuests.length === 0) {
-        questLogListDiv.innerHTML += "<p>현재 진행 중인 임무가 없습니다.</p>";
+        activeGrid.innerHTML = `<p class="modal-empty-text">현재 진행 중인 임무가 없습니다.</p>`;
     } else {
         questManager.activeQuests.forEach(quest => {
-            const div = document.createElement('div');
-            div.className = 'list-item';
-            div.style.borderLeftColor = 'var(--color-accent)'; // 퀘스트 표시 (노란색)
+            const div = document.createElement('article');
+            div.className = 'modal-info-card quest-card active';
 
-            let questInfo = `<b>${quest.title}</b> (from: ${quest.giver})<br>`;
-            questInfo += `<p style="font-size: 0.9em; margin-top: 5px; font-style: italic;">${quest.description}</p>`;
-            
-            questInfo += "<ul style='margin-top: 10px;'>";
+            let questInfo = `<h4>${quest.title}</h4>`;
+            questInfo += `<p class="card-meta">의뢰인: ${quest.giver}</p>`;
+            questInfo += `<p>${quest.description}</p>`;
+            questInfo += `<div class="quest-objective-list">`;
             quest.objectives.forEach(obj => {
                 const status = obj.currentCount >= obj.requiredCount ? ' <span style="color: var(--color-stamina);">(완료)</span>' : ` (${obj.currentCount}/${obj.requiredCount})`;
                 // 목표 설명 텍스트 (예: KILL 고블린 -> 고블린 처치)
@@ -63,30 +79,26 @@ export function showQuestLog(player) {
                     default:
                         objectiveText = `${obj.type} ${obj.target}`;
                 }
-                questInfo += `<li>- ${objectiveText}${status}</li>`;
+                questInfo += `<p>${objectiveText}${status}</p>`;
             });
-            questInfo += "</ul>";
+            questInfo += "</div>";
 
             div.innerHTML = questInfo;
-            questLogListDiv.appendChild(div);
+            activeGrid.appendChild(div);
         });
     }
 
     // 2. 완료 퀘스트 표시
-    questLogListDiv.innerHTML += '<h3 style="margin-top: 20px;"><i class="icon-log"></i> 완료한 임무</h3>';
     if (questManager.completedQuests.length === 0) {
-        questLogListDiv.innerHTML += "<p>완료한 임무가 없습니다.</p>";
+        completedGrid.innerHTML = `<p class="modal-empty-text">완료한 임무가 없습니다.</p>`;
     } else {
-        const completedList = document.createElement('ul');
         questManager.completedQuests.forEach(questId => {
             const questTitle = allQuests[questId]?.title || questId;
-            const li = document.createElement('li');
-            li.textContent = `[${questTitle}]`;
-            li.style.color = 'var(--color-text-secondary)';
-            li.style.textDecoration = 'line-through';
-            completedList.appendChild(li);
+            const card = document.createElement('article');
+            card.className = 'modal-info-card quest-card completed';
+            card.innerHTML = `<h4>[${questTitle}]</h4><p class="card-meta">완료</p>`;
+            completedGrid.appendChild(card);
         });
-        questLogListDiv.appendChild(completedList);
     }
 
     showModal('#quest-log-screen'); // 모달 표시

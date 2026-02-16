@@ -2,6 +2,7 @@
 // [수정] 겜바바 설정.txt 기반 calculateStats 함수 적용
 // [수정] 고등급 NPC(4등급 이하) 생성 시 정수 1~2개 랜덤 보유
 // [수정] addEssence/applyEssenceEffect 함수 추가 (정수 획득 기능)
+// [수정] (v5) useSkill: 스킬 사용 시 화면 흔들림 및 텍스트 박스 연출 추가
 
 // 1. 공용 유틸리티 임포트
 import { helpers } from './class_helpers.js';
@@ -313,12 +314,16 @@ export class NPC {
              this.cb?.logMessage(`[${this.name} 패시브: 흡혈]! ${healAmount}의 HP를 흡수했습니다.`);
         }
         
-        helpers.safeHpUpdate(target, -dmg);
+        // [수정] (v6) 피격 효과 옵션 전달
+        helpers.safeHpUpdate(target, -dmg, { isSkillHit: false });
+        
         /* AUTO-FIX: added optional chaining ?. for safety */
         this.cb?.logMessage(`${this.name}의 공격! ${target.name || '플레이어'}에게 ${dmg}의 피해. (${target.name || '플레이어'} HP: ${target.hp})`);
     }
 
-    // [확장 계획 1] 신관 AI는 Player.partyTurn에서 처리하므로 이 함수는 범용성 유지
+    /**
+     * [수정] (v5) 스킬 사용 시 연출 추가
+     */
     useSkill(target) {
         if (!target || target.hp <= 0) {
              this.attack(null); // 대상 없으면 공격 시도 안 함
@@ -345,9 +350,12 @@ export class NPC {
 
         const skillToUse = availableSkills[Math.floor(Math.random() * availableSkills.length)];
         this.mp -= (skillToUse.cost || 0);
+        
         /* AUTO-FIX: added optional chaining ?. for safety */
-        // [신규] 전투 연출 요청 - 스킬 로그 강조
-        this.cb?.logMessage(`[SKILL] ${this.name}이(가) 스킬 [${skillToUse.name}]을(를) 사용!`);
+        // [신규] (v5) 스킬 연출 (화면 흔들림 + 텍스트 박스)
+        this.cb?.showScreenEffect?.('shake');
+        /* AUTO-FIX: added optional chaining ?. for safety */
+        this.cb?.logMessage?.(`[${skillToUse.name}]! - ${this.name}`, 'log-skill-player');
 
         try {
             // [수정] NPC 스킬은 this.skills에 effect 함수가 포함되어 있음 (addEssence에서 복사)

@@ -1,0 +1,327 @@
+﻿{
+  "old_tombstone": {
+    "name": "오래된 비석",
+    "desc": "이끼가 낀 낡은 비석입니다. 희미하게 고대어가 새겨져 있습니다.",
+    "type": "SEARCH",
+    "actions": [
+      {
+        "label": "읽어본다",
+        "type": "statCheck",
+        "stat": "인지력",
+        "threshold": 15,
+        "success": { "type": "gainExp", "value": 40, "log": "비석에 새겨진 고대 지식을 해석하여 경험치를 얻었습니다." },
+        "failure": { "type": "log", "log": "글자가 너무 훼손되어 읽을 수 없습니다." }
+      }
+    ]
+  },
+  "skeleton_remains": {
+    "name": "백골 시체",
+    "desc": "선배 탐험가였던 것 같습니다. 가방이 아직 남아있을지도 모릅니다.",
+    "type": "LOOT",
+    "actions": [
+      {
+        "label": "뒤져본다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.42, "effect": { "type": "addItem", "item": "포션", "log": "가방에서 쓸만한 포션을 발견했습니다." } },
+          { "chance": 0.23, "effect": { "type": "gainGold", "value": 500, "log": "주머니에서 비상금을 챙겼습니다." } },
+          { "chance": 0.2, "effect": { "type": "addItem", "item": "건조 식량", "log": "마른 식량 꾸러미를 발견했습니다." } },
+          { "chance": 0.15, "effect": { "type": "combat", "monsters": ["스켈레톤"], "log": "함정이다! 뼈들이 맞춰지며 일어납니다!" } }
+        ]
+      }
+    ]
+  },
+  "locked_chest": {
+    "name": "잠긴 상자",
+    "desc": "튼튼해 보이는 보물 상자입니다. 자물쇠로 굳게 잠겨 있습니다.",
+    "type": "INTERACT",
+    "reqItem": "녹슨 열쇠",
+    "actions": [
+      {
+        "label": "열쇠로 연다",
+        "type": "useItem",
+        "item": "녹슨 열쇠",
+        "success": {
+          "type": "randomResult",
+          "outcomes": [
+            { "chance": 0.52, "effect": { "type": "addItem", "item": "상급 포션", "log": "상자 안에 귀한 물약이 들어있었습니다." } },
+            { "chance": 0.25, "effect": { "type": "addItem", "item": "마력결정체", "log": "희귀한 마력결정체를 발견했습니다!" } },
+            { "chance": 0.23, "effect": { "type": "addItem", "item": "모닥불 키트", "log": "야영 장비 상자를 발견했습니다." } }
+          ]
+        }
+      },
+      {
+        "label": "부순다 (근력)",
+        "type": "statCheck",
+        "stat": "근력",
+        "threshold": 24,
+        "success": { "type": "addItem", "item": "강철 조각", "log": "상자를 부수고 강철 조각을 챙겼습니다." },
+        "failure": { "type": "damage", "value": 10, "log": "상자가 너무 단단해 손만 다쳤습니다." }
+      }
+    ]
+  },
+  "rubble_pile": {
+    "name": "무너진 돌무더기",
+    "desc": "통로 한쪽이 무너져 있습니다. 그 뒤에 무언가 있을 것 같습니다.",
+    "type": "INTERACT",
+    "reqItem": "곡괭이",
+    "actions": [
+      {
+        "label": "곡괭이질",
+        "type": "useItem",
+        "item": "곡괭이",
+        "success": {
+          "type": "randomResult",
+          "outcomes": [
+            { "chance": 0.45, "effect": { "type": "addItem", "item": "강철 조각", "log": "쓸만한 광석을 캐냈습니다." } },
+            { "chance": 0.35, "effect": { "type": "addItem", "item": "마석", "log": "돌무더기 사이에서 마석을 발견했습니다." } },
+            { "chance": 0.2, "effect": { "type": "addItem", "item": "라이티늄", "log": "대박! 라이티늄 광석을 발견했습니다!" } }
+          ]
+        }
+      }
+    ]
+  },
+  "mysterious_altar": {
+    "name": "기이한 제단",
+    "desc": "검은 기운이 흘러나오는 제단입니다. 불길하지만 강력한 힘이 느껴집니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "성수로 정화",
+        "type": "useItem",
+        "item": "성수",
+        "success": { "type": "applyBuff", "buff": "신성한 가호", "duration": 12, "log": "제단을 정화하자 신성한 기운이 몸을 감쌉니다." }
+      },
+      {
+        "label": "만져본다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.5, "effect": { "type": "applyDebuff", "debuff": "저주(약)", "log": "손끝에서부터 저주가 스며듭니다!" } },
+          { "chance": 0.5, "effect": { "type": "gainExp", "value": 100, "log": "위험을 감수하고 제단의 마력을 흡수했습니다." } }
+        ]
+      }
+    ]
+  },
+  "ancient_fountain": {
+    "name": "고대 분수대",
+    "desc": "맑은 물이 솟아나고 있는 작은 분수대입니다. 마셔도 될까요?",
+    "type": "REST",
+    "actions": [
+      {
+        "label": "마신다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.72, "effect": { "type": "recoverAll", "value": 45, "log": "시원한 물이 활력을 불어넣습니다. (HP/MP/기력 회복)" } },
+          { "chance": 0.18, "effect": { "type": "addItem", "item": "여행자 수통", "log": "분수 근처에서 버려진 수통을 발견했습니다." } },
+          { "chance": 0.1, "effect": { "type": "applyDebuff", "debuff": "복통", "log": "물에서 썩은 맛이 납니다... 배가 아파옵니다." } }
+        ]
+      }
+    ]
+  },
+  "suspicious_dirt": {
+    "name": "수상한 흙더미",
+    "desc": "누군가 최근에 땅을 파헤친 흔적이 있습니다.",
+    "type": "INTERACT",
+    "reqItem": "삽",
+    "actions": [
+      {
+        "label": "파본다",
+        "type": "useItem",
+        "item": "삽",
+        "success": {
+          "type": "randomResult",
+          "outcomes": [
+            { "chance": 0.5, "effect": { "type": "addItem", "item": "식량", "log": "누군가 숨겨둔 비상 식량을 발견했습니다." } },
+            { "chance": 0.25, "effect": { "type": "addItem", "item": "모닥불 키트", "log": "야영 키트를 찾아냈습니다." } },
+            { "chance": 0.25, "effect": { "type": "addItem", "item": "녹슨 열쇠", "log": "흙 속에서 녹슨 열쇠를 찾아냈습니다." } }
+          ]
+        }
+      }
+    ]
+  },
+  "crystal_formation": {
+    "name": "수정 형성물",
+    "desc": "자연 마력으로 자란 거대한 수정 군집입니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "채집한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.5, "effect": { "type": "addItem", "item": "마석", "log": "수정 파편에서 마석을 얻었다." } },
+          { "chance": 0.3, "effect": { "type": "gainExp", "value": 60, "log": "수정의 공명을 읽어내며 경험치를 얻었다." } },
+          { "chance": 0.2, "effect": { "type": "damage", "value": 12, "log": "수정이 깨지며 파편에 베였다." } }
+        ]
+      }
+    ]
+  },
+  "ancient_inscription": {
+    "name": "고대 비문",
+    "desc": "희미한 문자로 미궁의 기록이 새겨져 있습니다.",
+    "type": "SEARCH",
+    "actions": [
+      {
+        "label": "해독한다",
+        "type": "statCheck",
+        "stat": "정신력",
+        "threshold": 18,
+        "success": { "type": "gainExp", "value": 120, "log": "비문 해독에 성공해 지식을 얻었다." },
+        "failure": { "type": "applyDebuff", "debuff": "혼란(1턴)", "log": "왜곡된 문자에 정신이 어지러워진다." }
+      }
+    ]
+  },
+  "hidden_cache": {
+    "name": "숨겨진 보관함",
+    "desc": "벽 틈새에 감춰진 작은 보관함입니다.",
+    "type": "LOOT",
+    "actions": [
+      {
+        "label": "연다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.38, "effect": { "type": "addItem", "item": "응급 전투식량", "log": "응급 전투식량을 얻었다." } },
+          { "chance": 0.22, "effect": { "type": "addItem", "item": "마나 포션", "log": "마나 포션을 얻었다." } },
+          { "chance": 0.2, "effect": { "type": "addItem", "item": "포션", "log": "포션을 얻었다." } },
+          { "chance": 0.2, "effect": { "type": "gainGold", "value": 1200, "log": "은닉 자금을 발견했다." } }
+        ]
+      }
+    ]
+  },
+  "trap_remains": {
+    "name": "덫 잔해",
+    "desc": "해체된 덫 흔적이 남아있습니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "수습한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.6, "effect": { "type": "addItem", "item": "강철 조각", "log": "덫 잔해에서 강철 조각을 회수했다." } },
+          { "chance": 0.4, "effect": { "type": "damage", "value": 8, "log": "남아있던 장치가 작동해 상처를 입었다." } }
+        ]
+      }
+    ]
+  },
+  "beast_tracks": {
+    "name": "짐승의 발자국",
+    "desc": "아주 큰 짐승의 흔적입니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "추적한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.5, "effect": { "type": "combat", "monsters": ["웨어울프"], "log": "추적 끝에 웨어울프와 조우했다!" } },
+          { "chance": 0.5, "effect": { "type": "addItem", "item": "식량", "log": "짐승의 은신처에서 식량을 찾았다." } }
+        ]
+      }
+    ]
+  },
+  "desert_oasis": {
+    "name": "사막의 오아시스",
+    "desc": "메마른 지형 속 작은 수원입니다.",
+    "type": "REST",
+    "actions": [
+      {
+        "label": "휴식한다",
+        "type": "recoverAll",
+        "value": 30,
+        "log": "오아시스에서 잠시 숨을 고르며 회복했다."
+      }
+    ]
+  },
+  "ancient_grave": {
+    "name": "고대 무덤",
+    "desc": "건드리면 안 될 것 같은 기운이 감돕니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "열어본다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.35, "effect": { "type": "addItem", "item": "성수", "log": "무덤 내부에서 정화된 성수를 발견했다." } },
+          { "chance": 0.35, "effect": { "type": "combat", "monsters": ["구울로드"], "log": "무덤의 수호자가 깨어났다!" } },
+          { "chance": 0.3, "effect": { "type": "applyDebuff", "debuff": "저주(중)", "log": "무덤의 저주가 몸을 잠식한다." } }
+        ]
+      }
+    ]
+  },
+  "ancient_tree": {
+    "name": "고대 나무",
+    "desc": "수백 년은 된 듯한 거목입니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "수피를 조사한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.5, "effect": { "type": "addItem", "item": "건조 식량", "log": "나무 속에 저장된 건조 식량을 얻었다." } },
+          { "chance": 0.5, "effect": { "type": "gainExp", "value": 80, "log": "자연의 흐름을 느끼며 통찰을 얻었다." } }
+        ]
+      }
+    ]
+  },
+  "crystal_cave": {
+    "name": "수정 소굴",
+    "desc": "벽면 전체가 희미하게 빛납니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "탐색한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.4, "effect": { "type": "addItem", "item": "마력결정체", "log": "깊은 곳에서 마력결정체를 찾았다." } },
+          { "chance": 0.3, "effect": { "type": "addItem", "item": "마석", "log": "마석을 찾았다." } },
+          { "chance": 0.3, "effect": { "type": "combat", "monsters": ["스톤 골렘"], "log": "수정을 지키던 골렘이 깨어났다!" } }
+        ]
+      }
+    ]
+  },
+  "ruined_temple": {
+    "name": "무너진 신전",
+    "desc": "사라진 종교의 흔적이 남아있는 폐허입니다.",
+    "type": "SEARCH",
+    "actions": [
+      {
+        "label": "탐문한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.45, "effect": { "type": "gainExp", "value": 140, "log": "신전 기록을 해석해 경험치를 얻었다." } },
+          { "chance": 0.25, "effect": { "type": "addItem", "item": "성수", "log": "봉인된 성수를 발견했다." } },
+          { "chance": 0.3, "effect": { "type": "combat", "monsters": ["가고일"], "log": "신전 수호자가 접근을 막는다!" } }
+        ]
+      }
+    ]
+  },
+  "herb_garden": {
+    "name": "야생 약초 군락",
+    "desc": "회복에 도움이 되는 약초가 자라고 있습니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "채집한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.5, "effect": { "type": "addItem", "item": "포션", "log": "약초를 이용해 포션을 만들었다." } },
+          { "chance": 0.3, "effect": { "type": "addItem", "item": "붕대", "log": "붕대를 제작할 재료를 얻었다." } },
+          { "chance": 0.2, "effect": { "type": "recoverAll", "value": 20, "log": "약초 향으로 기운을 회복했다." } }
+        ]
+      }
+    ]
+  },
+  "beast_lair": {
+    "name": "짐승의 소굴",
+    "desc": "강한 마수의 냄새가 진하게 풍깁니다.",
+    "type": "INTERACT",
+    "actions": [
+      {
+        "label": "침입한다",
+        "type": "randomResult",
+        "outcomes": [
+          { "chance": 0.65, "effect": { "type": "combat", "monsters": ["반달바위곰"], "log": "소굴의 주인이 포효하며 나타났다!" } },
+          { "chance": 0.35, "effect": { "type": "addItem", "item": "고급 식량", "log": "소굴에 남겨진 사냥감을 회수했다." } }
+        ]
+      }
+    ]
+  }
+}

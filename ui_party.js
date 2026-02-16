@@ -32,58 +32,57 @@ export function showParty(player) {
     /* AUTO-FIX: added guards for this.gameData to avoid TypeError when undefined (Rule 4) */
     const expToLevel = player.cb?.gameData?.expToLevel || {};
 
-    partyListDiv.innerHTML = ''; // 목록 초기화
-    /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
+    partyListDiv.innerHTML = `
+        <div class="modal-grid-head">
+            <h3>파티원 정보</h3>
+            <span>현재 ${player.party?.length || 0}명</span>
+        </div>
+        <div class="modal-card-grid party-card-grid" id="party-card-grid"></div>
+    `;
+
+    const grid = document.getElementById('party-card-grid');
+    if (!grid) return;
+
     if (player.party?.length === 0) {
-        partyListDiv.innerHTML = "<p>모집한 파티원이 없습니다.</p>";
+        grid.innerHTML = `<p class="modal-empty-text">모집한 파티원이 없습니다.</p>`;
     } else {
-        /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5); review required */
-        player.party?.forEach((member, index) => {
-            // 파티원 정보 표시 (상세 스탯 포함)
-            let memberInfo = `<b>${member.name} (${member.grade}등급/${member.trait})</b><br>`;
-            memberInfo += `레벨: ${member.level} | EXP: ${member.exp}/${expToLevel[member.level] || 'MAX'}<br>`;
-            memberInfo += `HP: ${member.hp}/${member.maxHp} | MP: ${member.mp}/${member.maxMp}<br>`;
-            memberInfo += `스킬: ${member.skills.map(s => s.name).join(', ') || '없음'}<br>`;
-            memberInfo += `정수: ${member.essences.join(', ') || '없음'}<br>`;
-            
-            // [수정] NPC의 최종 스탯(currentStats)을 표시하도록 변경
-            memberInfo += "스탯:<ul class='stat-list' style='font-size: 0.8em;'>";
-            for (const statName in member.currentStats) {
-                 // [문법 수정] 스탯 이름에 공백이 있어도 대괄호 표기법으로 안전하게 접근
-                 if(member.currentStats[statName] !== 0) {
-                    memberInfo += `<li class='stat-item'>${statName}: ${member.currentStats[statName]}</li>`;
-                 }
+        player.party.forEach((member, index) => {
+            const statSummary = Object.entries(member.currentStats || {})
+                .filter(([, value]) => value !== 0)
+                .slice(0, 8)
+                .map(([name, value]) => `<span class="mini-chip">${name} ${value}</span>`)
+                .join('');
+
+            const equippedSummary = Object.entries(member.equipment || {})
+                .filter(([, item]) => Boolean(item))
+                .map(([slot, item]) => `<span class="mini-chip">${slot}: ${item}</span>`)
+                .join('');
+
+            const card = document.createElement('article');
+            card.className = 'modal-info-card party-member-card';
+            card.innerHTML = `
+                <h4>${member.name} (${member.grade}등급/${member.trait})</h4>
+                <p class="card-meta">레벨 ${member.level} | EXP ${member.exp}/${expToLevel[member.level] || 'MAX'}</p>
+                <p>HP ${member.hp}/${member.maxHp} | MP ${member.mp}/${member.maxMp}</p>
+                <p>스킬: ${(member.skills || []).map(s => s.name).join(', ') || '없음'}</p>
+                <p>정수: ${(member.essences || []).join(', ') || '없음'}</p>
+                <div class="mini-chip-row">${statSummary || '<span class="mini-chip">스탯 정보 없음</span>'}</div>
+                <div class="mini-chip-row">${equippedSummary || '<span class="mini-chip">장착 장비 없음</span>'}</div>
+                <button type="button" class="danger-inline-btn">파티에서 추방</button>
+            `;
+
+            const dismissButton = card.querySelector('.danger-inline-btn');
+            if (dismissButton) {
+                dismissButton.onclick = () => {
+                    if (confirm(`${member.name}을(를) 정말로 파티에서 추방하시겠습니까?`)) {
+                        const removedMember = player.party.splice(index, 1)[0];
+                        logMessage(`${removedMember.name}을(를) 파티에서 추방했다.`);
+                        player.showStatus();
+                        showParty(player);
+                    }
+                };
             }
-            memberInfo += "</ul>";
-            
-            // [신규] NPC 장비 표시
-            memberInfo += "장비:<ul class='stat-list' style='font-size: 0.8em;'>";
-            for (const slot in member.equipment) {
-                if (member.equipment[slot]) {
-                    memberInfo += `<li class='stat-item'>${slot}: ${member.equipment[slot]}</li>`;
-                }
-            }
-            memberInfo += "</ul>";
-
-            const memberDiv = document.createElement('div');
-            memberDiv.className = 'list-item';
-            memberDiv.style.borderLeftColor = 'var(--color-stamina)';
-            memberDiv.innerHTML = memberInfo;
-
-            // 추방 버튼
-            const dismissButton = addButton(memberDiv, "파티에서 추방", () => {
-                 if (confirm(`${member.name}을(를) 정말로 파티에서 추방하시겠습니까?`)) {
-                    const removedMember = player.party.splice(index, 1)[0];
-                    logMessage(`${removedMember.name}을(를) 파티에서 추방했다.`);
-                    player.showStatus(); // [UI] 파티원 목록 갱신 (메인 UI)
-                    showParty(player); // [UI] 모달 내용 갱신
-                }
-            });
-            dismissButton.style.marginTop = "10px";
-            dismissButton.style.background = "var(--color-health)";
-            dismissButton.style.color = "white";
-
-            partyListDiv.appendChild(memberDiv);
+            grid.appendChild(card);
         });
     }
 
