@@ -44,37 +44,44 @@
                     
                     <div id="map-container">
                         <div id="map-grid"></div>
-                        <div id="player-fixed">@</div>
+                        <div id="player-fixed">◉</div>
                         
                         <div id="map-overlay-message" class="hidden"></div>
                     </div>
 
                     <div id="interaction-prompt" class="hidden">
                         <p id="interaction-desc">무언가 발견했습니다.</p>
-                        <button id="interaction-btn">조사하기 (Space)</button>
+                        <p class="interaction-hint">조사: Space / Enter</p>
                     </div>
 
                     <div id="map-controls">
-                        <div class="d-pad">
-                            <button id="btn-up" class="d-btn">▲</button>
-                            <div class="d-row">
-                                <button id="btn-left" class="d-btn">◀</button>
-                                <button id="btn-down" class="d-btn">▼</button>
-                                <button id="btn-right" class="d-btn">▶</button>
-                            </div>
-                        </div>
-                        <div class="action-pad">
-                            <button id="btn-wait" class="d-btn action">대기</button>
+                        <div class="action-pad exploration-main-actions">
                             <button id="btn-inventory" class="d-btn action">인벤토리 (I)</button>
+                            <button id="btn-ability" class="d-btn action">이능 (E)</button>
+                            <button id="btn-tactical" class="d-btn action">전술 모드 (G)</button>
                         </div>
                     </div>
 
                     <div id="map-legend">
-                        <span><b>◆</b> 몬스터</span>
-                        <span><b>◎</b> 포탈</span>
-                        <span><b>✸</b> 균열</span>
-                        <span><b>✦</b> 이벤트/상호작용</span>
-                        <span><b>✚</b> 아이템</span>
+                        <span><b>◉</b> 플레이어</span>
+                        <span><b>M</b> 몬스터</span>
+                        <span><b>P</b> 차원 비석/포탈</span>
+                        <span><b>S</b> 시작 지점</span>
+                        <span><b>R</b> 균열/균열 단계</span>
+                        <span><b>X</b> 균열 출구</span>
+                        <span><b>O</b> 차원 비석 오브젝트</span>
+                        <span><b>T</b> 포탑</span>
+                        <span><b>U</b> 균열 포탑</span>
+                        <span><b>N</b> 탐험 NPC</span>
+                        <span><b>H</b> 약탈자 NPC</span>
+                        <span><b>G</b> 광맥</span>
+                        <span><b>E</b> 이벤트/상호작용</span>
+                        <span><b>I</b> 아이템</span>
+                        <span><b>·</b> 인도자 경로</span>
+                        <span><b>C</b> 모닥불</span>
+                        <span><b>L</b> 설치 횃불</span>
+                        <span><b>L키</b> 탐험가 루팅</span>
+                        <span><b>전술</b> G 전환 / Q 종료</span>
                     </div>
                 </div>
 
@@ -141,6 +148,59 @@
                 <button id="character-status-close" class="modal-close-btn">닫기</button>
             </div>
         </div>
+
+        <div id="trait-graph-screen" class="modal-overlay hidden">
+            <div class="modal-content trait-graph-modal">
+                <h2><i class="icon-user"></i> 특성 그래프</h2>
+                <p id="trait-graph-point" class="trait-graph-point"></p>
+                <div class="trait-graph-layout">
+                    <div id="trait-graph-board-wrap" class="trait-graph-board-wrap"></div>
+                    <aside id="trait-graph-detail" class="trait-graph-detail"></aside>
+                </div>
+                <button id="trait-graph-close" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="skill-graph-screen" class="modal-overlay hidden">
+            <div class="modal-content trait-graph-modal skill-graph-modal">
+                <h2><i class="icon-spell"></i> 스킬 특성 그래프</h2>
+                <p id="skill-graph-point" class="trait-graph-point"></p>
+                <div class="trait-graph-layout">
+                    <div id="skill-graph-board-wrap" class="trait-graph-board-wrap"></div>
+                    <aside id="skill-graph-detail" class="trait-graph-detail"></aside>
+                </div>
+                <button id="skill-graph-close" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="butchery-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2><i class="icon-spell"></i> 해체 및 도축</h2>
+                <p id="butchery-desc" class="ability-desc">전투에서 승리한 몬스터를 해체하여 마석과 자재를 추출합니다.</p>
+                <div id="butchery-results" class="modal-card-grid"></div>
+                <div id="butchery-actions"></div>
+                <button id="butchery-close" class="modal-close-btn">닫기 / 계속</button>
+            </div>
+        </div>
+
+        <div id="exploration-ability-screen" class="modal-overlay hidden">
+            <div class="modal-content exploration-ability-modal">
+                <h2><i class="icon-essence"></i> 이능 목록</h2>
+                <p id="exploration-ability-desc" class="ability-desc">현재 사용할 수 있는 탐험 이능입니다.</p>
+                <div id="exploration-ability-list" class="modal-card-grid"></div>
+                <button id="exploration-ability-close" class="modal-close-btn">닫기</button>
+            </div>
+        </div>
+
+        <div id="rival-loot-screen" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2 id="rival-loot-title"><i class="icon-inventory"></i> 루팅</h2>
+                <p id="rival-loot-desc" class="ability-desc">전리품 회수 대기 중</p>
+                <div id="rival-loot-list"></div>
+                <button id="rival-loot-take" class="modal-close-btn">전리품 회수 (L)</button>
+                <button id="rival-loot-close" class="modal-close-btn" style="background-color: var(--color-bg-light);">닫기</button>
+            </div>
+        </div>
         
         <div id="essence-choice-screen" class="modal-overlay hidden">
             <div class="modal-content">
@@ -179,6 +239,7 @@
         <audio id="sfx-event" src="music/162. Get Fanfare - Key Item (Breath of the Wild Soundtrack).mp3" preload="auto"></audio>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/pixi.js@7.4.3/dist/pixi.min.js"></script>
     <script type="module" src="main.js"></script>
 </body>
 </html>

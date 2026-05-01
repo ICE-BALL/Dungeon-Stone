@@ -57,8 +57,12 @@ export const races = {
             desc: "넘버스 아이템의 효율이 1.5배 증가합니다. (패시브)",
             citation: [1698],
             effect: (p) => {
-                p?.cb?.logMessage?.("드워프의 손재주는 넘버스 아이템의 잠재력을 최대로 이끌어냅니다. (넘버스 아이템 효과 1.5배 적용)");
-                // (실제 1.5배 적용 로직은 Player.useItem 또는 Player.calculateStats에서 구현 필요)
+                if (!p) return;
+                if (typeof p.applyDebuff === "function") {
+                    p.applyDebuff("무구의 축복(강화)");
+                }
+                p?.calculateStats?.();
+                p?.cb?.logMessage?.("드워프의 손재주가 무구를 조율합니다. (넘버스 아이템 효율 강화)");
             }
         }
     },
@@ -101,14 +105,20 @@ export const races = {
     "Beastman": { 
         description: "수인족, 동물적 감각. 후각과 청각 우수. 영혼수와 계약 가능.",
         base_stats: { "근력": 12, "민첩성": 12, "지구력": 12, "정신력": 7, "행운": 5, "후각": 15, "청각": 15 },
-        special: "야수 변신 모드 가능성(구현 필요). 추적 능력 우수. 영혼수 계약 가능.",
+        special: "야수 변신 잠재력과 추적 능력이 뛰어나며 영혼수 계약을 통한 전투 보정이 가능하다.",
         racial_skill: {
             name: "영혼수 계약",
             desc: "영혼수와 계약하여 그 힘을 빌릴 수 있습니다. (패시브: 감각 강화)",
             citation: [1709, 1710],
             effect: (p) => {
-                p?.cb?.logMessage?.("영혼수와의 교감으로 감각이 더욱 예민해집니다. (후각, 청각 관련 판정 보너스)");
-                // (실제 계약 로직은 '수인 성지' 등에서 구현 필요)
+                if (!p) return;
+                p.explorationBuffs = p.explorationBuffs || {};
+                p.explorationBuffs.hunterSense = Math.max(12, Number(p.explorationBuffs.hunterSense || 0) + 10);
+                p.explorationBuffs.reveal = Math.max(8, Number(p.explorationBuffs.reveal || 0) + 6);
+                if (p.inCombat) {
+                    p.evasionBonus = Math.max(Number(p.evasionBonus || 0), 0.12);
+                }
+                p?.cb?.logMessage?.("영혼수 계약이 발동되어 감각이 날카로워졌습니다. (탐색/회피 강화)");
             }
         }
     },
@@ -167,8 +177,21 @@ export const magic = {
         desc: "미궁의 부산물을 도시로 가져갈 수 있게 한다.", 
         mp_cost: 30, 
         effect: function(p, t) { 
-            p?.cb?.logMessage?.("아이템에 왜곡 마법을 겁니다. (전투 중 몬스터에게 사용하여 부산물 획득 가능)"); 
-            // (실제 로직은 전투 중 아이템 사용 또는 몬스터 처치 시 구현 필요)
+            if (!p) return;
+            const now = Number(p.worldTimeHours || 0);
+            p.distortionActiveUntil = now + 24;
+            if (p.position === "Labyrinth" && p.mapManager?.getCorpseAt) {
+                const corpse = p.mapManager.getCorpseAt(p.x, p.y);
+                if (corpse) {
+                    const bonusStone = 20 + Math.floor(Math.random() * 41);
+                    p.mapManager.consumeCorpseAt?.(p.x, p.y, p);
+                    p.magic_stones = Math.max(0, Number(p.magic_stones || 0) + bonusStone);
+                    p.addItem?.("마력결정체");
+                    p?.cb?.logMessage?.(`왜곡 마법으로 ${corpse.name || "부산물"}을 봉인해 회수했습니다. (마력결정체 +1, 마석 +${bonusStone})`);
+                    return;
+                }
+            }
+            p?.cb?.logMessage?.("왜곡 표식을 전개했습니다. (24시간 동안 부산물 회수 안정화)");
         } 
     },
     "결속": { 
@@ -184,8 +207,15 @@ export const magic = {
         desc: "빛을 생성하여 주변을 밝힌다.", 
         mp_cost: 5, 
         effect: function(p, t) { 
-            p?.cb?.logMessage?.("빛구체를 생성하여 시야를 확보했다. (미궁 탐험 시 시야 +1)"); 
-            // (실제 시야 로직은 탐험 이벤트 판정 시 구현 필요)
+            if (!p) return;
+            p.explorationBuffs = p.explorationBuffs || {};
+            p.explorationBuffs.illumination = Math.max(10, Number(p.explorationBuffs.illumination || 0) + 8);
+            p.explorationBuffs.reveal = Math.max(6, Number(p.explorationBuffs.reveal || 0) + 4);
+            p.mapManager?.updateVisibility?.();
+            if (p.mapManager && typeof p.cb?.updateExplorationUI === "function") {
+                p.cb.updateExplorationUI(p.mapManager);
+            }
+            p?.cb?.logMessage?.("빛구체를 생성해 시야를 확장했습니다. (탐험 시야/감지 강화)");
         } 
     },
     "마력시": { 
@@ -417,8 +447,30 @@ export const magic = {
         desc: "시공 마법. 지정한 위치로 순간이동합니다. (1등급 마법)",
         mp_cost: 100,
         effect: function(p, t) {
-            p?.cb?.logMessage?.("차원문을 열어 공간을 이동합니다. (특수 조건 충족 시 히든 피스 발동 가능)");
-            // (실제 텔레포트 로직은 맵 시스템에 구현 필요)
+            if (!p) return;
+            if (p.position === "Labyrinth" && p.mapManager?.getRandomFloorTile) {
+                let dest = null;
+                for (let i = 0; i < 24; i++) {
+                    const pick = p.mapManager.getRandomFloorTile();
+                    if (!pick) continue;
+                    const dist = Math.abs(Number(p.x || 0) - Number(pick.x || 0)) + Math.abs(Number(p.y || 0) - Number(pick.y || 0));
+                    if (dist >= 5) {
+                        dest = pick;
+                        break;
+                    }
+                }
+                if (dest) {
+                    p.x = dest.x;
+                    p.y = dest.y;
+                    p.mapManager.updateVisibility?.();
+                    if (typeof p.cb?.updateExplorationUI === "function") {
+                        p.cb.updateExplorationUI(p.mapManager);
+                    }
+                    p?.cb?.logMessage?.(`차원문을 열어 (${dest.x}, ${dest.y}) 지점으로 도약했습니다.`);
+                    return;
+                }
+            }
+            p?.cb?.logMessage?.("차원문을 열었지만 좌표가 불안정해 이동에 실패했습니다.");
         }
     },
     "차단": {
@@ -554,6 +606,20 @@ export const items = {
             p.debuffs = (p.debuffs || []).filter(d => !d.includes("저주"));
             const removed = before - p.debuffs.length;
             p?.cb?.logMessage(removed > 0 ? "성수로 저주를 정화했다." : "성수를 사용했지만 정화할 저주가 없었다.");
+        }
+    },
+    "감정 스크롤": {
+        desc: "미감정 장비 1개의 성능을 해독합니다.",
+        price: 850,
+        type: "소모품",
+        effect: function(p) {
+            if (!p) return;
+            const identified = p.identifyRandomUnidentifiedItem?.("감정 스크롤");
+            if (identified) {
+                p?.cb?.logMessage?.(`[감정] ${identified}의 성능을 확인했습니다.`);
+            } else {
+                p?.cb?.logMessage?.("감정할 미감정 장비가 없습니다.");
+            }
         }
     },
     "삽": {
@@ -795,6 +861,108 @@ export const items = {
                 p?.cb?.logMessage("기력 재생 보조 스크롤을 사용했다. (기력 재생 속도 2배, 30턴)");
             }
         }
+    },
+    "밀 씨앗": {
+        desc: "영지 경작지에 파종할 수 있는 밀 씨앗.",
+        price: 120,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("영지에서 파종할 수 있는 씨앗입니다."); }
+    },
+    "감자 씨앗": {
+        desc: "영지 경작지에 파종할 수 있는 감자 씨앗.",
+        price: 170,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("영지에서 파종할 수 있는 씨앗입니다."); }
+    },
+    "토마토 씨앗": {
+        desc: "영지 경작지에 파종할 수 있는 토마토 씨앗.",
+        price: 230,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("영지에서 파종할 수 있는 씨앗입니다."); }
+    },
+    "약초 씨앗": {
+        desc: "영지 경작지에 파종할 수 있는 약초 씨앗.",
+        price: 260,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("영지에서 파종할 수 있는 씨앗입니다."); }
+    },
+    "밀": {
+        desc: "수확한 밀. 판매하거나 가공 재료로 사용할 수 있습니다.",
+        price: 90,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("가공 또는 판매 가능한 농산물입니다."); }
+    },
+    "감자": {
+        desc: "수확한 감자. 판매하거나 식량 재료로 사용할 수 있습니다.",
+        price: 140,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("가공 또는 판매 가능한 농산물입니다."); }
+    },
+    "토마토": {
+        desc: "수확한 토마토. 판매하거나 요리 재료로 사용할 수 있습니다.",
+        price: 190,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("가공 또는 판매 가능한 농산물입니다."); }
+    },
+    "약초 다발": {
+        desc: "치유용 약초 묶음. 판매 또는 포션 제작 재료로 사용합니다.",
+        price: 240,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("가공 또는 판매 가능한 농산물입니다."); }
+    },
+    "구리 광석": {
+        desc: "미궁 광맥에서 채집한 기초 금속 광석.",
+        price: 280,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "철 광석": {
+        desc: "중급 광맥에서 채집되는 금속 광석.",
+        price: 450,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "은 광석": {
+        desc: "마법 친화도가 높은 희귀 광석.",
+        price: 680,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "금 광석": {
+        desc: "고가에 거래되는 귀금속 광석.",
+        price: 1200,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "미스릴 광석": {
+        desc: "고층 미궁에서 발견되는 희귀 경량 금속.",
+        price: 1800,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "아다만타이트 광석": {
+        desc: "매우 단단한 고급 광석.",
+        price: 2500,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "오리할콤 광석": {
+        desc: "심층에서만 발견되는 초희귀 광석.",
+        price: 3500,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "문스톤 광석": {
+        desc: "달빛 공명을 품은 전설급 광석.",
+        price: 4200,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
+    },
+    "스타폴 광석": {
+        desc: "별의 낙하 흔적을 품은 최고급 광석.",
+        price: 5500,
+        type: "재료",
+        effect: function(p) { p?.cb?.logMessage("채광 재료입니다. 거래소에서 판매할 수 있습니다."); }
     }
 };
 
@@ -813,6 +981,7 @@ export const numbersItems = {
         no: 7661, 
         type: "팔찌", 
         desc: "죽음에 달하는 피해 시 가사상태(피해 면역) (3회).", 
+        stats: { "물리 내성": 10, "항마력": 10, "정신력": 6 },
         citation: [2227],
         effect: function(p) { 
             p?.cb?.logMessage("시체술사의 기만을 장착했다. (죽음에 달하는 피해 3회 방어) (패시브 효과)"); 
@@ -824,34 +993,79 @@ export const numbersItems = {
         desc: "심장 즉사 피해 시 일정 시간 절대 보호 (1회).", 
         citation: [2233, 2234],
         effect: function(p) { 
-            p?.cb?.logMessage("두 번째 심장이 뛰기 시작하며 죽음의 위협으로부터 보호한다! (패시브 효과)"); 
+            if (!p) return;
+            p.secondHeartReady = true;
+            p?.cb?.logMessage("두 번째 심장이 활성화되었습니다. 다음 즉사 피해를 1회 무효화합니다.");
         }
     },
     "수호자의 팔목 보호대": {
         no: 3112,
         type: "팔목 보호대",
         desc: "상시 대미지 감소 5%. 사용 시 적을 밀쳐내고 해로운 효과 면역.",
+        stats: { "물리 내성": 16, "항마력": 12, "고통내성": 8 },
         effect: function(p) {
-            if (typeof p?.removeAllDebuffs === "function") p.removeAllDebuffs(); 
-            p?.cb?.logMessage("수호자의 팔목 보호대: 모든 해로운 효과를 정화합니다!");
-            // (밀쳐내기 로직은 전투 시스템에 추가 구현 필요)
-            // (패시브(5% 감소)는 calculateStats에서 구현)
+            if (!p) return;
+            if (typeof p.removeAllDebuffs === "function") p.removeAllDebuffs();
+            if (p.inCombat && Array.isArray(p.currentMonster)) {
+                let pushed = 0;
+                p.currentMonster.forEach((monster) => {
+                    if (!monster || Number(monster.hp || 0) <= 0) return;
+                    if (Math.random() < 0.45) {
+                        helpers.safeApplyDebuff(monster, "기절(1턴)");
+                        pushed += 1;
+                    }
+                });
+                p?.cb?.logMessage(`수호자의 팔목 보호대가 폭발하며 ${pushed}체를 밀어냈습니다.`);
+            } else {
+                p?.cb?.logMessage("수호자의 팔목 보호대: 모든 해로운 효과를 정화합니다!");
+            }
         }
     },
     "가르파스의 목걸이": {
         no: 7777,
         type: "목걸이",
         desc: "마석을 넣어 랜덤한 물질로 변환. (가챠 아이템)",
+        stats: { "행운": 8, "인지력": 6, "정신력": 4 },
         citation: [2209, 2210],
         effect: function(p) {
-            p?.cb?.logMessage("가르파스의 목걸이를 사용합니다. (컨텐츠 구현 필요)");
-            // (구현 시, p.magic_stones를 차감하고 랜덤 아이템 지급 로직 필요)
+            if (!p) return;
+            const available = Math.max(0, Number(p.magic_stones || 0));
+            const spend = Math.min(available, 400);
+            if (spend <= 0) {
+                p?.cb?.logMessage("가르파스의 목걸이: 변환할 마석이 부족합니다.");
+                return;
+            }
+            p.magic_stones -= spend;
+            const convertRoll = Math.random();
+            if (convertRoll < 0.55) {
+                const itemPool = ["마력결정체", "포션", "건조 식량", "횃불", "모닥불 키트", "붕대"];
+                const count = Math.max(1, Math.floor(spend / 130));
+                for (let i = 0; i < count; i++) {
+                    const item = itemPool[Math.floor(Math.random() * itemPool.length)];
+                    p?.addItem?.(item);
+                }
+                p?.cb?.logMessage(`가르파스의 목걸이: 마석 ${spend}개를 보급품으로 변환했습니다.`);
+            } else if (convertRoll < 0.9) {
+                const goldGain = spend * (18 + Math.floor(Math.random() * 5));
+                p.gold = Math.max(0, Number(p.gold || 0) + goldGain);
+                p?.cb?.logMessage(`가르파스의 목걸이: 마석 ${spend}개를 ${goldGain.toLocaleString()} 스톤으로 환전했습니다.`);
+            } else {
+                const numbersPool = Object.keys(p?.cb?.gameData?.numbersItems || {});
+                if (numbersPool.length > 0) {
+                    const pick = numbersPool[Math.floor(Math.random() * numbersPool.length)];
+                    p?.addItem?.(pick);
+                    p?.cb?.logMessage(`가르파스의 목걸이: 확률 변환 성공! [${pick}] 넘버스를 획득했습니다.`);
+                } else {
+                    p?.cb?.logMessage("가르파스의 목걸이: 희귀 변환에 실패했습니다.");
+                }
+            }
         }
     },
     "독사의 송곳니": {
         no: 5991,
         type: "무기", // 장착 아이템
         desc: "관통력 보너스, 중독 피해 2배.",
+        stats: { "근력": 12, "물리 관통": 18, "독 감응도": 14 },
         citation: [2224],
         effect: function(p) { 
              p?.cb?.logMessage("독사의 송곳니를 장착했다. (패시브 효과)"); 
@@ -862,6 +1076,7 @@ export const numbersItems = {
         no: 6111,
         type: "반지", // 장착 아이템
         desc: "주변 이벤트 발생 시 긍정(녹색)/부정(적색)/혼합(황색)으로 알려줌.",
+        stats: { "육감": 18, "인지력": 10, "시각": 6 },
         citation: [2230, 2231],
         effect: function(p) { 
              p?.cb?.logMessage("운명 추적자를 장착했다. (미궁 탐색 시 랜덤 이벤트 발생)"); 
@@ -871,15 +1086,20 @@ export const numbersItems = {
         no: 7234,
         type: "원판", // 소모품형 마도구
         desc: "반경 10m 내 거짓말 방지 (10분).",
+        stats: { "정신력": 10, "통제력": 8, "인지력": 4 },
         citation: [2235],
         effect: function(p) {
-            p?.cb?.logMessage("어긋난 신뢰를 사용합니다. 10분간 주변의 거짓말을 방지합니다. (기능 미구현)");
+            if (!p) return;
+            const now = Number(p.worldTimeHours || 0);
+            p.deceptionShieldUntil = now + 10;
+            p?.cb?.logMessage("어긋난 신뢰: 10시간 동안 사기/협박/거짓 제안을 차단합니다.");
         }
     },
     "수호병단의 징표": {
         no: 2988,
         type: "귀걸이", // 장착 아이템
         desc: "방패에 충격 흡수 옵션 50% 부여.",
+        stats: { "물리 내성": 10, "항마력": 10, "지구력": 6 },
         citation: [2236],
         effect: function(p) { 
              p?.cb?.logMessage("수호병단의 징표를 장착했다. (방패 충격 흡수 50% 패시브 적용)"); 
@@ -890,6 +1110,7 @@ export const numbersItems = {
         no: 8667,
         type: "벨트", // 장착 아이템
         desc: "인간형 몬스터 수에 비례해 근접 물리 피해 증가.",
+        stats: { "근력": 14, "민첩성": 8, "물리 관통": 8 },
         citation: [2237, 2239],
         effect: function(p) { 
              p?.cb?.logMessage("황야의 무법자를 장착했다. (인간형 몬스터 상대 시 피해 증가)"); 
@@ -899,6 +1120,7 @@ export const numbersItems = {
         no: 4819,
         type: "부무기", // 장착 아이템
         desc: "화염 흡수 시 영혼력 회복. (패시브: 화염 내성 +30)",
+        stats: { "화염 내성": 30, "물리 내성": 12, "항마력": 8 },
         citation: [2241, 2242],
         effect: function(p) { 
              p?.cb?.logMessage("용암 방패를 장착했다. (화염 내성 +30)"); 
@@ -909,6 +1131,7 @@ export const numbersItems = {
         no: 8820,
         type: "각반", // 장착 아이템
         desc: "사용 시 3초간 물리 내성 및 항마력 2배 상승.",
+        stats: { "물리 내성": 14, "항마력": 14, "지구력": 10 },
         citation: [2243],
         effect: function(p) { 
              if (typeof p?.applyDebuff === "function") p.applyDebuff("철벽(1턴)"); // 1턴(3초)간
@@ -944,6 +1167,12 @@ export const npcs = {
     },
     "탐험가 길드 접수원": {
         dialog: "무슨 일로 오셨나요? 퀘스트 수락, 파티 결속, 정보 구매, 동료 모집이 가능합니다.", 
+        personalityProfile: {
+            temperament: "규정 중심 실무형",
+            traits: ["절차 중시", "기록 철저", "성실함"],
+            likes: ["greet", "business"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
             p?.cb?.logMessage("탐험가 길드 접수원: (ui_city.js의 '탐험가 길드 지부' 메뉴를 이용해주세요.)");
         }
@@ -970,6 +1199,12 @@ export const npcs = {
     },
     "상점 주인": {
         dialog: "어서 오세요! 필요한 물건이라도 있으신가?", 
+        personalityProfile: {
+            temperament: "실리적 상인",
+            traits: ["흥정 선호", "단골 우대", "손익 계산이 빠름"],
+            likes: ["business", "gift"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
             p?.cb?.logMessage("상점 주인: (ui_city.js의 '상점가' 메뉴를 이용해주세요.)");
         }
@@ -977,6 +1212,12 @@ export const npcs = {
     "교단 신관": {
         dialog: "신의 은총이 함께하길... 치료나 정수 삭제가 필요하신가요? 정수 삭제 비용은 500만 스톤부터 시작합니다.", 
         citation: [1325],
+        personalityProfile: {
+            temperament: "온건한 성직자",
+            traits: ["질서 중시", "정중함 선호", "신앙 중심"],
+            likes: ["greet", "gift"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
             p?.cb?.logMessage("교단 신관: (ui_city.js의 '대신전' 메뉴를 이용해주세요.)");
         }
@@ -996,6 +1237,12 @@ export const npcs = {
     "대장장이": {
         dialog: "뭘 도와줄까? 제작, 수리, 강화 다 가능해.", 
         citation: [2024],
+        personalityProfile: {
+            temperament: "과묵한 장인",
+            traits: ["품질 집착", "실력 존중", "무례를 싫어함"],
+            likes: ["greet", "business"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
              p?.cb?.logMessage("대장장이: (ui_city.js의 '대장간' 메뉴를 이용해주세요.)");
         }
@@ -1003,6 +1250,12 @@ export const npcs = {
     "주점 주인": {
         dialog: "어서와! 시원한 맥주 한 잔 어때?", 
         citation: [2025],
+        personalityProfile: {
+            temperament: "사교형 정보상",
+            traits: ["소문에 밝음", "재미를 좋아함", "분위기 중시"],
+            likes: ["rumor", "business"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
             p?.cb?.logMessage("주점 주인: (ui_city.js의 '주점' 메뉴를 이용해주세요.)");
         }
@@ -1010,8 +1263,80 @@ export const npcs = {
     "여관 주인": {
         dialog: "편히 쉬다 가세요. 하룻밤에 200 스톤입니다.", 
         citation: [2005],
+        personalityProfile: {
+            temperament: "친화형 관리인",
+            traits: ["안전 중시", "소문 수집", "정 많은 성격"],
+            likes: ["greet", "rumor", "gift"],
+            dislikes: ["rude"]
+        },
         action: function(p) { 
              p?.cb?.logMessage("여관 주인: (ui_city.js의 '여관' 메뉴를 이용해주세요.)");
+        }
+    },
+    "마탑 마도사": {
+        dialog: "지식은 대가를 치를수록 깊어지지요. 어떤 주문을 원합니까?",
+        personalityProfile: {
+            temperament: "오만한 연구자",
+            traits: ["효율 중시", "지식 거래", "감정보다 성과"],
+            likes: ["business", "rumor"],
+            dislikes: ["rude"]
+        },
+        action: function(p) {
+            p?.cb?.logMessage("마탑 마도사: (ui_city.js의 '마탑' 메뉴를 이용해주세요.)");
+        }
+    },
+    "훈련 교관": {
+        dialog: "정확한 자세, 반복, 그리고 회복. 그게 생존의 기본이다.",
+        personalityProfile: {
+            temperament: "강경한 실전파",
+            traits: ["규율 강조", "행동 중시", "성과 평가형"],
+            likes: ["greet", "business"],
+            dislikes: ["rude"]
+        },
+        action: function(p) {
+            p?.cb?.logMessage("훈련 교관: (ui_city.js의 '훈련장' 메뉴를 이용해주세요.)");
+        }
+    },
+    "거래소 중개인": {
+        dialog: "시세는 살아 움직입니다. 빠르게 거래할수록 유리합니다.",
+        action: function(p) {
+            p?.cb?.logMessage("거래소 중개인: (ui_city.js의 '알미너스 중앙 거래소' 메뉴를 이용해주세요.)");
+        }
+    },
+    "은행 관리자": {
+        dialog: "자산을 지키는 첫걸음은 분산 보관입니다.",
+        action: function(p) {
+            p?.cb?.logMessage("은행 관리자: (ui_city.js의 '알미너스 은행' 메뉴를 이용해주세요.)");
+        }
+    },
+    "경매장 진행인": {
+        dialog: "오늘도 귀한 넘버스들이 올라왔습니다. 자금 준비는 되셨겠죠?",
+        action: function(p) {
+            p?.cb?.logMessage("경매장 진행인: (ui_city.js의 '천공 경매장' 메뉴를 이용해주세요.)");
+        }
+    },
+    "왕궁 시종장": {
+        dialog: "왕궁 예법을 지키시길 바랍니다. 보고할 내용이 있다면 말씀하세요.",
+        action: function(p) {
+            p?.cb?.logMessage("왕궁 시종장: 왕궁 보고 체계를 통해 공적을 남길 수 있습니다.");
+        }
+    },
+    "배급소 관리자": {
+        dialog: "배급은 질서입니다. 순번대로 받으십시오.",
+        action: function(p) {
+            p?.cb?.logMessage("배급소 관리자: 비프론 생존 물자를 배급합니다.");
+        }
+    },
+    "비프론 암시장 주인": {
+        dialog: "싸게 줄게. 대신 질문은 하지 마.",
+        action: function(p) {
+            p?.cb?.logMessage("암시장 주인: 값은 싸지만 안전은 보장 못 해.");
+        }
+    },
+    "밀수 안내인": {
+        dialog: "지도에 없는 길을 원하면, 값부터 맞춥시다.",
+        action: function(p) {
+            p?.cb?.logMessage("밀수 안내인: 하수도 비밀 통로는 조용히 이용하세요.");
         }
     }
 };

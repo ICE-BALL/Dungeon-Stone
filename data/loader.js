@@ -7,13 +7,17 @@ const DATA_PATHS = {
     monsters1_3: 'data/monsters_grades_1-3.json',
     monsters4_6: 'data/monsters_grades_4-6.json',
     monsters7_10_b1: 'data/monsters_grades_7-10_b1.json',
+    monstersGembaba: 'data/monsters_gembaba_extracted.json',
     essences1_3: 'data/essences_grades_1-3.json',
     essences4_6: 'data/essences_grades_4-6.json',
     essences7_10_b1: 'data/essences_grades_7-10_b1.json',
+    essencesGembaba: 'data/essences_gembaba_extracted.json',
+    floorsGembaba: 'data/floors_gembaba_extracted.json',
     staticContent: 'data/static_content.json',
     worldData: 'data/world_data.json', 
     quests: 'data/quests.json',
-    curios: 'data/curios.json' // [신규] Curio 데이터 추가
+    curios: 'data/curios.json', // [신규] Curio 데이터 추가
+    balanceConfig: 'data/balance_config.json'
 };
 
 /**
@@ -35,10 +39,19 @@ export async function loadAllGameData() {
         npcs: {},
         cities: {},
         layers: {}, // 맵 데이터 (JS 모듈에서 로드)
+        floorCompendium: {
+            source: null,
+            extractedAt: null,
+            layers: [],
+            hidden_fields: [],
+            rifts: [],
+            special_fields: []
+        },
         rifts: {},
         hidden_fields: {}, 
         quests: {},
         curios: {}, // [신규] 상호작용 오브젝트 (JS 모듈에서 로드)
+        balanceConfig: {},
         statsList: [],
         specialStats: {},
         expToLevel: {},
@@ -96,6 +109,7 @@ export async function loadAllGameData() {
                 case 'monsters1_3':
                 case 'monsters4_6':
                 case 'monsters7_10_b1':
+                case 'monstersGembaba':
                     Object.assign(GameData.monsters, result.data);
                     break;
                 
@@ -103,7 +117,22 @@ export async function loadAllGameData() {
                 case 'essences1_3':
                 case 'essences4_6':
                 case 'essences7_10_b1':
+                case 'essencesGembaba':
                     Object.assign(GameData.essences, result.data);
+                    break;
+
+                // 층 컴펜디엄 (겜바바 설정 기반 추출)
+                case 'floorsGembaba':
+                    if (result.data && typeof result.data === 'object') {
+                        GameData.floorCompendium = {
+                            ...GameData.floorCompendium,
+                            ...result.data,
+                            layers: Array.isArray(result.data.layers) ? result.data.layers : [],
+                            hidden_fields: Array.isArray(result.data.hidden_fields) ? result.data.hidden_fields : [],
+                            rifts: Array.isArray(result.data.rifts) ? result.data.rifts : [],
+                            special_fields: Array.isArray(result.data.special_fields) ? result.data.special_fields : []
+                        };
+                    }
                     break;
 
                 // 정적 콘텐츠 (아이템, 마법, 종족 등)
@@ -150,6 +179,13 @@ export async function loadAllGameData() {
                 case 'curios':
                     Object.assign(GameData.curios, result.data || {});
                     console.log("Curio 데이터 로드 완료:", Object.keys(GameData.curios).length + "개 정의됨");
+                    break;
+                
+                // 밸런스 설정
+                case 'balanceConfig':
+                    GameData.balanceConfig = result.data && typeof result.data === 'object'
+                        ? result.data
+                        : {};
                     break;
             }
         }

@@ -54,6 +54,16 @@ export const PlayerWorldMethods = {
              tileData = this.cb?.gameData?.curios?.[tileParam];
         }
 
+        // [Phase 3] 종족별 환경 제약 체크
+        if (this.raceSystem) {
+            const constraintResult = this.raceSystem.canEnterTile(tileTypeKey);
+            if (!constraintResult.allowed) {
+                // 타일 진입 불가
+                this.cb?.logMessage?.(constraintResult.message || `${tileTypeKey} 지역으로 진입할 수 없습니다.`);
+                return;
+            }
+        }
+
         // 3. 벽(Wall) 확인 - 이동 불가
         if (tileTypeKey === "Wall") {
             this.cb?.logMessage?.(tileData?.desc || "단단한 벽이 길을 막고 있습니다.");
@@ -63,7 +73,6 @@ export const PlayerWorldMethods = {
         // 4. 이동 처리 및 비용 차감
         this.mapX = newX;
         this.mapY = newY;
-        this.timeRemaining--; 
         
         // 이동 피로도: 기본 5, 지구력 3당 1 감소 (최소 1)
         const fatigueCost = Math.max(1, 5 - Math.floor((this.currentStats["지구력"] || 10) / 3));
@@ -211,7 +220,17 @@ export const PlayerWorldMethods = {
                 helpers.safeHpUpdate(this, -(resultData.value || 0), { isSkillHit: false });
                 break;
             case "buff":
-                this.cb?.logMessage("기분 좋은 기운이 감돕니다. (버프 효과 미구현)");
+                {
+                    const buffName = String(resultData.id || "축복");
+                    const hpGain = Math.max(6, Math.floor(Number(this.maxHp || 100) * 0.08));
+                    const mpGain = Math.max(4, Math.floor(Number(this.maxMp || 60) * 0.06));
+                    helpers.safeHpUpdate(this, hpGain);
+                    this.mp = Math.min(this.maxMp, Number(this.mp || 0) + mpGain);
+                    if (typeof this.applyDebuff === "function") {
+                        this.applyDebuff(`${buffName}(3턴)`);
+                    }
+                    this.cb?.logMessage(`기분 좋은 기운이 감돕니다. (${buffName}, HP +${hpGain}, MP +${mpGain})`);
+                }
                 break;
             case "debuff":
                 if(typeof this.applyDebuff === 'function') this.applyDebuff(resultData.id);
@@ -235,9 +254,54 @@ export const PlayerWorldMethods = {
     },
 
     useItem(itemName) {
-        if (!this.inventory?.includes(itemName)) {
+        const equippedSlots = Object.entries(this.equipment || {})
+            .filter(([, equipped]) => equipped === itemName)
+            .map(([slot]) => slot);
+        const isEquippedItem = equippedSlots.length > 0;
+
+        if (!this.inventory?.includes(itemName) && !isEquippedItem) {
              this.cb?.logMessage?.(`오류: 인벤토리에 ${itemName} 아이템이 없습니다.`);
              return;
+        }
+
+        if (this.position === "Labyrinth" && this.mapManager?.tryResolveHiddenPieceByItem) {
+            const hiddenResult = this.mapManager.tryResolveHiddenPieceByItem(itemName);
+            if (hiddenResult?.resolved) {
+                if (hiddenResult.consume) {
+                    const itemIndex = this.inventory.indexOf(itemName);
+                    if (itemIndex > -1) this.inventory.splice(itemIndex, 1);
+                }
+                this.showStatus?.();
+                return;
+            }
+        }
+
+        if (itemName === "감정 스크롤") {
+            const itemIndex = this.inventory.indexOf(itemName);
+            if (itemIndex > -1) this.inventory.splice(itemIndex, 1);
+            const identified = this.identifyRandomUnidentifiedItem?.("감정 스크롤");
+            if (!identified) {
+                this.cb?.logMessage?.("감정할 미식별 장비가 없습니다.");
+            } else {
+                this.cb?.logMessage?.(`[감정 스크롤] ${identified}의 정체를 확인했습니다.`);
+            }
+            this.showStatus?.();
+            return;
+        }
+
+        if (itemName === "모닥불 키트") {
+            if (this.mapManager?.startCampfirePlacement) {
+                this.mapManager.startCampfirePlacement();
+                return;
+            }
+        }
+        if (itemName === "횃불" && this.position === "Labyrinth") {
+            if (this.mapManager?.startTorchPlacement || this.mapManager?.toggleTorchEquip) {
+                const placeFirst = confirm("횃불을 설치할까요?\n취소를 누르면 장착/해제를 시도합니다.");
+                if (placeFirst) this.mapManager.startTorchPlacement?.();
+                else this.mapManager.toggleTorchEquip?.();
+                return;
+            }
         }
 
         const item = (this.gameData.items && this.gameData.items[itemName]) || 
@@ -249,9 +313,7 @@ export const PlayerWorldMethods = {
                  item.effect(this);
                  if (!item.type || item.type === '소모품') {
                      const itemIndex = this.inventory.indexOf(itemName);
-                     if (itemIndex > -1) {
-                         this.inventory.splice(itemIndex, 1);
-                     }
+                     if (itemIndex > -1) this.inventory.splice(itemIndex, 1);
                  }
                  this.showStatus();
             } catch (e) {
@@ -281,11 +343,24 @@ export const PlayerWorldMethods = {
     checkSatiety() {
         if (this.position !== "Labyrinth") return;
 
-        if (this.satiety < 30 && this.satiety > 0 && !this.hungerWarningShown) {
+        const penalty = this.getSatietyPenaltyProfile?.() || {};
+        const stage = String(penalty.stage || "stable");
+        if (this._lastSatietyPenaltyStage !== stage) {
+            this._lastSatietyPenaltyStage = stage;
+            if (stage === "hungry") {
+                this.cb?.logMessage("허기로 인해 힘이 빠집니다. (근력/민첩 저하, 스킬 실패 확률 증가)");
+            } else if (stage === "critical") {
+                this.cb?.logMessage("극심한 허기 상태입니다. 공격력 저하와 스킬 실패 위험이 큽니다.");
+            } else if (stage === "starving") {
+                this.cb?.logMessage("아사 직전입니다. 즉시 식량을 확보하지 않으면 생존이 어렵습니다.");
+            }
+        }
+
+        if (this.satiety < 35 && this.satiety > 0 && !this.hungerWarningShown) {
             this.hungerWarningShown = true;
             this.cb?.logMessage("허기가 심해집니다. 식량을 섭취하거나 모닥불에서 휴식하세요.");
         }
-        if (this.satiety >= 30) {
+        if (this.satiety >= 35) {
             this.hungerWarningShown = false;
         }
 
@@ -301,6 +376,14 @@ export const PlayerWorldMethods = {
     },
 
     checkBetrayal() {
+        if (typeof this.processCompanionPanic === 'function') {
+            const panicked = this.processCompanionPanic("탐험 중 위기");
+            if (panicked) {
+                this.showStatus?.();
+                return;
+            }
+        }
+
         if (this.party.length > 0 && Math.random() < this.betrayalChance) {
             const traitorIndex = Math.floor(Math.random() * this.party.length);
             const traitor = this.party.splice(traitorIndex, 1)[0];
@@ -508,25 +591,62 @@ export const PlayerWorldMethods = {
 
         if (typeof this.calculateStats === 'function') this.calculateStats();
 
-        const requiredExp = (this.gameData.expToLevel && this.gameData.expToLevel[this.level]) || 'MAX';
+        const requiredExpRaw = (typeof this.getRequiredExpForLevel === 'function')
+            ? this.getRequiredExpForLevel(this.level)
+            : Number(this.gameData?.expToLevel?.[this.level]);
+        const requiredExp = Number.isFinite(requiredExpRaw) ? requiredExpRaw : 'MAX';
+        const maxEssenceCapacity = (typeof this.getMaxEssenceCapacity === 'function')
+            ? this.getMaxEssenceCapacity(this.level)
+            : Math.max(1, (this.level * 3) + Math.floor(this.level / 5) - (this.essences?.includes("디아몬트") ? 1 : 0));
         const statsList = Array.isArray(this.gameData.statsList) ? this.gameData.statsList : [];
         const baseStats = statsList.filter(stat => this.stats?.[stat.name] !== 0);
         const finalStats = statsList.filter(stat => this.currentStats?.[stat.name] !== 0);
-
         const statusChips = [
             `종족 ${this.race || '미선택'}`,
             `레벨 ${this.level}`,
             `탐험 ${this.grade}등급`,
             `EXP ${this.exp}/${requiredExp}`,
+            `특성 포인트 ${this.traitPoints || 0}`,
             `포만감 ${this.satiety}`,
             `피로 ${this.fatigue}/100`,
-            `동료 ${this.party?.length || 0}명`
+            `동료 ${this.party?.length || 0}명`,
+            `숙소 ${this.economyState?.lodgingTier || 'standard'}`
         ];
 
         let labyrinthInfo = '';
         if (this.position === "Labyrinth") {
             labyrinthInfo += `<div class="status-inline-card"><b>현재 좌표</b><span>L${this.currentLayer} (${this.x}, ${this.y})</span></div>`;
             labyrinthInfo += `<div class="status-inline-card"><b>허기 카운트</b><span>${(this.labyrinthSteps || 0)}/${this.hungerStepThreshold || 30}</span></div>`;
+            const torchState = this.equippedTorch ? `장착 중(${this.equippedTorchItem || "횃불"})` : "미장착";
+            const buffs = this.explorationBuffs || {};
+            labyrinthInfo += `<div class="status-inline-card"><b>탐험 광원</b><span>${torchState} | 광휘 ${buffs.illumination || 0}턴</span></div>`;
+            labyrinthInfo += `<div class="status-inline-card"><b>탐지 버프</b><span>탐색 ${buffs.reveal || 0}턴 | 추적 ${buffs.hunterSense || 0}턴</span></div>`;
+            if (Number(this.currentLayer || 0) === 6) {
+                const shipReady = this.shipUnlocked ? "선박 준비 완료" : "선박 없음";
+                const sailorCount = Array.isArray(this.party)
+                    ? this.party.filter(member => String(member?.trait || "").trim() === "항해사").length
+                    : 0;
+                labyrinthInfo += `<div class="status-inline-card"><b>해상 이동</b><span>${shipReady} | 항해사 ${sailorCount}명</span></div>`;
+            }
+            const scoutCount = Array.isArray(this.party)
+                ? this.party.filter(member => String(member?.trait || "").trim() === "탐색꾼").length
+                : 0;
+            if (scoutCount > 0) {
+                const tracker = this.rareDropTracker || {};
+                const pityThreshold = Math.max(3, 8 - scoutCount);
+                labyrinthInfo += `<div class="status-inline-card"><b>희귀 추적</b><span>${tracker.scoutNoRareKills || 0}/${pityThreshold} | 통찰 ${tracker.scoutInsight || 0}</span></div>`;
+            }
+            const cooldownEntries = Object.entries(this.mapManager?.explorationAbilityCooldowns || {})
+                .filter(([, value]) => Number(value) > 0)
+                .sort((a, b) => Number(b[1]) - Number(a[1]))
+                .slice(0, 3);
+            if (cooldownEntries.length > 0) {
+                const summary = cooldownEntries.map(([key, value]) => {
+                    const label = this.mapManager?.getExplorationAbilityLabel?.(key) || key;
+                    return `${label} ${value}턴`;
+                }).join(", ");
+                labyrinthInfo += `<div class="status-inline-card"><b>이능 쿨다운</b><span>${summary}</span></div>`;
+            }
             if (this.mapManager?.collapse?.active) {
                 const c = this.mapManager.collapse;
                 labyrinthInfo += `<div class="status-inline-card"><b>차원붕괴</b><span>${c.wave}/${c.maxWaves} | 왜곡 ${c.movesUntilShift}턴 | 장막 ${c.barrierRadius}</span></div>`;
@@ -535,7 +655,7 @@ export const PlayerWorldMethods = {
             labyrinthInfo = `<div class="status-inline-card"><b>현재 위치</b><span>${this.position || '도시'}</span></div>`;
         }
 
-        const equipSlots = ['투구', '갑옷', '장갑', '각반', '무기', '부무기'];
+        const equipSlots = ['투구', '갑옷', '장갑', '각반', '무기', '부무기', '목걸이', '반지', '팔찌', '귀걸이', '벨트', '부적', '토큰', '마도구', '가면'];
         const equipCards = equipSlots
             .map(slot => `<div class="status-mini-card"><b>${slot}</b><span>${this.equipment?.[slot] || '없음'}</span></div>`)
             .join('');
@@ -544,6 +664,42 @@ export const PlayerWorldMethods = {
         const essencePreview = this.essences?.length > 0 ? this.essences.map(key => `${key} 정수`).slice(0, 6).join(', ') : '없음';
         const skillPreview = this.essence_skills?.length > 0 ? this.essence_skills.slice(0, 8).join(', ') : '없음';
         const invPreview = this.inventory?.length > 0 ? this.inventory.slice(0, 8).join(', ') : '없음';
+        const traitNodeCount = Object.values(this.traitRanks || {}).filter(v => Number(v) > 0).length;
+        const traitSpent = Number(this.traitSpentPoints || 0);
+        const factionState = (typeof this.factionSystem?.getState === 'function')
+            ? this.factionSystem.getState()
+            : (this.factionState || {});
+        const reputationEntries = Object.entries(factionState.reputation || {})
+            .filter(([, value]) => Number.isFinite(Number(value)))
+            .map(([name, value]) => [name, Math.round(Number(value))]);
+        const sortedReputation = reputationEntries.slice().sort((a, b) => Number(b[1]) - Number(a[1]));
+        const formatRep = (entry) => entry ? `${entry[0]} ${entry[1] >= 0 ? '+' : ''}${entry[1]}` : '없음';
+        const bestReputation = formatRep(sortedReputation[0]);
+        const worstReputation = formatRep(sortedReputation[sortedReputation.length - 1]);
+        const factionFlagLabels = {
+            black_market_hidden_gate: '암시장 은닉 입구 개방',
+            kingdom_chaser_active: '왕국군 추격자 활성'
+        };
+        const activeFactionFlags = Object.entries(factionState.flags || {})
+            .filter(([, enabled]) => Boolean(enabled))
+            .map(([flag]) => factionFlagLabels[flag] || flag);
+        const factionFlagSummary = activeFactionFlags.length > 0
+            ? activeFactionFlags.slice(0, 3).join(', ')
+            : '없음';
+        const ecoLayer = Number(this.currentLayer || 1);
+        const ecoSnapshot = (this.position === "Labyrinth" && this.mapManager?.ecoSnapshot)
+            ? this.mapManager.ecoSnapshot
+            : this.livingWorld?.getLayerSnapshot?.(ecoLayer);
+        const ecoSummary = ecoSnapshot
+            ? `포식 ${Number(ecoSnapshot.predator || 0)} | 피식 ${Number(ecoSnapshot.prey || 0)} | 청소 ${Number(ecoSnapshot.scavenger || 0)}`
+            : '기록 없음';
+        const spawnBias = Number(this.mapManager?.ecoSnapshot?.spawnBias || 0);
+        const spawnBiasText = Number.isFinite(spawnBias)
+            ? `${spawnBias >= 0 ? '+' : ''}${(spawnBias * 100).toFixed(1)}%`
+            : '0.0%';
+        const corpseCountText = this.position === "Labyrinth"
+            ? `${Array.isArray(this.mapManager?.corpses) ? this.mapManager.corpses.length : 0}구`
+            : '0구';
 
         statusDiv.innerHTML = `
             <div class="status-chip-grid">
@@ -554,7 +710,7 @@ export const PlayerWorldMethods = {
                 <div class="status-inline-card"><b>보유 스톤</b><span>${this.gold.toLocaleString()}</span></div>
                 <div class="status-inline-card"><b>은행 예금</b><span>${this.bankGold.toLocaleString()}</span></div>
                 <div class="status-inline-card"><b>마석</b><span>${this.magic_stones.toLocaleString()} 개</span></div>
-                <div class="status-inline-card"><b>미궁 남은시간</b><span>${this.timeRemaining > 0 ? this.timeRemaining + '시간' : '제한 없음'}</span></div>
+                <div class="status-inline-card"><b>마탑 공적</b><span>${Number(this.mageTowerState?.merit || 0)} (${this.mageTowerState?.rankName || '견습'})</span></div>
                 ${labyrinthInfo}
             </div>
 
@@ -581,9 +737,22 @@ export const PlayerWorldMethods = {
                 <h4>기술 / 보유</h4>
                 <div class="status-inline-grid">
                     <div class="status-inline-card"><b>마법</b><span>${spellPreview}</span></div>
-                    <div class="status-inline-card"><b>정수 (${this.essences.length}/${this.level * 3})</b><span>${essencePreview}</span></div>
+                    <div class="status-inline-card"><b>정수 (${this.essences.length}/${maxEssenceCapacity})</b><span>${essencePreview}</span></div>
                     <div class="status-inline-card"><b>정수 스킬</b><span>${skillPreview}</span></div>
+                    <div class="status-inline-card"><b>특성 그래프</b><span>노드 ${traitNodeCount}개 활성 | 투자 ${traitSpent}pt</span></div>
                     <div class="status-inline-card"><b>인벤토리 (${this.inventory?.length || 0})</b><span>${invPreview}</span></div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <h4>세력 / 생태계</h4>
+                <div class="status-inline-grid">
+                    <div class="status-inline-card"><b>평판 최고</b><span>${bestReputation}</span></div>
+                    <div class="status-inline-card"><b>평판 최저</b><span>${worstReputation}</span></div>
+                    <div class="status-inline-card"><b>활성 세력 트리거</b><span>${factionFlagSummary}</span></div>
+                    <div class="status-inline-card"><b>현재층 생태계</b><span>${ecoSummary}</span></div>
+                    <div class="status-inline-card"><b>스폰 보정</b><span>${spawnBiasText}</span></div>
+                    <div class="status-inline-card"><b>시체 잔존</b><span>${corpseCountText}</span></div>
                 </div>
             </div>
         `;

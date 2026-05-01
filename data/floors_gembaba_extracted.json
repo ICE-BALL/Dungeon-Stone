@@ -1,0 +1,173 @@
+{
+  "source": "겜바바 설정.txt",
+  "extractedAt": "2026-02-24T10:38:02.240Z",
+  "layers": [
+    {
+      "chapter": 4,
+      "section": 1,
+      "floorId": "1",
+      "floorLabel": "1층",
+      "name": "수정동굴"
+    },
+    {
+      "chapter": 4,
+      "section": 2,
+      "floorId": "2",
+      "floorLabel": "2층",
+      "name": null
+    },
+    {
+      "chapter": 4,
+      "section": 3,
+      "floorId": "3",
+      "floorLabel": "3층",
+      "name": "순례자의 길"
+    },
+    {
+      "chapter": 4,
+      "section": 4,
+      "floorId": "4",
+      "floorLabel": "4층",
+      "name": "천공의 탑"
+    },
+    {
+      "chapter": 4,
+      "section": 5,
+      "floorId": "5",
+      "floorLabel": "5층",
+      "name": "대마경"
+    },
+    {
+      "chapter": 4,
+      "section": 6,
+      "floorId": "6",
+      "floorLabel": "6층",
+      "name": "대해"
+    },
+    {
+      "chapter": 4,
+      "section": 7,
+      "floorId": "7",
+      "floorLabel": "7층",
+      "name": null
+    },
+    {
+      "chapter": 4,
+      "section": 8,
+      "floorId": "8",
+      "floorLabel": "8층",
+      "name": "여명의 땅"
+    },
+    {
+      "chapter": 4,
+      "section": 9,
+      "floorId": "9",
+      "floorLabel": "9층",
+      "name": "별무덤"
+    },
+    {
+      "chapter": 4,
+      "section": 10,
+      "floorId": "10",
+      "floorLabel": "10층",
+      "name": null
+    }
+  ],
+  "hidden_fields": [
+    {
+      "chapter": 5,
+      "section": 1,
+      "floorId": "1",
+      "floorLabel": "1층",
+      "name": "기록 보관소"
+    }
+  ],
+  "rifts": [
+    {
+      "chapter": 6,
+      "section": 1,
+      "floorId": "1",
+      "floorLabel": "1층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 2,
+      "floorId": "2",
+      "floorLabel": "2층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 3,
+      "floorId": "3",
+      "floorLabel": "3층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 4,
+      "floorId": "4",
+      "floorLabel": "4층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 5,
+      "floorId": "5",
+      "floorLabel": "5층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 6,
+      "floorId": "7",
+      "floorLabel": "7층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 7,
+      "floorId": "8",
+      "floorLabel": "8층",
+      "name": null
+    },
+    {
+      "chapter": 6,
+      "section": 8,
+      "floorId": "B1",
+      "floorLabel": "지하1층",
+      "name": null
+    }
+  ],
+  "special_fields": [
+    {
+      "chapter": 7,
+      "section": 1,
+      "floorId": "4",
+      "floorLabel": "4층",
+      "name": null
+    },
+    {
+      "chapter": 7,
+      "section": 2,
+      "floorId": "5",
+      "floorLabel": "5층",
+      "name": null
+    },
+    {
+      "chapter": 7,
+      "section": 3,
+      "floorId": "6",
+      "floorLabel": "6층",
+      "name": null
+    },
+    {
+      "chapter": 7,
+      "section": 4,
+      "floorId": "9",
+      "floorLabel": "9층",
+      "name": null
+    }
+  ]
+}

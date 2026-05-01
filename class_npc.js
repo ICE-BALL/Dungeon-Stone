@@ -110,6 +110,16 @@ export class NPC {
 
         this.affinity = 0; // 플레이어와의 호감도
         this.debuffs = [];
+        this.personalityTags = {
+            greed: Math.floor(28 + Math.random() * 58),
+            fear: Math.floor(24 + Math.random() * 60),
+            faith: Math.floor(20 + Math.random() * 62)
+        };
+        this.hiddenLoyalty = Math.floor(38 + Math.random() * 52);
+        this.moraleState = {
+            panicCooldown: 0,
+            greedCooldown: 0
+        };
     }
 
     // [신규] NPC용 스탯 계산 (플레이어와 동일)
@@ -194,13 +204,32 @@ export class NPC {
         this.mp = Math.min(this.mp, this.maxMp);
     }
 
-    // [신규] NPC용 정수 추가/적용
-    addEssence(essenceName, showLog = true) {
-        let maxEssences = this.level * 3;
-        // [패시브 구현] 디아몬트 "부정한 자"
+    getRequiredExpForLevel(level = this.level) {
+        const lv = Math.max(1, Number(level || 1));
+        const raw = Number(this.gameData?.expToLevel?.[lv]);
+        if (!Number.isFinite(raw) || raw <= 0) return Infinity;
+        return Math.max(4, Math.floor(raw * 0.2));
+    }
+
+    getExpGainMultiplier() {
+        const lv = Math.max(1, Number(this.level || 1));
+        if (lv <= 10) return 1.25;
+        if (lv <= 20) return 1.15;
+        return 1.05;
+    }
+
+    getMaxEssenceCapacity(level = this.level) {
+        const lv = Math.max(1, Number(level || 1));
+        let maxEssences = (lv * 3) + Math.floor(lv / 5);
         if (this.essences.includes("디아몬트")) {
             maxEssences -= 1;
         }
+        return Math.max(1, maxEssences);
+    }
+
+    // [신규] NPC용 정수 추가/적용
+    addEssence(essenceName, showLog = true) {
+        const maxEssences = this.getMaxEssenceCapacity(this.level);
 
         if (this.essences.length >= maxEssences) { // NPC도 동일한 제한
             if (showLog) this.cb?.logMessage(`${this.name}의 최대 정수 흡수량(${maxEssences}개)을 초과했습니다.`);
@@ -303,9 +332,13 @@ export class NPC {
 
     attack(target) {
         if (!target) return;
-        // [문법 수정] 대괄호 표기법 사용
-        let defense = target.def ?? target.currentStats?.['물리 내성'] ?? 0;
-        let dmg = helpers.calculateDamage(this.currentStats['근력'] || 10, defense);
+        const damageResult = helpers.calculateAdvancedDamage({
+            attacker: this,
+            defender: target,
+            baseDamage: this.currentStats['근력'] || 10,
+            damageType: "physical"
+        });
+        let dmg = damageResult.finalDamage;
         
         // [패시브] NPC의 공격 시 패시브 (플레이어와 동일하게 적용)
         if (this.essences.includes("뱀파이어")) { // 흡혈
@@ -319,6 +352,12 @@ export class NPC {
         
         /* AUTO-FIX: added optional chaining ?. for safety */
         this.cb?.logMessage(`${this.name}의 공격! ${target.name || '플레이어'}에게 ${dmg}의 피해. (${target.name || '플레이어'} HP: ${target.hp})`);
+        if (damageResult.weaknessHit) {
+            this.cb?.logMessage(`[약점 타격] ${target.name || "대상"}의 약점을 관통했습니다.`);
+        }
+        if (damageResult.resistanceHit) {
+            this.cb?.logMessage(`[내성 저항] ${target.name || "대상"}이(가) 물리 내성으로 피해를 줄였습니다.`);
+        }
     }
 
     /**
@@ -385,11 +424,13 @@ export class NPC {
             return; // 경험치 획득 불가
         }
         
-        this.exp += amount;
-        /* AUTO-FIX: added guard for this.gameData.expToLevel to avoid TypeError */
-        const requiredExp = (this.gameData.expToLevel && this.gameData.expToLevel[this.level]) || Infinity;
-        
-        while (this.level < this.gameData.maxLevelModded && this.exp >= requiredExp) {
+        const expGained = Math.max(1, Math.floor(Number(amount || 0) * this.getExpGainMultiplier()));
+        this.exp += expGained;
+        const maxLevel = Number(this.gameData?.maxLevelModded || 999);
+
+        while (this.level < maxLevel) {
+            const requiredExp = this.getRequiredExpForLevel(this.level);
+            if (!Number.isFinite(requiredExp) || this.exp < requiredExp) break;
             this.exp -= requiredExp;
             this.levelUp();
         }

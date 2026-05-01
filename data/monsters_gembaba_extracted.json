@@ -1,0 +1,1267 @@
+{
+  "가고일 석상": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "가고일 석상"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "가르시안": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "가르시안"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "가챠본": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "가챠본"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "강철의 정령": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "강철의 정령"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "고대 땅거미": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "고대 땅거미"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "군도수호병": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "군도수호병"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "그래바니치": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "그래바니치"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "기계 거인": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "기계 거인"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "나가쿨로스": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "나가쿨로스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "나이트플라": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "나이트플라"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "나임피": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "나임피"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "네크라미아": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "네크라미아"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "넬파르돈": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "넬파르돈"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "녹갑 탐사병": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "녹갑 탐사병"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "늑대 괴수 칼반": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "늑대 괴수 칼반"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "다이빌 울프": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "다이빌 울프"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "다크 나이트": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "다크 나이트"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "다키온": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "다키온"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "데드렉트": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "데드렉트"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "드레이크": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "드레이크"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "드워프이터": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "드워프이터"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "디닉티스": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "디닉티스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "라네무트 주술사": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "라네무트 주술사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "라브가누스": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "라브가누스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "라이칸스로프": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "라이칸스로프"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "라크렐": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "라크렐"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "라프레미믹": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "라프레미믹"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "레드 드래곤": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "레드 드래곤"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "레드 드레이크": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "레드 드레이크"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "레드아이": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "레드아이"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "레디트로우스": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "레디트로우스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "렉타스": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "렉타스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "뤼투레 부적술사": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "뤼투레 부적술사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "리드거": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "리드거"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "리트캐논": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "리트캐논"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "마계 추적자": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "마계 추적자"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "마리모어": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "마리모어"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "말라카": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "말라카"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "매드클롭터": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "매드클롭터"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "머드골렘": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "머드골렘"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "메카로테": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "메카로테"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "멧크로우": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "멧크로우"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "모빌라우스": {
+    "grade": 2,
+    "hp": 14000,
+    "atk": 110,
+    "def": 46,
+    "magic_def": 46,
+    "essences": [
+      "모빌라우스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "물고기": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "물고기"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "미노타우로스": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "미노타우로스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "바르타누스": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "바르타누스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "반타오": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "반타오"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "발란티스 궁정 기사": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "발란티스 궁정 기사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "발란티스 마법사": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "발란티스 마법사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "발크수스": {
+    "grade": 2,
+    "hp": 14000,
+    "atk": 110,
+    "def": 46,
+    "magic_def": 46,
+    "essences": [
+      "발크수스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "백갑 수호병": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "백갑 수호병"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "본 드레이크": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "본 드레이크"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "불사조": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "불사조"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "불의 망자": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "불의 망자"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "블랙 트리": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "블랙 트리"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "블러드 로어": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "블러드 로어"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "비톨": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "비톨"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "빙하의 마법사 카리아데아": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "빙하의 마법사 카리아데아"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "사이클롭스": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "사이클롭스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "설원의 군주 카툼바": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "설원의 군주 카툼바"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "세무라": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "세무라"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "세인트 어쌔신": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "세인트 어쌔신"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "수수께끼 문지기": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "수수께끼 문지기"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "순찰병 에르테스": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "순찰병 에르테스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "스머그": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "스머그"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "스켈레톤 아처": {
+    "grade": 9,
+    "hp": 240,
+    "atk": 18,
+    "def": 6,
+    "magic_def": 6,
+    "essences": [
+      "스켈레톤 아처"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "스켈레톤 킹헬름": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "스켈레톤 킹헬름"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "스톤위터": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "스톤위터"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "스피어디퍼": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "스피어디퍼"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "심연의 감시자": {
+    "grade": 9,
+    "hp": 240,
+    "atk": 18,
+    "def": 6,
+    "magic_def": 6,
+    "essences": [
+      "심연의 감시자"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아르벳": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "아르벳"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아스톨토스": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "아스톨토스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아이니콘": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "아이니콘"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아이스 오크 전사": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "아이스 오크 전사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아이스 트롤": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "아이스 트롤"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아이언 나이트": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "아이언 나이트"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "아켈타스": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "아켈타스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "알트스모러": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "알트스모러"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "어스빈": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "어스빈"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "에반": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "에반"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "에스겐": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "에스겐"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "엘더 와이번": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "엘더 와이번"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "오크": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "오크"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "오크 대주술사": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "오크 대주술사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "용기병": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "용기병"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "우움달": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "우움달"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "은실의 예언병": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "은실의 예언병"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "이블루스": {
+    "grade": 2,
+    "hp": 14000,
+    "atk": 110,
+    "def": 46,
+    "magic_def": 46,
+    "essences": [
+      "이블루스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "일라트렉": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "일라트렉"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "임프": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "임프"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "좀비 로드": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "좀비 로드"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "지하토룡": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "지하토룡"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "천계나무": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "천계나무"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "천계심판관": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "천계심판관"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "청백궁 심판자": {
+    "grade": 6,
+    "hp": 1100,
+    "atk": 45,
+    "def": 18,
+    "magic_def": 18,
+    "essences": [
+      "청백궁 심판자"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "카탄다": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "카탄다"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "카프라바라": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "카프라바라"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "캠보르미어": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "캠보르미어"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "코카트리스": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "코카트리스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "크룽비": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "크룽비"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "크립티드": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "크립티드"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "키클롭스": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "키클롭스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "타우르부르드": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "타우르부르드"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "타이타누스": {
+    "grade": 2,
+    "hp": 14000,
+    "atk": 110,
+    "def": 46,
+    "magic_def": 46,
+    "essences": [
+      "타이타누스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "파멸불꽃 요정": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "파멸불꽃 요정"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "팔푸푸라": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "팔푸푸라"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "포펜시스": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "포펜시스"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "프라헬": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "프라헬"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "프로그맨 주술사": {
+    "grade": 8,
+    "hp": 430,
+    "atk": 27,
+    "def": 10,
+    "magic_def": 10,
+    "essences": [
+      "프로그맨 주술사"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "플레임 울프": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "플레임 울프"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "플릿윈더": {
+    "grade": 3,
+    "hp": 7000,
+    "atk": 85,
+    "def": 34,
+    "magic_def": 34,
+    "essences": [
+      "플릿윈더"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "해룡": {
+    "grade": 1,
+    "hp": 30000,
+    "atk": 150,
+    "def": 60,
+    "magic_def": 60,
+    "essences": [
+      "해룡"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "헤드헌터": {
+    "grade": 7,
+    "hp": 700,
+    "atk": 35,
+    "def": 14,
+    "magic_def": 14,
+    "essences": [
+      "헤드헌터"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "홉피시": {
+    "grade": 5,
+    "hp": 1800,
+    "atk": 55,
+    "def": 22,
+    "magic_def": 22,
+    "essences": [
+      "홉피시"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  },
+  "화주 피아닐": {
+    "grade": 4,
+    "hp": 3400,
+    "atk": 65,
+    "def": 26,
+    "magic_def": 26,
+    "essences": [
+      "화주 피아닐"
+    ],
+    "description": "겜바바 설정.txt 기반 자동 추가 데이터."
+  }
+}

@@ -1,0 +1,1055 @@
+{
+  "가고일 석상": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "가르시안": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "가챠본": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "강철의 정령": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "고대 땅거미": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "고요의 정수": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "군도수호병": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "그래바니치": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "기계 거인": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "나가쿨로스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "나이트플라": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "나임피": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "네크라미아": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "넬파르돈": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "녹갑 탐사병": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "늑대 괴수 칼반": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "다이빌 울프": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "다크 나이트": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "다키온": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "데드렉트": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "드레이크": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "드워프이터": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "디닉티스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "라네무트 주술사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "라브가누스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "라이칸스로프": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "라크렐": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "라프레미믹": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "레드 드래곤": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "레드 드레이크": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "레드아이": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "레디트로우스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "렉타스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "뤼투레 부적술사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "리드거": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "리트캐논": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "마계 추적자": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "마리모어": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "말라카": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "매드클롭터": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "머드골렘": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "메카로테": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "멧크로우": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "모빌라우스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "물고기": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "미노타우로스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "바르타누스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "반타오": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "발란티스 궁정 기사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "발란티스 마법사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "발크수스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "백갑 수호병": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "본 드레이크": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "불사조": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "불의 망자": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "블랙 트리": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "블러드 로어": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "비톨": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "빙하의 마법사 카리아데아": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "사이클롭스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "설원의 군주 카툼바": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "세무라": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "세인트 어쌔신": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "수수께끼 문지기": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "순찰병 에르테스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "스머그": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "스켈레톤 아처": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "스켈레톤 킹헬름": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "스톤위터": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "스피어디퍼": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "심연의 감시자": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아르벳": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아스톨토스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아이니콘": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아이스 오크 전사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아이스 트롤": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아이언 나이트": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "아켈타스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "알트스모러": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "어둠의 정수": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "어스빈": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "에반": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "에스겐": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "엘더 와이번": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "오크": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "오크 대주술사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "용기병": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "우움달": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "은실의 예언병": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "일라트렉": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "임프": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "좀비 로드": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "지하토룡": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "천계나무": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "천계심판관": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "청백궁 심판자": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "카탄다": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "카프라바라": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "캠보르미어": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "코카트리스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "크룽비": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "크립티드": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "키클롭스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "타우르부르드": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "타이타누스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "파멸불꽃 요정": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "팔푸푸라": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "포펜시스": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "프라헬": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "프로그맨 주술사": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "플레임 울프": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "플릿윈더": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "해룡": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "헤드헌터": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "혼돈의 정수": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "홉피시": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  },
+  "화주 피아닐": {
+    "grade": 6,
+    "stats": {},
+    "passive": {
+      "name": "미확인 패시브",
+      "desc": "겜바바 설정.txt에 이름만 언급되어 세부 효과는 미기재입니다."
+    },
+    "active": null
+  }
+}

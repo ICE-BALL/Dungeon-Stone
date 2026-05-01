@@ -1,0 +1,626 @@
+﻿{
+  "version": "1.0.0",
+  "stats": {
+    "item": {
+      "globalMultiplier": 1,
+      "tierMultiplier": {
+        "1": 1.18,
+        "2": 1.14,
+        "3": 1.1,
+        "4": 1.05,
+        "5": 1,
+        "6": 0.96,
+        "7": 0.93,
+        "8": 0.9,
+        "9": 0.87,
+        "10": 0.84
+      },
+      "slotMultiplier": {
+        "무기": 1.05,
+        "부무기": 1.02,
+        "갑옷": 1.03,
+        "투구": 1.01,
+        "장갑": 1,
+        "각반": 1
+      }
+    },
+    "essence": {
+      "globalMultiplier": 1,
+      "gradeMultiplier": {
+        "1": 1.2,
+        "2": 1.16,
+        "3": 1.12,
+        "4": 1.08,
+        "5": 1.04,
+        "6": 1,
+        "7": 0.97,
+        "8": 0.94,
+        "9": 0.91,
+        "10": 0.88
+      }
+    },
+    "monster": {
+      "globalMultiplier": 1,
+      "gradeMultiplier": {
+        "1": 1.08,
+        "2": 1.06,
+        "3": 1.04,
+        "4": 1.03,
+        "5": 1.02,
+        "6": 1,
+        "7": 0.98,
+        "8": 0.96,
+        "9": 0.94,
+        "10": 0.9
+      }
+    },
+    "derived": {
+      "crit": {
+        "base": 0.05,
+        "luckDivisor": 500,
+        "flexibilityDivisor": 1000,
+        "perceptionDivisor": 2000,
+        "min": 0.01,
+        "max": 0.85
+      },
+      "evasion": {
+        "base": 0.05,
+        "dexDivisor": 500,
+        "flexibilityDivisor": 1000,
+        "visionDivisor": 1000,
+        "eyesightDivisor": 2000,
+        "min": 0.01,
+        "max": 0.85
+      },
+      "essenceBonuses": {
+        "브라키아이스텔로": {
+          "evasion": 0.2
+        }
+      }
+    },
+    "maxStats": {
+      "hp": {
+        "enduranceScale": 8,
+        "levelScale": 20
+      },
+      "mp": {
+        "soulScale": 1,
+        "mindScale": 5
+      },
+      "stamina": {
+        "enduranceScale": 10
+      }
+    },
+    "progression": {
+      "expMultiplierByLevel": [
+        {
+          "maxLevel": 10,
+          "multiplier": 3.8
+        },
+        {
+          "maxLevel": 20,
+          "multiplier": 3.4
+        },
+        {
+          "maxLevel": 999,
+          "multiplier": 3
+        }
+      ],
+      "essenceCapacity": {
+        "basePerLevel": 3,
+        "bonusEveryLevel": 5,
+        "bonusAmount": 1,
+        "min": 1,
+        "diamondPenalty": 1
+      }
+    },
+    "racePassives": {
+      "human": {
+        "allStatsAdd": 2,
+        "expGainMultiplier": 1.05,
+        "add": {}
+      },
+      "fairy": {
+        "add": {
+          "민첩성": 6,
+          "모든 속성 감응도": 8,
+          "항마력": 4
+        },
+        "derived": {
+          "evasion": 0.05
+        },
+        "turnStart": {
+          "mpRegenFlat": 2
+        }
+      },
+      "dwarf": {
+        "add": {
+          "근력": 3,
+          "지구력": 5,
+          "물리 내성": 8
+        },
+        "numbersItemMultiplier": 1.5
+      },
+      "barbarian": {
+        "add": {
+          "근력": 5,
+          "지구력": 5
+        },
+        "conditional": [
+          {
+            "condition": {
+              "hpRateLte": 0.35
+            },
+            "add": {
+              "근력": 10,
+              "투쟁심": 20
+            }
+          }
+        ]
+      },
+      "beastkin": {
+        "add": {
+          "근력": 3,
+          "민첩성": 5,
+          "후각": 10,
+          "청각": 10
+        }
+      },
+      "dragonkin": {
+        "add": {
+          "근력": 5,
+          "항마력": 8,
+          "화염 내성": 20
+        }
+      }
+    }
+  },
+  "combat": {
+    "hitChance": {
+      "base": 0.72,
+      "hitRateDivisor": 250,
+      "eyesightDivisor": 600,
+      "perceptionDivisor": 1200,
+      "targetDexDivisor": 500,
+      "targetVisionDivisor": 1200,
+      "min": 0.2,
+      "max": 0.98
+    },
+    "turnStartRegen": {
+      "staminaDivisor": 12,
+      "hpDivisor": 25,
+      "mpDivisor": 20
+    },
+    "raceModifiers": {
+      "dragonkin": {
+        "bonusCritChanceOnAttack": 0.2,
+        "bonusCritProcChance": 0.2,
+        "fearProcChance": 0.16
+      },
+      "barbarian": {
+        "holySpellBlocked": true
+      }
+    },
+    "spellRules": {
+      "holyKeyword": "신성"
+    }
+  },
+  "essencePassiveRules": {
+    "석화 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      },
+      {
+        "type": "add",
+        "stat": "민첩성",
+        "value": -5
+      }
+    ],
+    "육체보존": [
+      {
+        "type": "add",
+        "stat": "자연 재생력",
+        "value": 10
+      }
+    ],
+    "강철 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 5
+      }
+    ],
+    "석상 형태": [
+      {
+        "type": "mul",
+        "stat": "물리 내성",
+        "value": 2,
+        "condition": {
+          "inCombat": false
+        }
+      }
+    ],
+    "매의 눈": [
+      {
+        "type": "add",
+        "stat": "시각",
+        "value": 5
+      }
+    ],
+    "영체": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 5
+      }
+    ],
+    "꺼지지 않는 불꽃": [
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": 5
+      }
+    ],
+    "심연의 적응": [
+      {
+        "type": "add",
+        "stat": "어둠 내성",
+        "value": 10
+      }
+    ],
+    "두꺼운 가죽": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "높은 물리 내성": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 20
+      }
+    ],
+    "바위 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 15
+      }
+    ],
+    "강철 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "대전사": [
+      {
+        "type": "add",
+        "stat": "근력",
+        "value": 5
+      }
+    ],
+    "나무 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 12,
+        "condition": {
+          "essenceEquals": [
+            "스네트리"
+          ]
+        }
+      },
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": -15,
+        "condition": {
+          "essenceEquals": [
+            "스네트리"
+          ]
+        }
+      },
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10,
+        "condition": {
+          "essenceEquals": [
+            "우드맨"
+          ]
+        }
+      },
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": -10,
+        "condition": {
+          "essenceEquals": [
+            "우드맨"
+          ]
+        }
+      }
+    ],
+    "예리한 감각": [
+      {
+        "type": "add",
+        "stat": "시각",
+        "value": 5
+      },
+      {
+        "type": "add",
+        "stat": "청각",
+        "value": 5
+      }
+    ],
+    "설인": [
+      {
+        "type": "add",
+        "stat": "냉기 내성",
+        "value": 10
+      }
+    ],
+    "얼음 피부": [
+      {
+        "type": "add",
+        "stat": "냉기 내성",
+        "value": 10
+      }
+    ],
+    "구리 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      },
+      {
+        "type": "add",
+        "stat": "번개 내성",
+        "value": 10
+      }
+    ],
+    "철갑": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "철 비늘": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "신속": [
+      {
+        "type": "add",
+        "stat": "민첩성",
+        "value": 10
+      }
+    ],
+    "바다의 전사": [
+      {
+        "type": "add",
+        "stat": "근력",
+        "value": 10,
+        "condition": {
+          "layerEquals": 6
+        }
+      }
+    ],
+    "단단한 껍질": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "언데드": [
+      {
+        "type": "add",
+        "stat": "독 내성",
+        "value": 999
+      },
+      {
+        "type": "add",
+        "stat": "신성 내성",
+        "value": -100
+      },
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": -100
+      }
+    ],
+    "광물 피부": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 15
+      }
+    ],
+    "원거리 명중": [
+      {
+        "type": "add",
+        "stat": "명중률",
+        "value": 10
+      }
+    ],
+    "단단한 등껍질": [
+      {
+        "type": "mul",
+        "stat": "물리 내성",
+        "value": 1.1
+      }
+    ],
+    "철의 육체": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 50
+      },
+      {
+        "type": "add",
+        "stat": "민첩성",
+        "value": -15
+      }
+    ],
+    "독사의 피": [
+      {
+        "type": "add",
+        "stat": "독 내성",
+        "value": 50
+      }
+    ],
+    "외눈박이": [
+      {
+        "type": "add",
+        "stat": "인지력",
+        "value": 200
+      }
+    ],
+    "조율자": [
+      {
+        "type": "allAdd",
+        "value": 5
+      }
+    ],
+    "심연의 육체": [
+      {
+        "type": "add",
+        "stat": "어둠 내성",
+        "value": 15
+      },
+      {
+        "type": "add",
+        "stat": "자연 재생력",
+        "value": 5
+      }
+    ],
+    "영웅의 길": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10,
+        "condition": {
+          "hpRateLte": 0.5
+        }
+      },
+      {
+        "type": "add",
+        "stat": "항마력",
+        "value": 10,
+        "condition": {
+          "hpRateLte": 0.5
+        }
+      },
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10,
+        "condition": {
+          "hpRateLte": 0.2
+        }
+      },
+      {
+        "type": "add",
+        "stat": "항마력",
+        "value": 10,
+        "condition": {
+          "hpRateLte": 0.2
+        }
+      }
+    ],
+    "태양의 갑옷": [
+      {
+        "type": "add",
+        "stat": "신성 내성",
+        "value": 15
+      },
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": 15
+      }
+    ],
+    "별의 인도": [
+      {
+        "type": "add",
+        "stat": "행운",
+        "value": 10
+      }
+    ],
+    "진흙 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      }
+    ],
+    "파멸의 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      },
+      {
+        "type": "add",
+        "stat": "어둠 내성",
+        "value": 10
+      }
+    ],
+    "검은 표범": [
+      {
+        "type": "add",
+        "stat": "민첩성",
+        "value": 10
+      }
+    ],
+    "심해의 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 15
+      }
+    ],
+    "지옥의 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 5
+      },
+      {
+        "type": "add",
+        "stat": "화염 내성",
+        "value": 5
+      }
+    ],
+    "얼음 갑옷": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 10
+      },
+      {
+        "type": "add",
+        "stat": "냉기 내성",
+        "value": 10
+      }
+    ],
+    "철갑 껍질": [
+      {
+        "type": "add",
+        "stat": "물리 내성",
+        "value": 20
+      }
+    ]
+  }
+}

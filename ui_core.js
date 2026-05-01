@@ -296,26 +296,107 @@ export function hideModal(modalId) {
  * 상태 바 업데이트 함수
  */
 export function updateStatusBars(player) {
+    // [Phase 3] resources 객체 우선 사용 (레이스 시스템)
+    const resources = player.resources;
+    const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+    const toFiniteNumber = (value, fallback = 0) => {
+        const num = Number(value);
+        if (Number.isFinite(num)) return num;
+        const fallbackNum = Number(fallback);
+        return Number.isFinite(fallbackNum) ? fallbackNum : 0;
+    };
+    const toSafeProgress = (current, max, fallbackMax = 1) => {
+        const rawMax = Math.max(0, toFiniteNumber(max, fallbackMax));
+        const safeMax = Math.max(1, rawMax);
+        const safeCurrent = clamp(toFiniteNumber(current, 0), 0, safeMax);
+        return { rawMax, safeMax, safeCurrent };
+    };
+
+    // 레거시 수치(player.hp/mp/stamina)와 종족 리소스(resources.*)를 동기화해
+    // UI가 전투/탐험 모든 경로에서 실제 수치를 표시하도록 보정합니다.
+    if (resources && typeof resources === "object") {
+        if (resources.hp && !resources.hp.locked) {
+            const maxHp = Math.max(1, toFiniteNumber(player.maxHp, resources.hp.max || 1));
+            const hp = clamp(toFiniteNumber(player.hp, resources.hp.current), 0, maxHp);
+            resources.hp.max = maxHp;
+            resources.hp.current = hp;
+            player.maxHp = maxHp;
+            player.hp = hp;
+        }
+        if (resources.mp) {
+            if (resources.mp.locked) {
+                player.maxMp = 0;
+                player.mp = 0;
+                resources.mp.max = 0;
+                resources.mp.current = 0;
+            } else {
+                const maxMp = Math.max(0, toFiniteNumber(player.maxMp, resources.mp.max || 0));
+                const mp = clamp(toFiniteNumber(player.mp, resources.mp.current), 0, Math.max(1, maxMp));
+                resources.mp.max = maxMp;
+                resources.mp.current = Math.min(mp, maxMp);
+                player.maxMp = maxMp;
+                player.mp = Math.min(mp, maxMp);
+            }
+        }
+        if (resources.stamina && !resources.stamina.locked) {
+            const maxStamina = Math.max(1, toFiniteNumber(player.maxStamina, resources.stamina.max || 1));
+            const stamina = clamp(toFiniteNumber(player.stamina, resources.stamina.current), 0, maxStamina);
+            resources.stamina.max = maxStamina;
+            resources.stamina.current = stamina;
+            player.maxStamina = maxStamina;
+            player.stamina = stamina;
+        }
+    }
+    
+    // HP 바
     const hpBar = document.getElementById('player-hp');
     const hpValue = document.getElementById('player-hp-value');
+    if (hpBar && hpValue) {
+        const hpState = resources?.hp
+            ? toSafeProgress(resources.hp.current, resources.hp.max, 1)
+            : toSafeProgress(player.hp, player.maxHp, 1);
+        hpBar.max = hpState.safeMax;
+        hpBar.value = hpState.safeCurrent;
+        hpValue.textContent = `${Math.round(hpState.safeCurrent)}/${Math.round(Math.max(1, hpState.rawMax))}`;
+        hpBar.style.display = 'block';
+    }
+
+    // MP 바 (locked 체크)
     const mpBar = document.getElementById('player-mp');
     const mpValue = document.getElementById('player-mp-value');
+    if (mpBar && mpValue) {
+        if (resources?.mp) {
+            if (resources.mp.locked) {
+                mpBar.style.display = 'none';
+                mpValue.style.display = 'none';
+            } else {
+                const mpState = toSafeProgress(resources.mp.current, resources.mp.max, 0);
+                mpBar.max = mpState.safeMax;
+                mpBar.value = mpState.safeCurrent;
+                mpValue.textContent = `${Math.round(mpState.safeCurrent)}/${Math.round(Math.max(0, mpState.rawMax))}`;
+                mpBar.style.display = 'block';
+                mpValue.style.display = 'block';
+            }
+        } else {
+            const mpState = toSafeProgress(player.mp, player.maxMp, 0);
+            mpBar.max = mpState.safeMax;
+            mpBar.value = mpState.safeCurrent;
+            mpValue.textContent = `${Math.round(mpState.safeCurrent)}/${Math.round(Math.max(0, mpState.rawMax))}`;
+            mpBar.style.display = 'block';
+            mpValue.style.display = 'block';
+        }
+    }
+
+    // Stamina 바
     const staminaBar = document.getElementById('player-stamina');
     const staminaValue = document.getElementById('player-stamina-value');
-
-    if (hpBar && hpValue) {
-        hpBar.max = player.maxHp;
-        hpBar.value = player.hp;
-        hpValue.textContent = `${player.hp}/${player.maxHp}`;
-    }
-    if (mpBar && mpValue) {
-        mpBar.max = player.maxMp;
-        mpBar.value = player.mp;
-        mpValue.textContent = `${player.mp}/${player.maxMp}`;
-    }
     if (staminaBar && staminaValue) {
-        staminaBar.max = player.maxStamina;
-        staminaBar.value = player.stamina;
-        staminaValue.textContent = `${player.stamina}/${player.maxStamina}`;
+        const staminaState = resources?.stamina
+            ? toSafeProgress(resources.stamina.current, resources.stamina.max, 1)
+            : toSafeProgress(player.stamina, player.maxStamina, 1);
+        staminaBar.max = staminaState.safeMax;
+        staminaBar.value = staminaState.safeCurrent;
+        staminaValue.textContent = `${Math.round(staminaState.safeCurrent)}/${Math.round(Math.max(1, staminaState.rawMax))}`;
+        staminaBar.style.display = 'block';
     }
 }

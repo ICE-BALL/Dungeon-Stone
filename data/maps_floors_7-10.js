@@ -1,6 +1,8 @@
 ﻿// 파일: data/maps_floors_7-10.js
 // 역할: 7~10층 맵 데이터 정의 (심층/엔드게임 구간 강화)
 
+import { generateBspDungeon } from './procedural_bsp.js';
+
 const TILE = {
     WALL: 0,
     FLOOR: 1,
@@ -214,48 +216,69 @@ export const mapsFloors7_10 = {
         name: "10층: 심연의 문",
         width: 42,
         height: 112,
-        description: "세로로 긴 최종 회랑. 양측 함정구역을 돌파해 심연의 문에 도달해야 합니다.",
+        description: "BSP 절차 생성 기반의 최심부. 방-복도 구조를 따라 심연 핵심으로 돌입합니다.",
         monsterDensity: 36,
         spawnRate: 0.009,
         generate: function() {
-            const w = this.width;
-            const h = this.height;
-            const map = createMap(w, h, TILE.WALL);
-            const cx = Math.floor(w / 2);
+            const layout = generateBspDungeon({
+                width: this.width,
+                height: this.height,
+                minLeafSize: 10,
+                maxLeafSize: 24,
+                minRoomSize: 5,
+                maxRoomSize: 13,
+                deadEndKeepRatio: 0.42,
+                deadEndTrimPasses: 3,
+                depthScale: 1.35
+            });
 
-            // 중앙 대회랑
-            carveRect(map, cx - 4, 2, 9, h - 4, TILE.FLOOR);
+            const grid = layout.grid;
+            const generatedEvents = [];
+            const startPos = layout.startPos || { x: Math.floor(this.width / 2), y: this.height - 8 };
+            const endPos = layout.endPos || { x: Math.floor(this.width / 2), y: 5 };
 
-            // 좌/우 함정 가지길
-            for (let y = 8; y < h - 8; y += 12) {
-                carveRect(map, cx - 14, y, 7, 5, TILE.FLOOR);
-                carveRect(map, cx + 8, y + 2, 7, 5, TILE.FLOOR);
-                carveCorridor(map, cx - 5, y + 2, cx - 8, y + 2, TILE.FLOOR, 0);
-                carveCorridor(map, cx + 5, y + 4, cx + 8, y + 4, TILE.FLOOR, 0);
+            generatedEvents.push({
+                type: "Start",
+                x: startPos.x,
+                y: startPos.y,
+                desc: "심연 회랑 입구"
+            });
+            generatedEvents.push({
+                type: "PORTAL",
+                targetLayer: "Ending",
+                x: endPos.x,
+                y: endPos.y,
+                desc: "심연의 문"
+            });
+
+            (layout.placements?.chests || []).slice(0, 6).forEach((spot, idx) => {
+                generatedEvents.push({
+                    type: "CURIO",
+                    id: idx % 2 === 0 ? "locked_chest" : "mysterious_altar",
+                    x: spot.x,
+                    y: spot.y,
+                    desc: idx % 2 === 0 ? "봉인된 보물함" : "심연 제단"
+                });
+            });
+
+            if (layout.placements?.boss) {
+                generatedEvents.push({
+                    type: "EVENT",
+                    eventKind: "ambush",
+                    x: layout.placements.boss.x,
+                    y: layout.placements.boss.y,
+                    desc: "심연 핵심부의 극단적 압력이 감지됩니다."
+                });
             }
 
-            // 회랑 내 위험 타일
-            for (let y = 4; y < h - 4; y++) {
-                for (let x = cx - 4; x <= cx + 4; x++) {
-                    if (Math.random() < 0.08) map[y][x] = TILE.LAVA;
-                    if (Math.random() < 0.05) map[y][x] = TILE.WALL;
-                }
-            }
-
-            // 시작/엔딩 구역 보정
-            carveRect(map, cx - 6, h - 11, 13, 8, TILE.FLOOR);
-            carveRect(map, cx - 6, 3, 13, 8, TILE.FLOOR);
-
-            boundaryWalls(map);
-            return map;
+            return {
+                grid,
+                startPos,
+                fixedEvents: generatedEvents,
+                spawnAnchors: layout.placements?.monsters || []
+            };
         },
-        fixedEvents: [
-            { type: "Start", x: "center", y: height => height - 8, desc: "심연 회랑 입구" },
-            { type: "CURIO", id: "old_tombstone", x: "center", y: height => height - 20, desc: "최후의 경고문" },
-            { type: "CURIO", id: "mysterious_altar", x: "random_floor", y: "random_floor", desc: "심연 제단" },
-            { type: "CURIO", id: "locked_chest", x: "random_floor", y: "random_floor", desc: "봉인된 보물함" },
-            { type: "PORTAL", targetLayer: "Ending", x: "center", y: 5, desc: "심연의 문" }
-        ],
+        fixedEvents: [],
         monsterTable: ["길티고스", "톨-라푸파", "종말의 기사", "어비스 스켈레톤", "본 드래곤"],
         monsterTableByRegion: {
             CENTER: ["길티고스", "톨-라푸파", "종말의 기사", "어비스 스켈레톤"],

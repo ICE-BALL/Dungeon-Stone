@@ -12,11 +12,13 @@ import {
 
 const CITY_NAME = "라프도니아";
 const LABIGION_DISTRICT = "라비기온 (7-13구역)";
+const RACE_HOMELAND_DISTRICT = "종족 영지";
 const LABIGION_BOARD_SIZE = { width: 1280, height: 820 };
 const STATUS_PANEL_ID = "status-panel";
 const LOG_PANEL_ID = "log-panel";
 const STATUS_TOGGLE_ID = "toggle-status-panel";
 const LOG_TOGGLE_ID = "toggle-log-panel";
+const LABYRINTH_OPEN_PERIOD_DAYS = 3;
 
 const LABIGION_NODE_LAYOUT = {
     "차원 광장": { x: 640, y: 150, type: "portal" },
@@ -34,11 +36,45 @@ const LABIGION_NODE_LAYOUT = {
     "마탑": { x: 1025, y: 210, type: "tower" }
 };
 
+const DISTRICT_LOCATION_LAYOUTS = {
+    "라비기온 (7-13구역)": LABIGION_NODE_LAYOUT,
+    "황도 카르논 (1구역)": {
+        "왕궁": { x: 640, y: 165, type: "palace" },
+        "천공 경매장": { x: 895, y: 315, type: "auction" },
+        "영광의 궁": { x: 405, y: 315, type: "hall" },
+        "모즐란 본청": { x: 640, y: 520, type: "security" }
+    },
+    "컴멜비 (2-5구역)": {
+        "알미너스 중앙 거래소": { x: 640, y: 205, type: "market" },
+        "알미너스 은행": { x: 420, y: 345, type: "bank" },
+        "고급 여관": { x: 870, y: 345, type: "inn" },
+        "다과점": { x: 470, y: 525, type: "cafe" },
+        "제과점": { x: 810, y: 525, type: "bakery" }
+    },
+    "노움트리 (6구역)": {
+        "키아르비스": { x: 640, y: 200, type: "resort" },
+        "온천": { x: 420, y: 360, type: "hotspring" },
+        "승마장": { x: 860, y: 360, type: "riding" },
+        "농장/목장": { x: 640, y: 560, type: "farm" }
+    },
+    "비프론 (14구역)": {
+        "배급소": { x: 420, y: 280, type: "supply" },
+        "깡패 점거 여관/주점": { x: 870, y: 340, type: "gang" },
+        "하수도 비밀 통로": { x: 640, y: 540, type: "secret" }
+    },
+    "종족 영지": {
+        "종족 성소 의식장": { x: 640, y: 190, type: "sanctum" },
+        "개인 영지": { x: 430, y: 380, type: "homestead" },
+        "귀환 차원문": { x: 860, y: 380, type: "portal" }
+    }
+};
+
 const DISTRICT_LAYOUT = {
     "황도 카르논 (1구역)": { x: 640, y: 52, type: "district" },
     "컴멜비 (2-5구역)": { x: 1175, y: 105, type: "district" },
     "노움트리 (6구역)": { x: 1090, y: 495, type: "district" },
-    "비프론 (14구역)": { x: 175, y: 590, type: "district" }
+    "비프론 (14구역)": { x: 175, y: 590, type: "district" },
+    "종족 영지": { x: 1060, y: 700, type: "district" }
 };
 
 const LABIGION_CONNECTIONS = [
@@ -58,17 +94,84 @@ const LABIGION_CONNECTIONS = [
     ["공용 승강장", "노움트리 (6구역)"],
     ["공용 승강장", "컴멜비 (2-5구역)"],
     ["공용 승강장", "황도 카르논 (1구역)"],
+    ["공용 승강장", "종족 영지"],
     ["행정청", "공용 승강장"],
     ["행정청", "여관"],
     ["행정청", "마탑"]
 ];
 
+const DISTRICT_CONNECTIONS = {
+    "황도 카르논 (1구역)": [
+        ["왕궁", "천공 경매장"],
+        ["왕궁", "영광의 궁"],
+        ["왕궁", "모즐란 본청"]
+    ],
+    "컴멜비 (2-5구역)": [
+        ["알미너스 중앙 거래소", "알미너스 은행"],
+        ["알미너스 중앙 거래소", "고급 여관"],
+        ["알미너스 은행", "다과점"],
+        ["고급 여관", "제과점"]
+    ],
+    "노움트리 (6구역)": [
+        ["키아르비스", "온천"],
+        ["키아르비스", "승마장"],
+        ["온천", "농장/목장"],
+        ["승마장", "농장/목장"]
+    ],
+    "비프론 (14구역)": [
+        ["배급소", "깡패 점거 여관/주점"],
+        ["배급소", "하수도 비밀 통로"],
+        ["깡패 점거 여관/주점", "하수도 비밀 통로"]
+    ],
+    "종족 영지": [
+        ["종족 성소 의식장", "개인 영지"],
+        ["종족 성소 의식장", "귀환 차원문"]
+    ]
+};
+
+const cityMapSelectionState = {
+    selectedByDistrict: {},
+    lockedByDistrict: {}
+};
+
 function clamp(value, min, max) {
     return Math.max(min, Math.min(max, value));
 }
 
+function getRaceHomelandDistrictData(player) {
+    const raceName = player?.race || "미정";
+    const mentorName = player?.raceStory?.mentor || `${raceName} 종족 인도자`;
+    return {
+        desc: `${raceName} 종족 전용 거점. 종족 서사 의식과 영지 운영을 담당합니다.`,
+        locations: {
+            "종족 성소 의식장": {
+                desc: `${mentorName}와 대화하며 종족 서사를 진행합니다.`
+            },
+            "개인 영지": {
+                desc: "그리드 배치로 영지를 꾸미고 생산/휴식을 관리합니다."
+            },
+            "귀환 차원문": {
+                desc: `${LABIGION_DISTRICT}(으)로 복귀하는 차원문입니다.`
+            }
+        }
+    };
+}
+
 function getCityData(player) {
-    return player.cb?.gameData?.cities?.[CITY_NAME] || {};
+    const base = player.cb?.gameData?.cities?.[CITY_NAME] || {};
+    const raceDistrict = getRaceHomelandDistrictData(player);
+    const existing = base[RACE_HOMELAND_DISTRICT] || {};
+    return {
+        ...base,
+        [RACE_HOMELAND_DISTRICT]: {
+            ...raceDistrict,
+            ...existing,
+            locations: {
+                ...(raceDistrict.locations || {}),
+                ...(existing.locations || {})
+            }
+        }
+    };
 }
 
 let panelToggleInitialized = false;
@@ -132,6 +235,24 @@ function revealStatusPanel() {
     setPanelToggleLabel(STATUS_PANEL_ID, STATUS_TOGGLE_ID);
 }
 
+function getAbsoluteWorldDay(player) {
+    const eco = player?.economyState || {};
+    const year = Math.max(1, Number(eco.year || 1));
+    const month = Math.max(1, Number(eco.month || 1));
+    const day = Math.max(1, Number(eco.day || 1));
+    const daysPerMonth = Math.max(1, Number(eco.daysPerMonth || 25));
+    const monthsPerYear = Math.max(1, Number(eco.monthsPerYear || 13));
+    return (((year - 1) * monthsPerYear + (month - 1)) * daysPerMonth) + day;
+}
+
+function getLabyrinthOpenState(player) {
+    return { isOpen: true, remainDays: 0 };
+}
+
+function getLayerStayLimitHours(layer) {
+    return 0;
+}
+
 function startLabyrinthRun(player) {
     let layerOne = player.cb.gameData?.layers?.[1] || player.cb.gameData?.maps?.[1];
     if (!layerOne) {
@@ -144,9 +265,9 @@ function startLabyrinthRun(player) {
     player.currentLayer = 1;
     player.daysInLabyrinth = 1;
     player.explorationCount = 0;
-    player.timeRemaining = layerOne.time_limit || 168;
+    player.timeRemaining = 0;
 
-    logMessage(`1층 ${layerOne.name}로 진입합니다.`);
+    logMessage(`1층 ${layerOne.name}로 진입합니다. (체류 제한 없음)`);
     player.questManager?.checkProgress('REACH', '1층', 1);
 
     updateMenu(player);
@@ -155,6 +276,7 @@ function startLabyrinthRun(player) {
 
 function renderCityTextMenu(player, menu) {
     menu.classList.remove('city-map-menu');
+    menu.classList.remove('city-detail-menu');
     menu.innerHTML = '';
 
     addButton(menu, "라비기온 인터랙티브 맵으로 돌아가기", () => {
@@ -170,6 +292,8 @@ function renderCityTextMenu(player, menu) {
     menu.appendChild(hr);
     addButton(menu, "인벤토리", () => showInventory(player));
     addButton(menu, "캐릭터 상태", () => showCharacterStatus(player));
+    addButton(menu, "특성 그래프", () => showTraitGraph(player));
+    addButton(menu, "스킬 특성 그래프", () => showSkillGraph(player));
     addButton(menu, "정수 확인", () => showEssences(player));
     addButton(menu, "마법/스킬", () => showSpells(player));
     addButton(menu, "파티원 정보", () => player.cb?.showParty(player));
@@ -180,14 +304,38 @@ function renderCityTextMenu(player, menu) {
     });
 }
 
-function buildLabigionNodes(player) {
+function getCurrentCityDistrict(player) {
     const cityData = getCityData(player);
-    const locations = cityData?.[LABIGION_DISTRICT]?.locations || {};
+    if (cityData?.[player.position]) return player.position;
+    return LABIGION_DISTRICT;
+}
+
+function getDistrictConnectionsForRender(currentDistrict, nodes) {
+    const nodeNames = new Set(nodes.map((n) => n.name));
+    const base = currentDistrict === LABIGION_DISTRICT
+        ? LABIGION_CONNECTIONS
+        : (DISTRICT_CONNECTIONS[currentDistrict] || []);
+    const filtered = base.filter(([from, to]) => nodeNames.has(from) && nodeNames.has(to));
+    if (filtered.length > 0) return filtered;
+
+    const locationNames = nodes.filter((n) => n.actionType === "location").map((n) => n.name);
+    const fallback = [];
+    for (let i = 0; i < locationNames.length - 1; i++) {
+        fallback.push([locationNames[i], locationNames[i + 1]]);
+    }
+    return fallback;
+}
+
+function buildDistrictNodes(player, currentDistrict) {
+    const cityData = getCityData(player);
+    const districtData = cityData?.[currentDistrict] || {};
+    const locations = districtData?.locations || {};
+    const districtLayout = DISTRICT_LOCATION_LAYOUTS[currentDistrict] || {};
     const nodes = [];
     let fallbackIndex = 0;
 
     Object.keys(locations).forEach((name) => {
-        const preset = LABIGION_NODE_LAYOUT[name];
+        const preset = districtLayout[name];
         const fallbackX = 220 + (fallbackIndex % 4) * 210;
         const fallbackY = 240 + Math.floor(fallbackIndex / 4) * 160;
         const x = preset?.x ?? fallbackX;
@@ -197,15 +345,24 @@ function buildLabigionNodes(player) {
 
         let actionType = "location";
         let actionLabel = `${name} 방문`;
-        if (name === "차원 광장") {
+        if (currentDistrict === LABIGION_DISTRICT && name === "차원 광장") {
             actionType = "labyrinth";
             actionLabel = "미궁 진입";
-        } else if (name === "공용 승강장") {
+        } else if (currentDistrict === LABIGION_DISTRICT && name === "공용 승강장") {
             actionType = "districtMenu";
             actionLabel = "도시 구역 이동";
-        } else if (name === "행정청") {
+        } else if (currentDistrict === LABIGION_DISTRICT && name === "행정청") {
             actionType = "admin";
             actionLabel = "행정청 방문";
+        } else if (currentDistrict === RACE_HOMELAND_DISTRICT && name === "종족 성소 의식장") {
+            actionType = "race_story";
+            actionLabel = "종족 서사 진행";
+        } else if (currentDistrict === RACE_HOMELAND_DISTRICT && name === "개인 영지") {
+            actionType = "homestead";
+            actionLabel = "영지 관리";
+        } else if (currentDistrict === RACE_HOMELAND_DISTRICT && name === "귀환 차원문") {
+            actionType = "returnHomeDistrict";
+            actionLabel = `${LABIGION_DISTRICT} 귀환`;
         }
 
         nodes.push({
@@ -217,12 +374,37 @@ function buildLabigionNodes(player) {
             y,
             type,
             actionType,
-            actionLabel
+            actionLabel,
+            district: currentDistrict
+        });
+    });
+
+    const extraLocations = (typeof player.getHomeDistrictExtraLocations === "function")
+        ? player.getHomeDistrictExtraLocations()
+        : [];
+    extraLocations.forEach((entry, index) => {
+        if (!entry?.name) return;
+        const preset = districtLayout[entry.name];
+        const fallbackX = 180 + ((fallbackIndex + index) % 4) * 220;
+        const fallbackY = 620 + Math.floor((fallbackIndex + index) / 4) * 110;
+        const x = preset?.x ?? fallbackX;
+        const y = preset?.y ?? fallbackY;
+        nodes.push({
+            id: `extra-${entry.actionType || "location"}-${entry.name}`,
+            name: entry.name,
+            label: entry.name,
+            desc: entry.desc || "특수 거점 활동",
+            x,
+            y,
+            type: entry.type || "utility",
+            actionType: entry.actionType || "location",
+            actionLabel: entry.actionLabel || `${entry.name} 방문`,
+            district: currentDistrict
         });
     });
 
     Object.keys(cityData)
-        .filter((districtName) => districtName !== LABIGION_DISTRICT)
+        .filter((districtName) => districtName !== currentDistrict)
         .forEach((districtName, idx) => {
             const preset = DISTRICT_LAYOUT[districtName];
             const x = preset?.x ?? (1020 + (idx % 2) * 100);
@@ -236,21 +418,25 @@ function buildLabigionNodes(player) {
                 y,
                 type: "district",
                 actionType: "districtMove",
-                actionLabel: "해당 구역으로 이동"
+                actionLabel: "해당 구역으로 이동",
+                district: districtName
             });
         });
 
-    nodes.push({
-        id: "action-current-location",
-        name: "현재 구역 활동",
-        label: "현재 구역 활동",
-        desc: `${player.position}에서 가능한 활동 장소를 바로 확인합니다.`,
-        x: 1035,
-        y: 700,
-        type: "utility",
-        actionType: "currentLocation",
-        actionLabel: "구역 활동 보기"
-    });
+    if (currentDistrict === LABIGION_DISTRICT) {
+        nodes.push({
+            id: "action-current-location",
+            name: "현재 구역 활동",
+            label: "현재 구역 활동",
+            desc: `${currentDistrict}에서 가능한 활동 장소를 바로 확인합니다.`,
+            x: 1035,
+            y: 700,
+            type: "utility",
+            actionType: "currentLocation",
+            actionLabel: "구역 활동 보기",
+            district: currentDistrict
+        });
+    }
 
     return nodes;
 }
@@ -273,6 +459,7 @@ function leaveCityMapMode() {
 function activateCityMapNode(player, node) {
     if (!node) return;
     leaveCityMapMode();
+    const nodeDistrict = node.district || getCurrentCityDistrict(player);
 
     switch (node.actionType) {
         case "labyrinth":
@@ -280,23 +467,36 @@ function activateCityMapNode(player, node) {
             break;
         case "districtMenu":
             player.position = LABIGION_DISTRICT;
-            player.cb?.showCityDistricts(player);
+            logMessage("이동할 구역 노드를 지도에서 직접 선택하세요.");
+            player.cb?.updateMenu?.(player);
             break;
         case "districtMove":
-            if (tryMoveToDistrict(player, node.name)) {
-                player.cb?.showCityLocations(player);
-            }
+            if (tryMoveToDistrict(player, node.name)) player.cb?.updateMenu?.(player);
             break;
         case "currentLocation":
+            player.position = nodeDistrict;
             player.cb?.showCityLocations(player);
             break;
-        case "admin":
+        case "race_story":
+            player.position = nodeDistrict;
+            player.cb?.handleCityAction(player, "종족 성소");
+            break;
+        case "homestead":
+            player.position = nodeDistrict;
+            player.cb?.handleCityAction(player, "개인 영지");
+            break;
+        case "returnHomeDistrict":
             player.position = LABIGION_DISTRICT;
+            logMessage(`종족 영지에서 ${player.position}(으)로 귀환했습니다.`);
+            player.cb?.updateMenu?.(player);
+            break;
+        case "admin":
+            player.position = nodeDistrict;
             logMessage("행정청 업무는 순차적으로 확장 예정입니다. 현재는 방문 기록만 남깁니다.");
             break;
         case "location":
         default:
-            player.position = LABIGION_DISTRICT;
+            player.position = nodeDistrict;
             player.cb?.handleCityAction(player, node.name);
             break;
     }
@@ -319,12 +519,14 @@ function addCityConnection(board, from, to, style = "main") {
 
 function renderCityMapMenu(player, menu) {
     const cityData = getCityData(player);
-    const labigion = cityData?.[LABIGION_DISTRICT];
-    if (!labigion?.locations) {
+    const currentDistrict = getCurrentCityDistrict(player);
+    const districtData = cityData?.[currentDistrict];
+    if (!districtData?.locations) {
         renderCityTextMenu(player, menu);
         return;
     }
 
+    menu.classList.remove('city-detail-menu');
     menu.classList.add('city-map-menu');
     menu.innerHTML = '';
 
@@ -335,7 +537,7 @@ function renderCityMapMenu(player, menu) {
     const header = document.createElement('header');
     header.className = 'city-map-header';
     header.innerHTML = `
-        <h3>라비기온 인터랙티브 지도</h3>
+        <h3>${currentDistrict} 인터랙티브 지도</h3>
         <p>노드를 선택한 뒤 오른쪽 패널의 버튼으로 이벤트를 진행하세요. 드래그로 이동, 휠로 확대/축소, Shift+드래그(또는 우클릭 드래그)로 회전할 수 있습니다.</p>
     `;
     shell.appendChild(header);
@@ -364,7 +566,7 @@ function renderCityMapMenu(player, menu) {
 
     const infoCurrent = document.createElement('p');
     infoCurrent.className = 'city-map-current';
-    infoCurrent.textContent = `현재 위치: ${player.position || LABIGION_DISTRICT}`;
+    infoCurrent.textContent = `현재 위치: ${currentDistrict}`;
     infoPanel.appendChild(infoCurrent);
 
     const infoTitle = document.createElement('h4');
@@ -374,6 +576,15 @@ function renderCityMapMenu(player, menu) {
     const infoDesc = document.createElement('p');
     infoDesc.className = 'city-map-info-desc';
     infoPanel.appendChild(infoDesc);
+
+    const infoSelectMode = document.createElement('p');
+    infoSelectMode.className = 'city-map-select-mode';
+    infoPanel.appendChild(infoSelectMode);
+
+    const unlockSelectionButton = document.createElement('button');
+    unlockSelectionButton.type = 'button';
+    unlockSelectionButton.className = 'city-map-control-btn';
+    infoPanel.appendChild(unlockSelectionButton);
 
     const actionButton = document.createElement('button');
     actionButton.className = 'city-map-go-btn';
@@ -412,6 +623,8 @@ function renderCityMapMenu(player, menu) {
     const quickButtons = [
         ["인벤토리", () => showInventory(player)],
         ["캐릭터 상태", () => showCharacterStatus(player)],
+        ["특성 그래프", () => showTraitGraph(player)],
+        ["스킬 특성 그래프", () => showSkillGraph(player)],
         ["정수 확인", () => showEssences(player)],
         ["마법/스킬", () => showSpells(player)],
         ["파티원 정보", () => player.cb?.showParty(player)],
@@ -419,15 +632,14 @@ function renderCityMapMenu(player, menu) {
         ["상태 보기", () => {
             revealStatusPanel();
             player.showStatus();
-        }],
-        ["도시 텍스트 메뉴", () => renderCityTextMenu(player, menu)]
+        }]
     ];
     quickButtons.forEach(([label, handler]) => {
         const btn = addButton(quickActions, label, handler);
         btn.classList.add('city-map-quick-btn');
     });
 
-    const nodes = buildLabigionNodes(player);
+    const nodes = buildDistrictNodes(player, currentDistrict);
     if (nodes.length === 0) {
         renderCityTextMenu(player, menu);
         return;
@@ -437,14 +649,19 @@ function renderCityMapMenu(player, menu) {
     const nodeButtonMap = new Map();
     nodes.forEach((node) => nodeMap.set(node.name, node));
 
-    LABIGION_CONNECTIONS.forEach(([fromName, toName]) => {
+    const connections = getDistrictConnectionsForRender(currentDistrict, nodes);
+    connections.forEach(([fromName, toName]) => {
         const from = nodeMap.get(fromName);
         const to = nodeMap.get(toName);
         const style = (from?.type === "district" || to?.type === "district") ? "district" : "main";
         addCityConnection(board, from, to, style);
     });
 
-    let selectedNode = nodes.find((node) => node.name === player.position) || nodes[0];
+    const rememberedId = cityMapSelectionState.selectedByDistrict[currentDistrict];
+    let selectedNode = nodes.find((node) => node.id === rememberedId)
+        || nodes.find((node) => node.name === player.position)
+        || nodes[0];
+    let selectedNodeLocked = Boolean(cityMapSelectionState.lockedByDistrict[currentDistrict] && selectedNode);
     let cameraState = {
         panX: 0,
         panY: 0,
@@ -463,17 +680,27 @@ function renderCityMapMenu(player, menu) {
             `줌 ${Math.round(cameraState.zoom * 100)}% | 회전 ${Math.round(cameraState.rotation)}deg`;
     }
 
-    function setSelectedNode(node) {
+    function setSelectedNode(node, lockSelection = false, force = false) {
         if (!node) return;
+        if (selectedNodeLocked && !lockSelection && !force) return;
         selectedNode = node;
+        if (lockSelection) selectedNodeLocked = true;
 
         nodeButtonMap.forEach((btn, nodeId) => {
             btn.classList.toggle('active', nodeId === selectedNode.id);
         });
 
+        cityMapSelectionState.selectedByDistrict[currentDistrict] = selectedNode.id;
+        cityMapSelectionState.lockedByDistrict[currentDistrict] = selectedNodeLocked;
+
         infoTitle.textContent = node.label;
         infoDesc.textContent = node.desc;
         actionButton.textContent = node.actionLabel || "이동";
+        infoSelectMode.textContent = selectedNodeLocked
+            ? "선택 고정됨: 마우스를 올려도 변경되지 않습니다."
+            : "미리보기 모드: 마우스를 올리면 선택이 바뀝니다. 클릭하면 선택이 고정됩니다.";
+        unlockSelectionButton.textContent = selectedNodeLocked ? "선택 고정 해제" : "선택 고정 중 아님";
+        unlockSelectionButton.disabled = !selectedNodeLocked;
     }
 
     nodes.forEach((node) => {
@@ -486,12 +713,24 @@ function renderCityMapMenu(player, menu) {
             <span class="city-map-node-label">${node.label}</span>
             <span class="city-map-node-type">${node.actionLabel || "이동"}</span>
         `;
+        nodeButton.addEventListener('pointerdown', (event) => {
+            event.stopPropagation();
+        });
         nodeButton.addEventListener('mouseenter', () => setSelectedNode(node));
         nodeButton.addEventListener('focus', () => setSelectedNode(node));
-        nodeButton.addEventListener('click', () => setSelectedNode(node));
+        nodeButton.addEventListener('click', (event) => {
+            event.stopPropagation();
+            setSelectedNode(node, true, true);
+        });
         board.appendChild(nodeButton);
         nodeButtonMap.set(node.id, nodeButton);
     });
+
+    unlockSelectionButton.onclick = () => {
+        selectedNodeLocked = false;
+        cityMapSelectionState.lockedByDistrict[currentDistrict] = false;
+        setSelectedNode(selectedNode, false, true);
+    };
 
     actionButton.onclick = () => activateCityMapNode(player, selectedNode);
 
@@ -526,6 +765,8 @@ function renderCityMapMenu(player, menu) {
     viewport.addEventListener('contextmenu', (event) => event.preventDefault());
     viewport.addEventListener('pointerdown', (event) => {
         if (event.button !== 0 && event.button !== 2) return;
+        const onNode = (event.target instanceof Element) && event.target.closest('.city-map-node');
+        if (onNode) return;
         event.preventDefault();
         dragState = {
             pointerId: event.pointerId,
@@ -574,7 +815,7 @@ function renderCityMapMenu(player, menu) {
         applyCameraTransform();
     }, { passive: false });
 
-    setSelectedNode(selectedNode);
+    setSelectedNode(selectedNode, false, true);
     applyCameraTransform();
 }
 
@@ -590,15 +831,25 @@ export function initRaceSelection(player) {
         mainGameDiv.style.display = 'none';
 
         racesListDiv.innerHTML = '';
+        
+        // [Phase 3] RACE_DEFINITIONS 사용
+        const raceDefinitions = player.cb?.raceDefinitions?.() || {};
         const races = player.cb?.gameData?.races || {};
         
-        Object.keys(races).forEach(race => {
-            addButton(racesListDiv, `${race} - ${races[race].description}`, () => {
-                player.chooseRace(race);
+        // 우선 RACE_DEFINITIONS 우선 사용
+        const racesToUse = Object.keys(raceDefinitions).length > 0 ? raceDefinitions : races;
+        
+        Object.keys(racesToUse).forEach(raceId => {
+            const raceData = racesToUse[raceId];
+            const raceName = raceData.name || raceData.displayName || raceId;
+            const raceDesc = raceData.description || '종족';
+            
+            addButton(racesListDiv, `${raceName} - ${raceDesc}`, () => {
+                player.chooseRace(raceId);
                 raceSelectionDiv.style.display = 'none';
                 mainGameDiv.classList.remove('hidden');
                 mainGameDiv.style.display = 'grid'; 
-                logMessage("던전 앤 스톤의 세계에 온 것을 환영합니다. 도시에서 탐험을 준비하세요.");
+                logMessage(`던전 앤 스톤의 세계에 온 것을 환영합니다. ${player.position}에서 여정을 시작합니다.`);
                 if (player.cb && player.cb.playMusic) player.cb.playMusic('bgm-city');
                 updateMenu(player); 
                 player.showStatus(); 
@@ -619,9 +870,11 @@ export function updateMenu(player) {
     const combatScreen = document.getElementById('combat-screen');
     const explorationScreen = document.getElementById('exploration-screen');
     const mainGameDiv = document.getElementById('main-game'); 
+    const gameContainer = document.getElementById('game-container');
 
     if (!menu || !combatScreen || !explorationScreen || !mainGameDiv) return;
     initPanelToggles();
+    gameContainer?.classList.remove('effect-flash', 'effect-shake', 'effect-boss-hit');
 
     // 1. BGM 재생
     if (player.cb && player.cb.playMusic) {
@@ -635,6 +888,8 @@ export function updateMenu(player) {
     // 2. 화면 초기화 (일단 모두 숨김)
     menu.classList.add('hidden');
     menu.classList.remove('city-map-menu');
+    menu.classList.remove('city-detail-menu');
+    menu.style.display = '';
     combatScreen.classList.add('hidden');
     explorationScreen.classList.add('hidden');
     mainGameDiv.style.display = 'grid';
@@ -643,61 +898,26 @@ export function updateMenu(player) {
     updateStatusBars(player); 
 
     // ---------------------------------------------------------
-    // Case A: 균열(Rift) - 기존 텍스트 방식
+    // Case A: 균열(Rift) - 탐험 맵 방식
     // ---------------------------------------------------------
     if (player.position === "Rift") {
-        menu.classList.remove('hidden'); 
-        menu.innerHTML = '';
-        // (균열 로직 - 기존 코드와 동일)
-        if (!player.currentRift || !player.currentRift.stages) {
-            logMessage("오류: 유효하지 않은 균열입니다.");
-            player.position = "라비기온 (7-13구역)"; 
-            updateMenu(player);
-            return;
-        }
-        const stage = player.currentRift.stages[player.currentRiftStage];
-        if (!stage) {
-            logMessage(`[${player.currentRift.name}] 균열 탐사가 완료되었습니다.`);
-            player.position = "라비기온 (7-13구역)"; 
+        explorationScreen.classList.remove('hidden');
+        if (!player.currentRift || !Array.isArray(player.currentRift.stages)) {
+            logMessage("오류: 유효하지 않은 균열 데이터입니다.");
+            player.position = "라비기온 (7-13구역)";
             player.currentRift = null;
             updateMenu(player);
             return;
         }
-        logMessage(`현재 위치: [${player.currentRift.name}] 균열 - ${stage.name}`);
-        addButton(menu, `균열 탐사: ${stage.name} 진입`, () => {
-            logMessage(`[${stage.name}]으로 진입합니다...`);
-            if (stage.event) {
-                logMessage(`[균열 이벤트] ${stage.event}`);
-            }
-            let monstersToSpawn = [];
-            if (stage.monsters) monstersToSpawn = monstersToSpawn.concat(stage.monsters);
-            if (stage.boss) {
-                if (Array.isArray(stage.boss)) monstersToSpawn = monstersToSpawn.concat(stage.boss);
-                else monstersToSpawn.push(stage.boss);
-            }
-            if (monstersToSpawn.length > 0) player.startCombat(monstersToSpawn);
-            else {
-                // 이벤트 전용 스테이지: 리스크/보상 부여
-                const gain = 30 + Math.floor(Math.random() * 71); // 30~100
-                player.magic_stones += gain;
-                if (Math.random() < 0.35) {
-                    const dmg = 15 + Math.floor(Math.random() * 26); // 15~40
-                    player.hp = Math.max(1, player.hp - dmg);
-                    logMessage(`균열의 난류로 ${dmg} 피해를 입었다.`);
-                }
-                logMessage(`균열의 핵 조각을 회수했다. (마석 +${gain})`);
-                player.currentRiftStage++;
-                updateMenu(player);
-                player.showStatus();
-            }
-        });
-        addButton(menu, "균열 포기 (도시로 귀환)", () => {
-            if (confirm("균열 탐사를 포기하시겠습니까?")) {
-                player.position = "라비기온 (7-13구역)";
-                player.currentRift = null;
-                updateMenu(player);
-            }
-        });
+
+        if (player.mapManager && typeof player.mapManager.enterRift === 'function') {
+            player.mapManager.enterRift(player.currentRift);
+        } else {
+            logMessage("오류: 균열 맵 매니저가 초기화되지 않았습니다.");
+            player.position = "라비기온 (7-13구역)";
+            player.currentRift = null;
+            updateMenu(player);
+        }
     }
 
     // ---------------------------------------------------------
@@ -722,7 +942,8 @@ export function updateMenu(player) {
     // ---------------------------------------------------------
     else {
         menu.classList.remove('hidden');
-        if (player.position === LABIGION_DISTRICT) {
+        const cityData = getCityData(player);
+        if (player.position === LABIGION_DISTRICT || cityData?.[player.position]) {
             applyCityMapLayout(true);
             renderCityMapMenu(player, menu);
         } else {
@@ -894,10 +1115,9 @@ function handlePortalTransition(player, nextLayer, layerName) {
     player.currentMapId = null;
     player.daysInLabyrinth = 1; 
     
-    const nextData = player.cb.gameData?.layers?.[nextLayer] || player.cb.gameData?.maps?.[nextLayer];
-    player.timeRemaining = nextData ? (nextData.time_limit || 168) : 168;
+    player.timeRemaining = 0;
 
-    logMessage(`${layerName}(으)로 진입합니다.`);
+    logMessage(`${layerName}(으)로 진입합니다. (체류 제한 없음)`);
     player.questManager?.checkProgress('REACH', `${nextLayer}층`, 1);
 
     // [중요] updateMenu를 호출하여 새로운 층의 맵이 표시되도록 함
@@ -921,6 +1141,8 @@ export function showRiftEntryModal(player, rift) {
         player.position = "Rift"; 
         player.currentRift = rift; 
         player.currentRiftStage = 0; 
+        player.pendingRiftStageIndex = null;
+        player.currentMapId = null;
         logMessage(`[${rift.name}] 균열 속으로 진입합니다...`);
         hideModal('#rift-choice-screen');
         updateMenu(player); 
@@ -943,6 +1165,695 @@ function escapeHtml(text) {
         .replaceAll("'", '&#039;');
 }
 
+function formatTraitGrant(node) {
+    const stats = Object.entries(node?.grants?.stats || {})
+        .slice(0, 4)
+        .map(([stat, value]) => `${stat} ${value > 0 ? "+" : ""}${value}`)
+        .join(", ");
+    const derived = Object.entries(node?.grants?.derived || {})
+        .filter(([, value]) => Number(value) > 0)
+        .slice(0, 3)
+        .map(([key, value]) => `${key} +${(Number(value) * 100).toFixed(1)}%`)
+        .join(", ");
+    if (stats && derived) return `${stats} | ${derived}`;
+    return stats || derived || "보너스 없음";
+}
+
+function formatSkillGrant(node) {
+    const componentKeyLabel = {
+        shape: "형식",
+        element: "속성",
+        baseDamage: "기반 피해",
+        baseCost: "기반 소모",
+        baseCooldown: "기반 쿨타임",
+        targets: "추가 대상",
+        powerRate: "위력 보정",
+        costRate: "소모 보정",
+        cooldownRate: "쿨타임 보정",
+        controlChance: "제어 확률",
+        critRate: "치명 보정",
+        lifeSteal: "흡수율",
+        shieldRate: "보호막 전환"
+    };
+    const percentKeys = new Set(["powerRate", "costRate", "cooldownRate", "controlChance", "critRate", "lifeSteal", "shieldRate"]);
+    const components = Object.entries(node?.grants?.component || {})
+        .slice(0, 6)
+        .map(([key, value]) => {
+            if (value === undefined || value === null) return null;
+            const label = componentKeyLabel[key] || key;
+            if (typeof value === "number") {
+                if (percentKeys.has(key)) return `${label} ${value >= 0 ? "+" : ""}${(value * 100).toFixed(1)}%`;
+                return `${label} ${value >= 0 ? "+" : ""}${value}`;
+            }
+            return `${label}: ${value}`;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+    const derived = Object.entries(node?.grants?.derived || {})
+        .slice(0, 5)
+        .map(([key, value]) => {
+            if (!Number.isFinite(Number(value))) return null;
+            return `${key} ${Number(value) >= 0 ? "+" : ""}${(Number(value) * 100).toFixed(1)}%`;
+        })
+        .filter(Boolean)
+        .join(", ");
+
+    if (components && derived) return `${components} | ${derived}`;
+    return components || derived || "보너스 없음";
+}
+
+export function showSkillGraph(player) {
+    const modal = document.getElementById('skill-graph-screen');
+    const boardHost = document.getElementById('skill-graph-board-wrap');
+    const detailHost = document.getElementById('skill-graph-detail');
+    const pointHost = document.getElementById('skill-graph-point');
+    const closeButton = document.getElementById('skill-graph-close');
+    if (!modal || !boardHost || !detailHost || !pointHost) return;
+
+    const payload = (typeof player.getSkillGraphPayload === "function")
+        ? player.getSkillGraphPayload()
+        : null;
+    if (!payload) {
+        logMessage("스킬 특성 그래프 데이터가 아직 준비되지 않았습니다.");
+        return;
+    }
+
+    let selectedId = payload.nodes.find((node) => node.canPurchase)?.id || payload.nodes.find((node) => !node.autoUnlock)?.id || payload.nodes[0]?.id;
+    let suppressNodeClick = false;
+    const workbench = {
+        coreId: null,
+        elementId: null,
+        behaviorIds: [],
+        utilityIds: [],
+        sigilId: null
+    };
+
+    let dragGhost = null;
+    let dragSourceId = null;
+
+    const removeDragGhost = () => {
+        if (!dragGhost) return;
+        dragGhost.remove();
+        dragGhost = null;
+    };
+
+    const createDragGhost = (label = "") => {
+        removeDragGhost();
+        const ghost = document.createElement('div');
+        ghost.className = 'skill-drag-ghost';
+        ghost.textContent = label || "노드";
+        document.body.appendChild(ghost);
+        dragGhost = ghost;
+        return ghost;
+    };
+
+    const getBranchNodes = (state, branch) => {
+        return (state.nodes || [])
+            .filter((node) => node.branch === branch && !node.autoUnlock && Number(node.rank || 0) > 0)
+            .sort((a, b) => Number(b.rank || 0) - Number(a.rank || 0));
+    };
+
+    const normalizeWorkbench = (state) => {
+        const branchMap = {
+            core: getBranchNodes(state, 'core'),
+            element: getBranchNodes(state, 'element'),
+            behavior: getBranchNodes(state, 'behavior'),
+            utility: getBranchNodes(state, 'utility'),
+            sigil: getBranchNodes(state, 'sigil')
+        };
+        const allowed = new Set(state.nodes.filter((node) => Number(node.rank || 0) > 0).map((node) => node.id));
+        const ensureSingle = (currentId, branchKey) => {
+            if (currentId && allowed.has(currentId) && branchMap[branchKey].some((node) => node.id === currentId)) return currentId;
+            return branchMap[branchKey][0]?.id || null;
+        };
+        const ensureMulti = (ids, branchKey) => {
+            const max = 2;
+            const uniq = [];
+            (Array.isArray(ids) ? ids : []).forEach((id) => {
+                if (!id || uniq.length >= max) return;
+                if (!allowed.has(id)) return;
+                if (!branchMap[branchKey].some((node) => node.id === id)) return;
+                if (uniq.includes(id)) return;
+                uniq.push(id);
+            });
+            for (const node of branchMap[branchKey]) {
+                if (uniq.length >= max) break;
+                if (!uniq.includes(node.id)) uniq.push(node.id);
+            }
+            return uniq.slice(0, max);
+        };
+
+        workbench.coreId = ensureSingle(workbench.coreId, 'core');
+        workbench.elementId = ensureSingle(workbench.elementId, 'element');
+        workbench.behaviorIds = ensureMulti(workbench.behaviorIds, 'behavior');
+        workbench.utilityIds = ensureMulti(workbench.utilityIds, 'utility');
+        workbench.sigilId = ensureSingle(workbench.sigilId, 'sigil');
+
+        return branchMap;
+    };
+
+    const getWorkbenchPayload = () => ({
+        coreId: workbench.coreId,
+        elementId: workbench.elementId,
+        behaviorIds: [...workbench.behaviorIds],
+        utilityIds: [...workbench.utilityIds],
+        sigilId: workbench.sigilId
+    });
+
+    const attachBoardPanHandlers = () => {
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        boardHost.onpointerdown = (event) => {
+            if (event.button !== 0) return;
+            const target = event.target instanceof Element ? event.target : null;
+            if (target?.closest('.trait-node')) return;
+            isPanning = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            startLeft = boardHost.scrollLeft;
+            startTop = boardHost.scrollTop;
+            boardHost.classList.add('is-panning');
+            try { boardHost.setPointerCapture(event.pointerId); } catch (_) {}
+        };
+        boardHost.onpointermove = (event) => {
+            if (!isPanning) return;
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) suppressNodeClick = true;
+            boardHost.scrollLeft = startLeft - dx;
+            boardHost.scrollTop = startTop - dy;
+        };
+        boardHost.onpointerup = (event) => {
+            if (!isPanning) return;
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+            try { boardHost.releasePointerCapture(event.pointerId); } catch (_) {}
+        };
+        boardHost.onpointercancel = () => {
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+        };
+        boardHost.onpointerleave = () => {
+            if (!isPanning) return;
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+        };
+    };
+
+    const render = (keepScroll = null) => {
+        const state = player.getSkillGraphPayload?.();
+        if (!state) return;
+        const nodeMap = new Map(state.nodes.map((node) => [node.id, node]));
+        if (!nodeMap.has(selectedId)) {
+            selectedId = state.nodes.find((node) => node.canPurchase)?.id || state.nodes[0]?.id;
+        }
+
+        const boardWidth = Math.max(1200, state.width || 1200);
+        const boardHeight = Math.max(780, state.height || 780);
+        const selectedForScroll = nodeMap.get(selectedId);
+        const defaultLeft = selectedForScroll ? Math.max(0, selectedForScroll.x - 280) : 0;
+        const defaultTop = selectedForScroll ? Math.max(0, selectedForScroll.y - 220) : 0;
+        const scrollLeft = keepScroll ? keepScroll.left : defaultLeft;
+        const scrollTop = keepScroll ? keepScroll.top : defaultTop;
+
+        boardHost.innerHTML = `
+            <div class="trait-graph-board" style="width:${boardWidth}px;height:${boardHeight}px;">
+                <svg class="trait-graph-links" viewBox="0 0 ${boardWidth} ${boardHeight}" preserveAspectRatio="none"></svg>
+                <div class="trait-graph-nodes"></div>
+            </div>
+        `;
+        const svg = boardHost.querySelector('.trait-graph-links');
+        const nodeLayer = boardHost.querySelector('.trait-graph-nodes');
+        if (!svg || !nodeLayer) return;
+        attachBoardPanHandlers();
+
+        state.edges.forEach((edge) => {
+            const from = nodeMap.get(edge.from);
+            const to = nodeMap.get(edge.to);
+            if (!from || !to) return;
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", String(from.x + 54));
+            line.setAttribute("y1", String(from.y + 26));
+            line.setAttribute("x2", String(to.x + 54));
+            line.setAttribute("y2", String(to.y + 26));
+            line.setAttribute("class", "trait-link");
+            svg.appendChild(line);
+        });
+
+        state.nodes.forEach((node) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            const statusClass = node.rank > 0
+                ? 'unlocked'
+                : (node.canPurchase ? 'available' : 'locked');
+            btn.className = `trait-node trait-tier-${node.tier} ${statusClass} ${node.id === selectedId ? 'selected' : ''}`;
+            btn.style.left = `${node.x}px`;
+            btn.style.top = `${node.y}px`;
+            btn.innerHTML = `
+                <span class="trait-node-name">${escapeHtml(node.name)}</span>
+                <span class="trait-node-rank">Lv ${node.rank}/${node.maxRank}</span>
+            `;
+            btn.addEventListener('click', () => {
+                if (suppressNodeClick) {
+                    suppressNodeClick = false;
+                    return;
+                }
+                selectedId = node.id;
+                render({ left: boardHost.scrollLeft, top: boardHost.scrollTop });
+            });
+            nodeLayer.appendChild(btn);
+        });
+
+        pointHost.innerHTML = `남은 포인트 <b>${state.points}</b> | 누적 투자 <b>${state.spent}</b> | 제작 스킬 <b>${(state.craftedSkills || []).length}</b>`;
+
+        const selected = nodeMap.get(selectedId);
+        if (!selected) return;
+        const reqText = (selected.requires || []).length > 0
+            ? selected.requires.map((req) => {
+                const reqNode = nodeMap.get(req.id);
+                const reqRank = player.getSkillNodeRank?.(req.id) || 0;
+                return `${reqNode?.name || req.id} (${reqRank}/${req.rank || 1})`;
+            }).join(', ')
+            : "없음";
+
+        const purchaseDisabled = !selected.canPurchase;
+        const nextCost = selected.nextCost || 0;
+        const reasonText = purchaseDisabled ? (selected.blockedReason || "투자 불가") : "투자 가능";
+        if (!workbench.coreId && selected.branch === "core" && Number(selected.rank || 0) > 0) {
+            workbench.coreId = selected.id;
+        }
+        if (!workbench.elementId && selected.branch === "element" && Number(selected.rank || 0) > 0) {
+            workbench.elementId = selected.id;
+        }
+        const branchMap = normalizeWorkbench(state);
+        const preview = typeof player.getSkillSynthesisPreview === "function"
+            ? player.getSkillSynthesisPreview(getWorkbenchPayload())
+            : null;
+        const previewText = preview
+            ? `미리보기: ${preview.skillName} | 피해 ${preview.damage} | MP ${preview.mpCost} | 쿨타임 ${preview.cooldown} | 대상 ${preview.targets}`
+            : "워크벤치 슬롯에 코어/속성/행동을 배치하면 결과가 즉시 계산됩니다.";
+
+        const renderPalette = (title, branch, nodes) => `
+            <section class="skill-workbench-group">
+                <h5>${escapeHtml(title)}</h5>
+                <div class="skill-workbench-palette">
+                    ${(nodes || []).map((node) => `
+                        <button
+                            type="button"
+                            draggable="true"
+                            class="skill-workbench-node"
+                            data-node-id="${escapeHtml(node.id)}"
+                            data-node-branch="${escapeHtml(branch)}"
+                            title="${escapeHtml(node.desc || '')}"
+                        >
+                            <b>${escapeHtml(node.name)}</b>
+                            <span>Lv ${node.rank}/${node.maxRank}</span>
+                        </button>
+                    `).join("") || `<p class="trait-node-reason">투자된 노드 없음</p>`}
+                </div>
+            </section>
+        `;
+
+        const slotDefs = [
+            { id: "core", label: "코어 슬롯", branch: "core", value: workbench.coreId },
+            { id: "element", label: "속성 슬롯", branch: "element", value: workbench.elementId },
+            { id: "behavior-1", label: "행동 슬롯 A", branch: "behavior", value: workbench.behaviorIds[0] || null },
+            { id: "behavior-2", label: "행동 슬롯 B", branch: "behavior", value: workbench.behaviorIds[1] || null },
+            { id: "utility-1", label: "지원 슬롯 A", branch: "utility", value: workbench.utilityIds[0] || null },
+            { id: "utility-2", label: "지원 슬롯 B", branch: "utility", value: workbench.utilityIds[1] || null },
+            { id: "sigil", label: "인장 슬롯", branch: "sigil", value: workbench.sigilId }
+        ];
+
+        detailHost.innerHTML = `
+            <h4>${escapeHtml(selected.name)}</h4>
+            <p class="trait-node-desc">${escapeHtml(selected.desc || "")}</p>
+            <div class="trait-node-meta">
+                <div><b>브랜치</b><span>${escapeHtml(selected.branch || "none")}</span></div>
+                <div><b>요구 레벨</b><span>${selected.unlockLevel || 1}</span></div>
+                <div><b>랭크</b><span>${selected.rank}/${selected.maxRank}</span></div>
+                <div><b>다음 비용</b><span>${nextCost}pt</span></div>
+            </div>
+            <p class="trait-node-require"><b>선행</b>: ${escapeHtml(reqText)}</p>
+            <p class="trait-node-grant"><b>효과</b>: ${escapeHtml(formatSkillGrant(selected))}</p>
+            <p class="trait-node-reason">${escapeHtml(reasonText)}</p>
+            <section class="skill-workbench-shell">
+                <h5>드래그 앤 드롭 워크벤치</h5>
+                <p class="trait-node-reason">노드를 슬롯으로 끌어 배치하세요. 유효 슬롯은 녹색, 거부 슬롯은 붉게 표시됩니다.</p>
+                <div class="skill-workbench-layout">
+                    <div class="skill-workbench-sources">
+                        ${renderPalette("코어", "core", branchMap.core)}
+                        ${renderPalette("속성", "element", branchMap.element)}
+                        ${renderPalette("행동", "behavior", branchMap.behavior)}
+                        ${renderPalette("지원", "utility", branchMap.utility)}
+                        ${renderPalette("인장", "sigil", branchMap.sigil)}
+                    </div>
+                    <div class="skill-workbench-slots">
+                        ${slotDefs.map((slot) => {
+                            const node = slot.value ? nodeMap.get(slot.value) : null;
+                            return `
+                                <div class="skill-workbench-slot" data-slot-id="${slot.id}" data-slot-branch="${slot.branch}">
+                                    <span class="slot-label">${escapeHtml(slot.label)}</span>
+                                    <span class="slot-value">${node ? escapeHtml(node.name) : "비어 있음"}</span>
+                                    <span class="slot-branch">${escapeHtml(slot.branch)}</span>
+                                </div>
+                            `;
+                        }).join("")}
+                    </div>
+                </div>
+            </section>
+            <p class="trait-node-reason">${escapeHtml(previewText)}</p>
+            <button id="skill-node-upgrade" class="trait-upgrade-btn" ${purchaseDisabled ? "disabled" : ""}>이 노드 투자</button>
+            <button id="skill-node-craft" class="trait-upgrade-btn" ${preview ? "" : "disabled"}>현재 조합으로 스킬 제작</button>
+        `;
+
+        const assignSlotValue = (slotId, nodeId) => {
+            if (!slotId || !nodeId) return;
+            if (slotId === "core") workbench.coreId = nodeId;
+            else if (slotId === "element") workbench.elementId = nodeId;
+            else if (slotId === "sigil") workbench.sigilId = nodeId;
+            else if (slotId === "behavior-1") {
+                const next = [nodeId, ...(workbench.behaviorIds || []).filter((id) => id && id !== nodeId)];
+                workbench.behaviorIds = next.slice(0, 2);
+            } else if (slotId === "behavior-2") {
+                const first = (workbench.behaviorIds || []).find((id) => id && id !== nodeId) || null;
+                workbench.behaviorIds = [first, nodeId].filter(Boolean).slice(0, 2);
+            } else if (slotId === "utility-1") {
+                const next = [nodeId, ...(workbench.utilityIds || []).filter((id) => id && id !== nodeId)];
+                workbench.utilityIds = next.slice(0, 2);
+            } else if (slotId === "utility-2") {
+                const first = (workbench.utilityIds || []).find((id) => id && id !== nodeId) || null;
+                workbench.utilityIds = [first, nodeId].filter(Boolean).slice(0, 2);
+            }
+        };
+
+        detailHost.querySelectorAll('.skill-workbench-node').forEach((nodeBtn) => {
+            const nodeId = nodeBtn.getAttribute('data-node-id');
+            const node = nodeMap.get(nodeId || "");
+            if (!nodeId || !node) return;
+
+            nodeBtn.addEventListener('dragstart', (event) => {
+                dragSourceId = nodeId;
+                nodeBtn.classList.add('is-dragging-source');
+                event.dataTransfer?.setData('text/plain', nodeId);
+                event.dataTransfer?.setData('application/x-skill-node', nodeId);
+                event.dataTransfer.effectAllowed = 'move';
+                const ghost = createDragGhost(node.name);
+                ghost.style.left = `${event.pageX + 14}px`;
+                ghost.style.top = `${event.pageY + 14}px`;
+                try {
+                    event.dataTransfer?.setDragImage(ghost, 16, 12);
+                } catch (_) {}
+            });
+            nodeBtn.addEventListener('drag', (event) => {
+                if (!dragGhost) return;
+                if (!Number.isFinite(event.pageX) || !Number.isFinite(event.pageY)) return;
+                dragGhost.style.left = `${event.pageX + 14}px`;
+                dragGhost.style.top = `${event.pageY + 14}px`;
+            });
+            nodeBtn.addEventListener('dragend', () => {
+                nodeBtn.classList.remove('is-dragging-source');
+                dragSourceId = null;
+                removeDragGhost();
+            });
+        });
+
+        detailHost.querySelectorAll('.skill-workbench-slot').forEach((slotEl) => {
+            const slotId = slotEl.getAttribute('data-slot-id') || '';
+            const slotBranch = slotEl.getAttribute('data-slot-branch') || '';
+            const clearClasses = () => {
+                slotEl.classList.remove('drop-valid', 'drop-invalid', 'drop-snap', 'drop-reject');
+            };
+            const getDraggedNodeId = (event) =>
+                event.dataTransfer?.getData('application/x-skill-node') ||
+                event.dataTransfer?.getData('text/plain') ||
+                dragSourceId ||
+                "";
+            const isValidDrop = (nodeId) => {
+                const node = nodeMap.get(nodeId || "");
+                if (!node) return false;
+                return String(node.branch || "") === slotBranch;
+            };
+
+            slotEl.addEventListener('dragover', (event) => {
+                event.preventDefault();
+                const nodeId = getDraggedNodeId(event);
+                clearClasses();
+                if (isValidDrop(nodeId)) {
+                    slotEl.classList.add('drop-valid', 'drop-snap');
+                    event.dataTransfer.dropEffect = 'move';
+                } else {
+                    slotEl.classList.add('drop-invalid');
+                    event.dataTransfer.dropEffect = 'none';
+                }
+            });
+            slotEl.addEventListener('dragleave', () => {
+                clearClasses();
+            });
+            slotEl.addEventListener('drop', (event) => {
+                event.preventDefault();
+                const nodeId = getDraggedNodeId(event);
+                clearClasses();
+                if (!isValidDrop(nodeId)) {
+                    slotEl.classList.add('drop-reject');
+                    setTimeout(() => slotEl.classList.remove('drop-reject'), 260);
+                    return;
+                }
+                assignSlotValue(slotId, nodeId);
+                const keep = { left: boardHost.scrollLeft, top: boardHost.scrollTop };
+                render(keep);
+            });
+            slotEl.addEventListener('click', () => {
+                if (slotId === "core") workbench.coreId = null;
+                else if (slotId === "element") workbench.elementId = null;
+                else if (slotId === "sigil") workbench.sigilId = null;
+                else if (slotId === "behavior-1") workbench.behaviorIds = [workbench.behaviorIds[1]].filter(Boolean);
+                else if (slotId === "behavior-2") workbench.behaviorIds = [workbench.behaviorIds[0]].filter(Boolean);
+                else if (slotId === "utility-1") workbench.utilityIds = [workbench.utilityIds[1]].filter(Boolean);
+                else if (slotId === "utility-2") workbench.utilityIds = [workbench.utilityIds[0]].filter(Boolean);
+                const keep = { left: boardHost.scrollLeft, top: boardHost.scrollTop };
+                render(keep);
+            });
+        });
+
+        const upgradeBtn = document.getElementById('skill-node-upgrade');
+        if (upgradeBtn && !purchaseDisabled) {
+            upgradeBtn.onclick = () => {
+                const keep = { left: boardHost.scrollLeft, top: boardHost.scrollTop };
+                player.purchaseSkillNode?.(selected.id);
+                player.showStatus?.();
+                render(keep);
+            };
+        }
+
+        const craftBtn = document.getElementById('skill-node-craft');
+        if (craftBtn && preview) {
+            craftBtn.onclick = () => {
+                const keep = { left: boardHost.scrollLeft, top: boardHost.scrollTop };
+                player.craftCustomSkill?.(getWorkbenchPayload());
+                player.showStatus?.();
+                render(keep);
+            };
+        }
+
+        boardHost.scrollLeft = scrollLeft;
+        boardHost.scrollTop = scrollTop;
+    };
+
+    showModal('#skill-graph-screen');
+    render();
+    if (closeButton) {
+        closeButton.onclick = () => {
+            dragSourceId = null;
+            removeDragGhost();
+            hideModal('#skill-graph-screen');
+        };
+    }
+}
+
+export function showTraitGraph(player) {
+    const modal = document.getElementById('trait-graph-screen');
+    const boardHost = document.getElementById('trait-graph-board-wrap');
+    const detailHost = document.getElementById('trait-graph-detail');
+    const pointHost = document.getElementById('trait-graph-point');
+    const closeButton = document.getElementById('trait-graph-close');
+    if (!modal || !boardHost || !detailHost || !pointHost) return;
+
+    const payload = (typeof player.getTraitGraphPayload === "function")
+        ? player.getTraitGraphPayload()
+        : null;
+    if (!payload) {
+        logMessage("특성 그래프 데이터가 아직 준비되지 않았습니다.");
+        return;
+    }
+
+    let selectedId = payload.nodes.find((node) => node.canPurchase)?.id || payload.nodes.find((node) => !node.autoUnlock)?.id || payload.nodes[0]?.id;
+    let suppressNodeClick = false;
+
+    const attachBoardPanHandlers = () => {
+        let isPanning = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+
+        boardHost.onpointerdown = (event) => {
+            if (event.button !== 0) return;
+            const target = event.target instanceof Element ? event.target : null;
+            if (target?.closest('.trait-node')) return;
+            isPanning = true;
+            startX = event.clientX;
+            startY = event.clientY;
+            startLeft = boardHost.scrollLeft;
+            startTop = boardHost.scrollTop;
+            boardHost.classList.add('is-panning');
+            try { boardHost.setPointerCapture(event.pointerId); } catch (_) {}
+        };
+        boardHost.onpointermove = (event) => {
+            if (!isPanning) return;
+            const dx = event.clientX - startX;
+            const dy = event.clientY - startY;
+            if (Math.abs(dx) > 3 || Math.abs(dy) > 3) suppressNodeClick = true;
+            boardHost.scrollLeft = startLeft - dx;
+            boardHost.scrollTop = startTop - dy;
+        };
+        boardHost.onpointerup = (event) => {
+            if (!isPanning) return;
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+            try { boardHost.releasePointerCapture(event.pointerId); } catch (_) {}
+        };
+        boardHost.onpointercancel = () => {
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+        };
+        boardHost.onpointerleave = () => {
+            if (!isPanning) return;
+            isPanning = false;
+            boardHost.classList.remove('is-panning');
+        };
+    };
+
+    const render = (keepScroll = null) => {
+        const state = player.getTraitGraphPayload();
+        if (!state) return;
+        const nodeMap = new Map(state.nodes.map((node) => [node.id, node]));
+        if (!nodeMap.has(selectedId)) {
+            selectedId = state.nodes.find((node) => node.canPurchase)?.id || state.nodes[0]?.id;
+        }
+
+        const boardWidth = Math.max(1200, state.width);
+        const boardHeight = Math.max(780, state.height);
+        const selectedForScroll = nodeMap.get(selectedId);
+        const defaultLeft = selectedForScroll ? Math.max(0, selectedForScroll.x - 280) : 0;
+        const defaultTop = selectedForScroll ? Math.max(0, selectedForScroll.y - 220) : 0;
+        const scrollLeft = keepScroll ? keepScroll.left : defaultLeft;
+        const scrollTop = keepScroll ? keepScroll.top : defaultTop;
+
+        boardHost.innerHTML = `
+            <div class="trait-graph-board" style="width:${boardWidth}px;height:${boardHeight}px;">
+                <svg class="trait-graph-links" viewBox="0 0 ${boardWidth} ${boardHeight}" preserveAspectRatio="none"></svg>
+                <div class="trait-graph-nodes"></div>
+            </div>
+        `;
+        const board = boardHost.querySelector('.trait-graph-board');
+        const svg = boardHost.querySelector('.trait-graph-links');
+        const nodeLayer = boardHost.querySelector('.trait-graph-nodes');
+        if (!board || !svg || !nodeLayer) return;
+        attachBoardPanHandlers();
+
+        state.edges.forEach((edge) => {
+            const from = nodeMap.get(edge.from);
+            const to = nodeMap.get(edge.to);
+            if (!from || !to) return;
+            const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            line.setAttribute("x1", String(from.x + 54));
+            line.setAttribute("y1", String(from.y + 26));
+            line.setAttribute("x2", String(to.x + 54));
+            line.setAttribute("y2", String(to.y + 26));
+            line.setAttribute("class", "trait-link");
+            svg.appendChild(line);
+        });
+
+        state.nodes.forEach((node) => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            const statusClass = node.rank > 0
+                ? 'unlocked'
+                : (node.canPurchase ? 'available' : 'locked');
+            btn.className = `trait-node trait-tier-${node.tier} ${statusClass} ${node.id === selectedId ? 'selected' : ''}`;
+            btn.style.left = `${node.x}px`;
+            btn.style.top = `${node.y}px`;
+            btn.innerHTML = `
+                <span class="trait-node-name">${escapeHtml(node.name)}</span>
+                <span class="trait-node-rank">Lv ${node.rank}/${node.maxRank}</span>
+            `;
+            btn.addEventListener('click', () => {
+                if (suppressNodeClick) {
+                    suppressNodeClick = false;
+                    return;
+                }
+                selectedId = node.id;
+                render({ left: boardHost.scrollLeft, top: boardHost.scrollTop });
+            });
+            nodeLayer.appendChild(btn);
+        });
+
+        pointHost.innerHTML = `남은 포인트 <b>${state.points}</b> | 누적 투자 <b>${state.spent}</b>`;
+
+        const selected = nodeMap.get(selectedId);
+        if (!selected) return;
+
+        const reqText = (selected.requires || []).length > 0
+            ? selected.requires.map((req) => {
+                const reqNode = nodeMap.get(req.id);
+                const reqRank = player.getTraitNodeRank?.(req.id) || 0;
+                return `${reqNode?.name || req.id} (${reqRank}/${req.rank || 1})`;
+            }).join(', ')
+            : "없음";
+        const purchaseDisabled = !selected.canPurchase;
+        const nextCost = selected.nextCost || 0;
+        const reasonText = purchaseDisabled ? (selected.blockedReason || "투자 불가") : "투자 가능";
+        detailHost.innerHTML = `
+            <h4>${escapeHtml(selected.name)}</h4>
+            <p class="trait-node-desc">${escapeHtml(selected.desc || "")}</p>
+            <div class="trait-node-meta">
+                <div><b>브랜치</b><span>${escapeHtml(selected.branch || "none")}</span></div>
+                <div><b>요구 레벨</b><span>${selected.unlockLevel || 1}</span></div>
+                <div><b>랭크</b><span>${selected.rank}/${selected.maxRank}</span></div>
+                <div><b>다음 비용</b><span>${nextCost}pt</span></div>
+            </div>
+            <p class="trait-node-require"><b>선행</b>: ${escapeHtml(reqText)}</p>
+            <p class="trait-node-grant"><b>효과</b>: ${escapeHtml(formatTraitGrant(selected))}</p>
+            <p class="trait-node-reason">${escapeHtml(reasonText)}</p>
+            <button id="trait-node-upgrade" class="trait-upgrade-btn" ${purchaseDisabled ? "disabled" : ""}>이 노드 투자</button>
+        `;
+
+        const upgradeBtn = document.getElementById('trait-node-upgrade');
+        if (upgradeBtn && !purchaseDisabled) {
+            upgradeBtn.onclick = () => {
+                const keep = { left: boardHost.scrollLeft, top: boardHost.scrollTop };
+                player.purchaseTraitNode?.(selected.id);
+                player.showStatus?.();
+                render(keep);
+            };
+        }
+
+        boardHost.scrollLeft = scrollLeft;
+        boardHost.scrollTop = scrollTop;
+    };
+
+    showModal('#trait-graph-screen');
+    render();
+    if (closeButton) {
+        closeButton.onclick = () => hideModal('#trait-graph-screen');
+    }
+}
+
 export function showCharacterStatus(player) {
     const modal = document.getElementById('character-status-screen');
     const content = document.getElementById('character-status-content');
@@ -960,6 +1871,13 @@ export function showCharacterStatus(player) {
 
     const equipment = player.equipment || {};
     const occupied = slotOrder.filter((slot) => Boolean(equipment[slot.key])).length;
+    const traitNodeCount = Object.values(player.traitRanks || {}).filter((v) => Number(v) > 0).length;
+    const traitPoints = Number(player.traitPoints || 0);
+    const traitSpent = Number(player.traitSpentPoints || 0);
+    const skillNodeCount = Object.values(player.skillRanks || {}).filter((v) => Number(v) > 0).length;
+    const skillPoints = Number(player.skillPoints || 0);
+    const skillSpent = Number(player.skillSpentPoints || 0);
+    const craftedCount = Array.isArray(player.craftedSkills) ? player.craftedSkills.length : 0;
     const slotBadges = slotOrder.map((slot) => {
         const item = equipment[slot.key];
         const isEquipped = Boolean(item);
@@ -1002,9 +1920,33 @@ export function showCharacterStatus(player) {
                 ${slotCards}
             </div>
         </div>
+        <section class="character-trait-summary">
+            <h4>특성 그래프</h4>
+            <p>남은 포인트 ${traitPoints} | 투자 ${traitSpent} | 활성 노드 ${traitNodeCount}</p>
+            <button id="open-trait-graph-btn" class="modal-close-btn trait-open-btn">특성 그래프 열기</button>
+        </section>
+        <section class="character-trait-summary">
+            <h4>스킬 특성 그래프</h4>
+            <p>남은 포인트 ${skillPoints} | 투자 ${skillSpent} | 활성 노드 ${skillNodeCount} | 제작 스킬 ${craftedCount}</p>
+            <button id="open-skill-graph-btn" class="modal-close-btn trait-open-btn">스킬 특성 그래프 열기</button>
+        </section>
     `;
 
     showModal('#character-status-screen');
+    const openTraitBtn = document.getElementById('open-trait-graph-btn');
+    const openSkillBtn = document.getElementById('open-skill-graph-btn');
+    if (openTraitBtn) {
+        openTraitBtn.onclick = () => {
+            hideModal('#character-status-screen');
+            showTraitGraph(player);
+        };
+    }
+    if (openSkillBtn) {
+        openSkillBtn.onclick = () => {
+            hideModal('#character-status-screen');
+            showSkillGraph(player);
+        };
+    }
     if (closeButton) {
         closeButton.onclick = () => hideModal('#character-status-screen');
     }
@@ -1012,9 +1954,26 @@ export function showCharacterStatus(player) {
 
 function normalizeEquipmentSlot(type) {
     if (!type) return null;
-    if (['검', '창', '횃불'].includes(type)) return '무기';
+    if (['검', '창', '횃불', '둔기', '활', '클로', '몽둥이', '장검', '철퇴'].includes(type)) return '무기';
     if (['방패', '시계'].includes(type)) return '부무기';
     if (['부츠'].includes(type)) return '각반';
+    const accessoryMap = {
+        목걸이: '목걸이',
+        반지: '반지',
+        팔찌: '팔찌',
+        '팔목 보호대': '팔찌',
+        귀걸이: '귀걸이',
+        벨트: '벨트',
+        부적: '부적',
+        토큰: '토큰',
+        마도구: '마도구',
+        가면: '가면',
+        원판: '부적',
+        함정: '마도구',
+        장비: '부적',
+        가방: '부적'
+    };
+    if (Object.prototype.hasOwnProperty.call(accessoryMap, type)) return accessoryMap[type];
     return type;
 }
 
@@ -1034,6 +1993,13 @@ function getInventoryItemMeta(player, itemName, count) {
     const isEquipment = Boolean(equipSlot && player.equipment?.hasOwnProperty(equipSlot));
     const isUsable = Boolean(functionalData && typeof functionalData.effect === 'function' && (!itemData.type || ['소모품', '설치품', '도구'].includes(itemData.type)));
     const isMaterial = Boolean(player.cb?.gameData?.materials?.[itemName]);
+    const identified = isEquipment
+        ? Boolean(player.isItemIdentified?.(itemName))
+        : true;
+    const mysteryState = isEquipment ? (player.getItemIdentityState?.(itemName) || null) : null;
+    const displayName = (isEquipment && !identified)
+        ? `미감정 ${equipSlot || "장비"}`
+        : itemName;
 
     let category = 'misc';
     if (isEquipment) category = 'equipment';
@@ -1049,7 +2015,10 @@ function getInventoryItemMeta(player, itemName, count) {
         isEquipment,
         isUsable,
         isMaterial,
-        category
+        category,
+        identified,
+        mysteryState,
+        displayName
     };
 }
 
@@ -1069,7 +2038,28 @@ export function showInventory(player) {
         .map(([itemName, count]) => getInventoryItemMeta(player, itemName, count))
         .sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 
-    const slotOrder = ['투구', '갑옷', '장갑', '각반', '무기', '부무기'];
+    const magicStoneCount = Math.max(0, Math.floor(Number(player.magic_stones || 0)));
+    if (magicStoneCount > 0) {
+        itemEntries.unshift({
+            name: '마석',
+            count: magicStoneCount,
+            itemData: {
+                type: '재화',
+                desc: '미궁에서 회수한 핵심 재화입니다. 환전소에서 스톤으로 교환할 수 있습니다.'
+            },
+            functionalData: null,
+            equipSlot: null,
+            isEquipment: false,
+            isUsable: false,
+            isMaterial: true,
+            category: 'material',
+            identified: true,
+            mysteryState: null,
+            displayName: '마석'
+        });
+    }
+
+    const slotOrder = ['투구', '갑옷', '장갑', '각반', '무기', '부무기', '목걸이', '반지', '팔찌', '귀걸이', '벨트', '부적', '토큰', '마도구', '가면'];
     const equippedCount = slotOrder.reduce((count, slot) => count + (player.equipment?.[slot] ? 1 : 0), 0);
 
     inventoryListDiv.innerHTML = `
@@ -1077,7 +2067,7 @@ export function showInventory(player) {
             <section class="inventory-equip-panel">
                 <div class="inv-panel-head">
                     <h3>장비 슬롯</h3>
-                    <span>${equippedCount}/6 장착</span>
+                    <span>${equippedCount}/${slotOrder.length} 장착</span>
                 </div>
                 <div class="inv-equip-grid" id="inv-equip-grid"></div>
             </section>
@@ -1119,12 +2109,18 @@ export function showInventory(player) {
         equipGrid.innerHTML = '';
         slotOrder.forEach((slot) => {
             const equippedItem = player.equipment?.[slot];
+            const shownName = equippedItem
+                ? (player.isItemIdentified?.(equippedItem) ? equippedItem : `미감정 ${slot}`)
+                : '비어 있음';
+            const cursedMark = equippedItem && player.itemIdentity?.cursedSlots?.[slot]?.itemName === equippedItem
+                ? " [저주]"
+                : "";
             const slotBtn = document.createElement('button');
             slotBtn.type = 'button';
             slotBtn.className = `inv-equip-slot ${equippedItem ? 'equipped' : 'empty'}`;
             slotBtn.innerHTML = `
                 <span class="slot-label">${slot}</span>
-                <span class="slot-item">${equippedItem ? escapeHtml(equippedItem) : '비어 있음'}</span>
+                <span class="slot-item">${escapeHtml(shownName)}${cursedMark}</span>
             `;
             if (equippedItem) {
                 slotBtn.onclick = () => {
@@ -1151,21 +2147,36 @@ export function showInventory(player) {
         }
 
         const equippedBySlot = meta.isEquipment ? player.equipment?.[meta.equipSlot] === meta.name : false;
-        const typeLabel = meta.itemData?.type || '미분류';
-        const tierLabel = meta.itemData?.tier ? `${meta.itemData.tier}티어` : '일반';
+        const typeLabel = meta.identified ? (meta.itemData?.type || '미분류') : '미감정';
+        const tierLabel = meta.identified ? (meta.itemData?.tier ? `${meta.itemData.tier}티어` : '일반') : '???';
+        const hasActiveEffect = Boolean(meta.functionalData && typeof meta.functionalData.effect === 'function');
         const canAct = meta.isUsable || meta.isEquipment;
         const actionLabel = meta.isEquipment
-            ? (equippedBySlot ? '장착 해제' : '장착')
+            ? (equippedBySlot ? '장착 해제' : (meta.identified ? '장착' : '감정 없이 장착(도박)'))
             : (meta.isUsable ? '사용' : '사용 불가');
+        const showActivateButton = Boolean(meta.isEquipment && equippedBySlot && hasActiveEffect);
+        const mysteryNote = (!meta.identified && meta.isEquipment)
+            ? `<p class="inv-detail-line"><b>감정 상태:</b> 미확인 (저주/축복 가능)</p>`
+            : '';
+        const curseNote = (meta.isEquipment && meta.equipSlot && player.itemIdentity?.cursedSlots?.[meta.equipSlot]?.itemName === meta.name)
+            ? `<p class="inv-detail-line"><b>저주 상태:</b> 장착 고정(해제 불가)</p>`
+            : '';
+        const descText = meta.identified
+            ? (meta.itemData?.desc || '설명이 없습니다.')
+            : '정체를 알 수 없는 장비다. 감정소나 감정 스크롤로 확인 가능.';
+        const titleText = meta.identified ? meta.name : meta.displayName;
 
         detailBody.innerHTML = `
-            <h4 class="inv-detail-title">${escapeHtml(meta.name)}</h4>
+            <h4 class="inv-detail-title">${escapeHtml(titleText)}</h4>
             <p class="inv-detail-line"><b>수량:</b> ${meta.count}개</p>
             <p class="inv-detail-line"><b>종류:</b> ${escapeHtml(typeLabel)}</p>
             <p class="inv-detail-line"><b>등급:</b> ${escapeHtml(tierLabel)}</p>
             ${meta.equipSlot ? `<p class="inv-detail-line"><b>장착 부위:</b> ${meta.equipSlot}</p>` : ''}
-            <p class="inv-detail-desc">${escapeHtml(meta.itemData?.desc || '설명이 없습니다.')}</p>
+            ${mysteryNote}
+            ${curseNote}
+            <p class="inv-detail-desc">${escapeHtml(descText)}</p>
             <button type="button" class="inv-detail-action" ${canAct ? '' : 'disabled'}>${actionLabel}</button>
+            ${showActivateButton ? `<button type="button" class="inv-detail-action inv-detail-activate">능력 발동</button>` : ''}
         `;
 
         const actionButton = detailBody.querySelector('.inv-detail-action');
@@ -1182,23 +2193,19 @@ export function showInventory(player) {
                 if (equippedBySlot) {
                     player.unequipItem(meta.equipSlot);
                 } else {
-                    const originalSlot = meta.itemData?.type || meta.equipSlot;
-                    if (originalSlot === meta.equipSlot) {
-                        player.equipItem(meta.name);
-                    } else {
-                        player.unequipItem(meta.equipSlot);
-                        player.equipment[meta.equipSlot] = meta.name;
-                        const index = player.inventory.indexOf(meta.name);
-                        if (index > -1) player.inventory.splice(index, 1);
-                        player.cb?.logMessage?.(`${meta.name}을(를) ${meta.equipSlot} 부위에 장착했다.`);
-                        player.cb?.playSfx?.('sfx-event');
-                        player.calculateStats?.();
-                        player.showStatus?.();
-                    }
+                    player.equipItem(meta.name);
                 }
                 showInventory(player);
             }
         };
+
+        const activateButton = detailBody.querySelector('.inv-detail-activate');
+        if (activateButton) {
+            activateButton.onclick = () => {
+                hideModal('#inventory-screen');
+                player.useItem(meta.name);
+            };
+        }
     }
 
     function renderItemGrid() {
@@ -1217,9 +2224,11 @@ export function showInventory(player) {
             const card = document.createElement('button');
             card.type = 'button';
             card.className = `inv-item-card ${meta.category} ${isSelected ? 'selected' : ''}`;
+            const nameText = meta.identified ? meta.name : meta.displayName;
+            const typeText = meta.identified ? (meta.itemData?.type || '미분류') : '미감정';
             card.innerHTML = `
-                <span class="inv-item-name">${escapeHtml(meta.name)}</span>
-                <span class="inv-item-meta">${escapeHtml(meta.itemData?.type || '미분류')}</span>
+                <span class="inv-item-name">${escapeHtml(nameText)}</span>
+                <span class="inv-item-meta">${escapeHtml(typeText)}</span>
                 <span class="inv-item-count">x${meta.count}</span>
             `;
             card.onclick = () => {
@@ -1260,8 +2269,9 @@ export function showEssences(player) {
     const backButton = essencesScreenDiv ? essencesScreenDiv.querySelector('.modal-close-btn') : null;
     if (!essencesScreenDiv) return;
 
-    let maxEssences = player.level * 3;
-    if (player.essences?.includes("디아몬트")) maxEssences -= 1;
+    const maxEssences = typeof player.getMaxEssenceCapacity === 'function'
+        ? player.getMaxEssenceCapacity(player.level)
+        : Math.max(1, (player.level * 3) + Math.floor(player.level / 5) - (player.essences?.includes("디아몬트") ? 1 : 0));
     essencesListDiv.innerHTML = `
         <div class="modal-grid-head">
             <h3>보유 정수</h3>

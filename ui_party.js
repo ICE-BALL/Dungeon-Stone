@@ -14,6 +14,15 @@ import {
     hideModal
 } from './ui_core.js';
 
+const PARTY_ROLE_EFFECTS = {
+    "탐색꾼": "은폐 흔적 탐지 + 희귀 드랍 추적 게이지 강화",
+    "인도자": "이능(길잡이 예지) 사용 시 차원 비석 최단경로 표식 제공",
+    "항해사": "6층 대해 해상 이동 가능 + 항로 안정화",
+    "마법사": "탐험 이능 MP 소모 절감 + 재사용 대기시간 단축",
+    "신관": "상태 이상 완화/정화 보조",
+    "전사": "근접 위압으로 돌발 위험 완화"
+};
+
 /**
  * 파티원 정보 모달 표시
  * @param {Player} player - 플레이어 객체
@@ -60,10 +69,16 @@ export function showParty(player) {
 
             const card = document.createElement('article');
             card.className = 'modal-info-card party-member-card';
+            const roleEffect = PARTY_ROLE_EFFECTS[member.trait] || "기본 전투 지원";
+            const memberRequiredExpRaw = typeof member.getRequiredExpForLevel === 'function'
+                ? member.getRequiredExpForLevel(member.level)
+                : Number(expToLevel[member.level]);
+            const memberRequiredExp = Number.isFinite(memberRequiredExpRaw) ? memberRequiredExpRaw : 'MAX';
             card.innerHTML = `
                 <h4>${member.name} (${member.grade}등급/${member.trait})</h4>
-                <p class="card-meta">레벨 ${member.level} | EXP ${member.exp}/${expToLevel[member.level] || 'MAX'}</p>
+                <p class="card-meta">레벨 ${member.level} | EXP ${member.exp}/${memberRequiredExp}</p>
                 <p>HP ${member.hp}/${member.maxHp} | MP ${member.mp}/${member.maxMp}</p>
+                <p>직업 효과: ${roleEffect}</p>
                 <p>스킬: ${(member.skills || []).map(s => s.name).join(', ') || '없음'}</p>
                 <p>정수: ${(member.essences || []).join(', ') || '없음'}</p>
                 <div class="mini-chip-row">${statSummary || '<span class="mini-chip">스탯 정보 없음</span>'}</div>
@@ -140,7 +155,9 @@ export function showEssencePartyChoice(player, essenceName, essenceDisplayName) 
     };
 
     // 4. 버튼 생성: 플레이어
-    const playerLimit = player.level * 3;
+    const playerLimit = typeof player.getMaxEssenceCapacity === 'function'
+        ? player.getMaxEssenceCapacity(player.level)
+        : Math.max(1, (player.level * 3) + Math.floor(player.level / 5) - (player.essences?.includes("디아몬트") ? 1 : 0));
     const playerBtn = addButton(list, `1. 내가 흡수한다 (현재: ${player.essences.length}/${playerLimit}개)`, () => {
         player.addEssence(essenceName);
         handleChoiceMade();
@@ -154,7 +171,9 @@ export function showEssencePartyChoice(player, essenceName, essenceDisplayName) 
     /* AUTO-FIX: added optional chaining ?. for safety (Rule B.5) */
     player.party?.forEach((member, index) => {
         if (member && member.hp > 0) { // 살아있는 동료만
-            const memberLimit = member.level * 3;
+            const memberLimit = typeof member.getMaxEssenceCapacity === 'function'
+                ? member.getMaxEssenceCapacity(member.level)
+                : Math.max(1, (member.level * 3) + Math.floor(member.level / 5) - (member.essences?.includes("디아몬트") ? 1 : 0));
             const memberBtn = addButton(list, `${index + 2}. ${member.name}에게 주기 (현재: ${member.essences.length}/${memberLimit}개)`, () => {
                 member.addEssence(essenceName); // NPC의 addEssence 호출
                 handleChoiceMade();

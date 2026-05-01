@@ -9,6 +9,46 @@ import {
     hideModal,
     updateStatusBars
 } from './ui_core.js';
+import { helpers } from './class_helpers.js';
+
+let selectedCombatTargetIndex = null;
+
+function getLivingMonsterIndexes(player) {
+    if (!Array.isArray(player?.currentMonster)) return [];
+    const indexes = [];
+    player.currentMonster.forEach((monster, index) => {
+        if (monster && monster.hp > 0) indexes.push(index);
+    });
+    return indexes;
+}
+
+function normalizeSelectedTarget(player) {
+    const living = getLivingMonsterIndexes(player);
+    if (living.length === 0) {
+        selectedCombatTargetIndex = null;
+        return null;
+    }
+    if (!living.includes(selectedCombatTargetIndex)) {
+        selectedCombatTargetIndex = living[0];
+    }
+    return selectedCombatTargetIndex;
+}
+
+function bindMonsterCardEvents(player, statusDiv) {
+    if (!statusDiv) return;
+    statusDiv.querySelectorAll('.combat-monster-card[data-target-index]').forEach((card) => {
+        card.addEventListener('click', () => {
+            if (!player?.inCombat || !player?.playerTurn) return;
+            const idx = Number(card.dataset.targetIndex);
+            if (!Number.isInteger(idx)) return;
+            const target = player.currentMonster?.[idx];
+            if (!target || target.hp <= 0) return;
+            selectedCombatTargetIndex = idx;
+            updateCombatStatus(player);
+            updateCombatMenu(player);
+        });
+    });
+}
 
 
 /**
@@ -27,75 +67,83 @@ export function updateCombatStatus(player) {
      // 전투 종료 시
      if (!player.currentMonster || !Array.isArray(player.currentMonster) || player.currentMonster.every(m => !m || m.hp <= 0)) {
          statusDiv.innerHTML = "<h4>전투 종료</h4>";
+         selectedCombatTargetIndex = null;
          return;
      }
 
     let combatStatusHtml = "";
+    const selectedTarget = normalizeSelectedTarget(player);
 
     // 보스(2등급 이하) 전용 UI
     const boss = player.currentMonster.find(m => m && m.hp > 0 && m.grade <= 2);
     if (boss) {
+        const bossIndex = player.currentMonster.findIndex((m) => m === boss);
         const bossPhase = boss.bossPhase || 1;
         combatStatusHtml += `
-            <div class="boss-status-container">
+            <div class="boss-status-container combat-monster-card ${bossIndex === selectedTarget ? 'selected' : ''} ${player.playerTurn ? 'clickable' : ''}" data-target-index="${bossIndex}">
                 <h4>${boss.name} (Phase ${bossPhase})</h4>
                 <progress id="boss-hp-bar" max="${boss.maxHp}" value="${boss.hp}"></progress>
                 <span id="boss-hp-value">${boss.hp}/${boss.maxHp}</span>
+                <p class="monster-card-affinity">${helpers.describeCombatAffinity(boss)}</p>
                  ${boss.debuffs?.length > 0 ? `<span style='color: orange; display: block;'>[${boss.debuffs.join(',')}]</span>` : ''}
             </div>`;
     }
 
-    // 몬스터 상태 표시 (HP 바 포함)
-    combatStatusHtml += "<h4>몬스터</h4><ul class='monster-status-list'>";
+    // 몬스터 카드 그리드
+    combatStatusHtml += "<h4>몬스터 선택</h4><div class='combat-monster-grid'>";
     player.currentMonster.forEach((m, i) => {
-        if (!m) return; 
-        
-        // 보스는 이미 표시했으므로 리스트에서 제외
+        if (!m) return;
         if (m === boss) return;
-
         const maxHp = m.maxHp ?? m.hp ?? 1;
-        const currentHp = m.hp ?? 0;
-        
-        if (currentHp <= 0) {
-             combatStatusHtml += `<li style="text-decoration: line-through; color: grey;">${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (처치됨)</li>`;
-        } 
-        else { 
-            combatStatusHtml += `
-                <li>
-                    ${i}: <b>${m.name || '알 수 없는 몬스터'}</b> (${m.grade || '?'}등급)
+        const currentHp = Math.max(0, m.hp ?? 0);
+        const hpRatio = Math.max(0, Math.min(100, Math.floor((currentHp / Math.max(1, maxHp)) * 100)));
+        const dead = currentHp <= 0;
+        const selectedClass = !dead && i === selectedTarget ? "selected" : "";
+        const clickableClass = (!dead && player.playerTurn) ? "clickable" : "";
+
+        combatStatusHtml += `
+            <article class="combat-monster-card ${dead ? 'dead' : ''} ${selectedClass} ${clickableClass}" data-target-index="${i}">
+                <div class="monster-card-head">
+                    <span class="monster-card-name">${m.name || '알 수 없는 몬스터'}</span>
+                    <span class="monster-card-grade">${m.grade || '?'}등급</span>
+                </div>
+                <div class="monster-card-hp-wrap">
                     <progress class="monster-hp-bar" max="${maxHp}" value="${currentHp}"></progress>
-                    <span class="monster-hp-value">${currentHp}/${maxHp}</span>
-                    ${m.debuffs?.length > 0 ? `<span style='color: orange;'>[${m.debuffs.join(',')}]</span>` : ''}
-                </li>`;
-        }
+                    <span class="monster-hp-value">${currentHp}/${maxHp} (${hpRatio}%)</span>
+                </div>
+                <p class="monster-card-affinity">${helpers.describeCombatAffinity(m)}</p>
+                ${m.debuffs?.length > 0 ? `<p class="monster-card-debuff">[${m.debuffs.join(', ')}]</p>` : `<p class="monster-card-debuff empty">상태이상 없음</p>`}
+            </article>
+        `;
     });
-    if (player.currentMonster.filter(m => m !== boss).length === 0) {
-        combatStatusHtml += "<li>(남은 몬스터 없음)</li>";
-    }
-    combatStatusHtml += "</ul>";
+    combatStatusHtml += "</div>";
 
 
     // 파티원 상태 표시 (HP 바 포함)
     if (player.party?.length > 0) {
-        combatStatusHtml += "<h4 style='margin-top: 15px;'>파티원</h4><ul class='party-status-list'>";
+        combatStatusHtml += "<h4 style='margin-top: 15px;'>파티원</h4><div class='combat-party-grid'>";
         player.party.forEach((p, i) => {
             if (p) {
                 const maxHp = p.maxHp ?? 1;
                 const currentHp = p.hp ?? 0;
                 // (v6) 피격 효과를 위해 파티원 HP 바에 고유 ID 추가
                 combatStatusHtml += `
-                    <li>
-                        <b>${p.name || '동료'}</b> (${p.grade}등급/${p.trait})
+                    <article class="combat-party-card ${currentHp <= 0 ? 'dead' : ''}">
+                        <div class="party-card-head">
+                            <b>${p.name || '동료'}</b>
+                            <span>${p.grade}등급/${p.trait}</span>
+                        </div>
                         <progress id="party-hp-${i}" class="party-hp-bar" max="${maxHp}" value="${currentHp}"></progress>
                         <span class="party-hp-value">${currentHp}/${maxHp}</span>
                          ${p.hp <= 0 ? "<span style='color: red;'> (쓰러짐)</span>" : ""}
-                    </li>`;
+                    </article>`;
             }
         });
-        combatStatusHtml += "</ul>";
+        combatStatusHtml += "</div>";
     }
 
     statusDiv.innerHTML = combatStatusHtml;
+    bindMonsterCardEvents(player, statusDiv);
 }
 
 
@@ -117,7 +165,6 @@ export function updateCombatMenu(player) {
 
     // [수정] 전투 시작 시: 텍스트 메뉴 및 탐험 맵 숨기기
     menu.classList.add('hidden');
-    menu.style.display = 'none';
     
     if(explorationScreen) {
         explorationScreen.classList.add('hidden'); // 맵 숨김 (전투 몰입)
@@ -131,25 +178,30 @@ export function updateCombatMenu(player) {
 
     if (player.playerTurn && player.inCombat) {
         combatMenu.innerHTML = '<h4>플레이어 턴</h4>';
-        const attackCost = 1; 
+        const attackCost = 1;
+        const targetIndex = normalizeSelectedTarget(player);
+        const target = Number.isInteger(targetIndex) ? player.currentMonster?.[targetIndex] : null;
 
-        // 공격 대상 선택 버튼 생성
-        if (player.currentMonster?.length > 0) {
-            const livingMonsters = player.currentMonster.filter(m => m && m.hp > 0);
-            if (livingMonsters.length > 1) {
-                livingMonsters.forEach((monster, index) => {
-                     const originalIndex = player.currentMonster.findIndex(m => m === monster);
-                     addButton(combatMenu, `공격: ${monster.name} #${originalIndex} (기력 ${attackCost})`, () => player.playerAttack(originalIndex));
-                });
-            } else if (livingMonsters.length === 1) {
-                 const originalIndex = player.currentMonster.findIndex(m => m === livingMonsters[0]);
-                addButton(combatMenu, `공격: ${livingMonsters[0].name} (기력 ${attackCost})`, () => player.playerAttack(originalIndex));
-            } else {
-                 combatMenu.innerHTML += '<p>공격할 대상이 없습니다.</p>';
+        const actionHint = document.createElement('p');
+        actionHint.className = 'combat-action-hint';
+        actionHint.textContent = target
+            ? `선택 대상: ${target.name} (#${targetIndex})`
+            : '상단 몬스터 카드를 클릭해 대상을 선택하세요.';
+        combatMenu.appendChild(actionHint);
+
+        const attackBtn = addButton(
+            combatMenu,
+            target ? `기본 공격 (${target.name}) - 기력 ${attackCost}` : "기본 공격 (대상 선택 필요)",
+            () => {
+                if (!Number.isInteger(targetIndex)) {
+                    logMessage("먼저 공격할 몬스터를 선택하세요.");
+                    return;
+                }
+                player.playerAttack(targetIndex);
             }
-        } else {
-            combatMenu.innerHTML += '<p>공격할 대상이 없습니다.</p>';
-        }
+        );
+        attackBtn.classList.add('combat-primary-action');
+        attackBtn.disabled = !target;
 
         // 종족 스킬 버튼
         const racialSkill = player.cb?.gameData?.races?.[player.race]?.racial_skill;
@@ -376,4 +428,111 @@ export function showInventoryInCombat(player) {
     backButton.onclick = () => {
         hideModal('#inventory-screen');
     };
+}
+
+/**
+ * [신규] 해체 화면 표시 (전투 승리 후)
+ * @param {Player} player - 플레이어 객체
+ * @param {Array} defeatedMonsters - 처치된 몬스터 배열
+ * @param {object} options - 콜백 옵션
+ */
+export function showButcheryScreen(player, defeatedMonsters = [], options = {}) {
+    const butcheryScreen = document.getElementById('butchery-screen');
+    const  butcheryDesc = document.getElementById('butchery-desc');
+    const butcheryResults = document.getElementById('butchery-results');
+    const butcheryActions = document.getElementById('butchery-actions');
+    const closeBtn = document.getElementById('butchery-close');
+    const onComplete = typeof options?.onComplete === 'function' ? options.onComplete : null;
+    let processedCount = 0;
+
+    if (!butcheryScreen || !butcheryResults) {
+        console.error("Butchery screen elements not found!");
+        onComplete?.({ processedCount: 0, totalCount: 0 });
+        return;
+    }
+
+    butcheryResults.innerHTML = '';
+    butcheryActions.innerHTML = '';
+
+    const validMonsters = Array.isArray(defeatedMonsters) 
+        ? defeatedMonsters.filter(m => m && m.name)
+        : [];
+
+    if (validMonsters.length === 0) {
+        butcheryDesc.textContent = "처치할 몬스터가 없습니다.";
+        closeBtn.textContent = "닫기";
+        closeBtn.onclick = () => {
+            hideModal('#butchery-screen');
+            onComplete?.({ processedCount: 0, totalCount: 0 });
+        };
+        showModal('#butchery-screen');
+        return;
+    }
+
+    butcheryDesc.textContent = `${validMonsters.length}개의 몬스터를 해체할 수 있습니다.`;
+
+    // 각 몬스터별 해체 시도 버튼
+    validMonsters.forEach((monster, idx) => {
+        const card = document.createElement('div');
+        card.className = 'ability-card';
+        card.style.padding = '10px';
+        card.style.marginBottom = '10px';
+        card.style.border = '1px solid var(--color-border)';
+        card.style.borderRadius = '4px';
+
+        const monsterName = monster.name || `몬스터 ${idx + 1}`;
+        const grade = monster.grade || '?';
+        const successRate = player.butcherySystem 
+            ? Math.floor(player.butcherySystem.calculateSuccessRate(monster) * 100)
+            : 50;
+
+        card.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>${monsterName}</strong> | ${grade}등급<br/>
+                    성공률: ${successRate}%
+                </div>
+                <button class="d-btn action" id="butcher-btn-${idx}">해체</button>
+            </div>
+        `;
+        butcheryResults.appendChild(card);
+
+        const btn = document.getElementById(`butcher-btn-${idx}`);
+        btn.onclick = () => {
+            if (!player.butcherySystem) {
+                player.cb?.logMessage?.("[해체] 해체 기능이 없습니다.");
+                return;
+            }
+
+            const result = player.butcherySystem.attemptButchery(monster);
+            
+            // 결과 표시
+            let resultMsg = "";
+            if (result.destroyed) {
+                resultMsg = `[대실패!] 마석이 파괴되고 도구가 손상되었습니다. HP -15`;
+            } else if (result.cracked) {
+                resultMsg = `[실패] 금 간 마석만 추출했습니다. (${result.magicStones}개)`;
+            } else if (result.pristineMagicStone) {
+                resultMsg = `[대성공!] 온전한 마석 + 재료 + 고기 모두 획득!`;
+            } else {
+                resultMsg = `[성공] 마석 ${result.magicStones}개 + 고기를 추출했습니다.`;
+            }
+
+            player.cb?.logMessage?.(resultMsg);
+            player.showStatus?.();
+            
+            // 버튼 비활성화
+            btn.disabled = true;
+            btn.style.opacity = '0.5';
+            processedCount += 1;
+        };
+    });
+
+    closeBtn.textContent = "완료";
+    closeBtn.onclick = () => {
+        hideModal('#butchery-screen');
+        onComplete?.({ processedCount, totalCount: validMonsters.length });
+    };
+
+    showModal('#butchery-screen');
 }

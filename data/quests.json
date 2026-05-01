@@ -202,5 +202,245 @@
       "level": 1
     },
     "endCondition": null
+  },
+  "RACE_HUMAN_001": {
+    "id": "RACE_HUMAN_001",
+    "title": "제국 수련기사단 입문",
+    "description": "왕궁 기사단장 에르민에게 서약을 올리고 1층 실전 기록을 남기십시오.",
+    "type": "RACE",
+    "giver": "왕궁 기사단장 에르민",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_HUMAN_002",
+    "objectives": [
+      { "type": "TALK", "target": "왕궁 기사단장 에르민", "requiredCount": 1, "currentCount": 0 },
+      { "type": "REACH", "target": "1층", "requiredCount": 1, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 120,
+      "gold": 700,
+      "items": [{ "item": "포션", "count": 2 }],
+      "reputation": 5
+    },
+    "startCondition": { "level": 1, "race": "human" },
+    "endCondition": { "npc": "왕궁 기사단장 에르민" }
+  },
+  "RACE_HUMAN_002": {
+    "id": "RACE_HUMAN_002",
+    "title": "황도 방위 실습",
+    "description": "고블린 위협을 줄이고 길드 접수원에게 실습 보고를 완료하십시오.",
+    "type": "RACE",
+    "giver": "왕궁 기사단장 에르민",
+    "objectives": [
+      { "type": "KILL", "target": "고블린", "requiredCount": 12, "currentCount": 0 },
+      { "type": "TALK", "target": "탐험가 길드 접수원", "requiredCount": 1, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 240,
+      "gold": 1600,
+      "items": [{ "item": "상급 포션", "count": 1 }],
+      "reputation": 8
+    },
+    "startCondition": { "level": 1, "race": "human", "completedQuest": "RACE_HUMAN_001" },
+    "endCondition": { "npc": "탐험가 길드 접수원" }
+  },
+  "RACE_DWARF_001": {
+    "id": "RACE_DWARF_001",
+    "title": "강철 공방의 시금석",
+    "description": "대장 마이스터 브론에게 공방 보고를 올리고 강철 조각을 수급하십시오.",
+    "type": "RACE",
+    "giver": "대장 마이스터 브론",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_DWARF_002",
+    "objectives": [
+      { "type": "TALK", "target": "대장 마이스터 브론", "requiredCount": 1, "currentCount": 0 },
+      { "type": "COLLECT", "target": "강철 조각", "requiredCount": 6, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 130,
+      "gold": 900,
+      "items": [{ "item": "붕대", "count": 2 }],
+      "reputation": 5
+    },
+    "startCondition": { "level": 1, "race": "dwarf" },
+    "endCondition": { "npc": "대장 마이스터 브론" }
+  },
+  "RACE_DWARF_002": {
+    "id": "RACE_DWARF_002",
+    "title": "합금 장인 예비시험",
+    "description": "라이티늄을 확보하고 대장장이에게 공정 승인을 받으십시오.",
+    "type": "RACE",
+    "giver": "대장 마이스터 브론",
+    "objectives": [
+      { "type": "COLLECT", "target": "라이티늄", "requiredCount": 3, "currentCount": 0 },
+      { "type": "TALK", "target": "대장장이", "requiredCount": 1, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 260,
+      "gold": 1900,
+      "items": [{ "item": "강철 방패", "count": 1 }],
+      "reputation": 9
+    },
+    "startCondition": { "level": 1, "race": "dwarf", "completedQuest": "RACE_DWARF_001" },
+    "endCondition": { "npc": "대장장이" }
+  },
+  "RACE_BARBARIAN_001": {
+    "id": "RACE_BARBARIAN_001",
+    "title": "혼령각인 입문 의식",
+    "description": "바바리안 주술사 카르툼에게 의식을 받고 첫 사냥 기록을 올리십시오.",
+    "type": "RACE",
+    "giver": "바바리안 주술사 카르툼",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_BARBARIAN_002",
+    "objectives": [
+      { "type": "TALK", "target": "바바리안 주술사 카르툼", "requiredCount": 1, "currentCount": 0 },
+      { "type": "KILL", "target": "고블린", "requiredCount": 8, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 140,
+      "gold": 850,
+      "items": [{ "item": "건조 식량", "count": 2 }],
+      "reputation": 5
+    },
+    "startCondition": { "level": 1, "race": "barbarian" },
+    "endCondition": { "npc": "바바리안 주술사 카르툼" }
+  },
+  "RACE_BARBARIAN_002": {
+    "id": "RACE_BARBARIAN_002",
+    "title": "망자 심장 포획",
+    "description": "오크 전사를 사냥하고 마력결정체를 주술단에 헌납하십시오.",
+    "type": "RACE",
+    "giver": "바바리안 주술사 카르툼",
+    "objectives": [
+      { "type": "KILL", "target": "오크 전사", "requiredCount": 8, "currentCount": 0 },
+      { "type": "COLLECT", "target": "마력결정체", "requiredCount": 3, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 300,
+      "gold": 2100,
+      "items": [{ "item": "상급 포션", "count": 1 }],
+      "reputation": 10
+    },
+    "startCondition": { "level": 1, "race": "barbarian", "completedQuest": "RACE_BARBARIAN_001" },
+    "endCondition": { "npc": "바바리안 주술사 카르툼" }
+  },
+  "RACE_BEASTKIN_001": {
+    "id": "RACE_BEASTKIN_001",
+    "title": "영혼수 추적 교본",
+    "description": "영혼수 추적자 리오나의 지침을 듣고 2층 정찰 기록을 남기십시오.",
+    "type": "RACE",
+    "giver": "영혼수 추적자 리오나",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_BEASTKIN_002",
+    "objectives": [
+      { "type": "TALK", "target": "영혼수 추적자 리오나", "requiredCount": 1, "currentCount": 0 },
+      { "type": "REACH", "target": "2층", "requiredCount": 1, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 140,
+      "gold": 900,
+      "items": [{ "item": "포션", "count": 2 }],
+      "reputation": 5
+    },
+    "startCondition": { "level": 1, "race": "beastkin" },
+    "endCondition": { "npc": "영혼수 추적자 리오나" }
+  },
+  "RACE_BEASTKIN_002": {
+    "id": "RACE_BEASTKIN_002",
+    "title": "군집 사냥 시험",
+    "description": "칼날늑대의 사냥꾼 무리를 추적하고 전리품을 회수하십시오.",
+    "type": "RACE",
+    "giver": "영혼수 추적자 리오나",
+    "objectives": [
+      { "type": "KILL", "target": "칼날늑대", "requiredCount": 10, "currentCount": 0 },
+      { "type": "COLLECT", "target": "늑대 가죽", "requiredCount": 3, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 280,
+      "gold": 1900,
+      "items": [{ "item": "붕대", "count": 3 }],
+      "reputation": 9
+    },
+    "startCondition": { "level": 1, "race": "beastkin", "completedQuest": "RACE_BEASTKIN_001" },
+    "endCondition": { "npc": "영혼수 추적자 리오나" }
+  },
+  "RACE_FAIRY_001": {
+    "id": "RACE_FAIRY_001",
+    "title": "별빛 군락 관측 임무",
+    "description": "별무리 관측자 에이라와 공명하고 마력결정체를 모아 별빛 지표를 완성하십시오.",
+    "type": "RACE",
+    "giver": "별무리 관측자 에이라",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_FAIRY_002",
+    "objectives": [
+      { "type": "TALK", "target": "별무리 관측자 에이라", "requiredCount": 1, "currentCount": 0 },
+      { "type": "COLLECT", "target": "마력결정체", "requiredCount": 4, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 150,
+      "gold": 1000,
+      "items": [{ "item": "마나 포션", "count": 2 }],
+      "reputation": 6
+    },
+    "startCondition": { "level": 1, "race": "fairy" },
+    "endCondition": { "npc": "별무리 관측자 에이라" }
+  },
+  "RACE_FAIRY_002": {
+    "id": "RACE_FAIRY_002",
+    "title": "극광 항로 개척",
+    "description": "3층까지 항로를 확보하고 페어리 개체를 진정시켜 공명 데이터를 제출하십시오.",
+    "type": "RACE",
+    "giver": "별무리 관측자 에이라",
+    "objectives": [
+      { "type": "REACH", "target": "3층", "requiredCount": 1, "currentCount": 0 },
+      { "type": "KILL", "target": "페어리", "requiredCount": 6, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 300,
+      "gold": 2100,
+      "items": [{ "item": "상급 포션", "count": 1 }],
+      "reputation": 10
+    },
+    "startCondition": { "level": 1, "race": "fairy", "completedQuest": "RACE_FAIRY_001" },
+    "endCondition": { "npc": "별무리 관측자 에이라" }
+  },
+  "RACE_DRAGONKIN_001": {
+    "id": "RACE_DRAGONKIN_001",
+    "title": "용혈 서약식",
+    "description": "용혈 사제 발티르에게 서약을 마치고 2층 실전 기록을 확보하십시오.",
+    "type": "RACE",
+    "giver": "용혈 사제 발티르",
+    "autoAcceptOnRaceSelect": true,
+    "nextQuestId": "RACE_DRAGONKIN_002",
+    "objectives": [
+      { "type": "TALK", "target": "용혈 사제 발티르", "requiredCount": 1, "currentCount": 0 },
+      { "type": "REACH", "target": "2층", "requiredCount": 1, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 160,
+      "gold": 1100,
+      "items": [{ "item": "포션", "count": 2 }],
+      "reputation": 6
+    },
+    "startCondition": { "level": 1, "race": "dragonkin" },
+    "endCondition": { "npc": "용혈 사제 발티르" }
+  },
+  "RACE_DRAGONKIN_002": {
+    "id": "RACE_DRAGONKIN_002",
+    "title": "용언 지배력 검증",
+    "description": "스톤골렘을 제압하고 마력결정체를 모아 용혈 사원에 제출하십시오.",
+    "type": "RACE",
+    "giver": "용혈 사제 발티르",
+    "objectives": [
+      { "type": "KILL", "target": "스톤골렘", "requiredCount": 5, "currentCount": 0 },
+      { "type": "COLLECT", "target": "마력결정체", "requiredCount": 4, "currentCount": 0 }
+    ],
+    "rewards": {
+      "exp": 320,
+      "gold": 2400,
+      "items": [{ "item": "상급 포션", "count": 2 }],
+      "reputation": 11
+    },
+    "startCondition": { "level": 1, "race": "dragonkin", "completedQuest": "RACE_DRAGONKIN_001" },
+    "endCondition": { "npc": "용혈 사제 발티르" }
   }
 }

@@ -15,6 +15,31 @@ export class QuestManager {
         this.completedQuests = []; // 완료한 퀘스트 ID 목록
     }
 
+    normalizeRaceId(raceId) {
+        if (typeof this.player?.normalizeRaceId === "function") {
+            return this.player.normalizeRaceId(raceId);
+        }
+        const raw = String(raceId || "").trim().toLowerCase();
+        const aliases = {
+            human: "human",
+            elf: "fairy",
+            fairy: "fairy",
+            dwarf: "dwarf",
+            barbarian: "barbarian",
+            beastman: "beastkin",
+            beastkin: "beastkin",
+            dragonkin: "dragonkin",
+            인간: "human",
+            엘프: "fairy",
+            요정: "fairy",
+            드워프: "dwarf",
+            바바리안: "barbarian",
+            수인: "beastkin",
+            용인족: "dragonkin"
+        };
+        return aliases[raw] || raw;
+    }
+
     /**
      * 퀘스트 ID로 퀘스트 데이터를 가져옵니다.
      * @param {string} questId - 퀘스트 ID
@@ -48,7 +73,23 @@ export class QuestManager {
                 this.player.cb.logMessage(`레벨 ${questData.startCondition.level} 이상이 되어야 이 퀘스트를 수락할 수 있습니다.`);
                 return;
             }
-            // ... 기타 조건 (필요시 추가)
+            if (questData.startCondition.race) {
+                const requiredRace = this.normalizeRaceId(questData.startCondition.race);
+                const playerRace = this.normalizeRaceId(this.player?.race);
+                if (!requiredRace || requiredRace !== playerRace) {
+                    this.player.cb.logMessage(`[${questData.title}] 퀘스트는 ${questData.startCondition.race} 종족만 수락할 수 있습니다.`);
+                    return;
+                }
+            }
+            const requiredCompleted = questData.startCondition.completedQuest;
+            if (requiredCompleted) {
+                const requiredList = Array.isArray(requiredCompleted) ? requiredCompleted : [requiredCompleted];
+                const hasAll = requiredList.every((id) => this.completedQuests.includes(id));
+                if (!hasAll) {
+                    this.player.cb.logMessage(`[${questData.title}] 퀘스트는 선행 의뢰를 완료해야 수락할 수 있습니다.`);
+                    return;
+                }
+            }
         }
 
         // 퀘스트 데이터를 복사하여 activeQuests에 추가 (원본 데이터 수정을 방지)
@@ -155,6 +196,9 @@ export class QuestManager {
         // 2. 퀘스트 목록 이동
         this.completedQuests.push(quest.id);
         // checkProgress 함수에서 activeQuests를 필터링하므로 여기서는 ID만 추가
+        if (quest.nextQuestId) {
+            this.acceptQuest(quest.nextQuestId);
+        }
     }
 
     /**
